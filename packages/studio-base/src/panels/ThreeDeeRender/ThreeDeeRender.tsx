@@ -21,7 +21,7 @@ import { DeepPartial } from "ts-essentials";
 import { useDebouncedCallback } from "use-debounce";
 
 import Logger from "@foxglove/log";
-import { isLessThan, Time, toNanoSec } from "@foxglove/rostime";
+import { fromNanoSec, isLessThan, Time, toNanoSec } from "@foxglove/rostime";
 import {
   LayoutActions,
   MessageEvent,
@@ -676,10 +676,17 @@ export function ThreeDeeRender({ context }: { context: PanelExtensionContext }):
       return;
     }
 
+    const timeLimit = fromNanoSec(currentTime ?? 0n);
+
     for (const message of preloadedMessages) {
       // Skip preloaded messages before the last receiveTime we've previously processed
       if (isLessThan(message.receiveTime, lastPreloadedMessageTimeRef.current)) {
         continue;
+      }
+
+      // Don't ingest future messages
+      if (!isLessThan(message.receiveTime, timeLimit)) {
+        break;
       }
 
       const datatype = topicsToDatatypes.get(message.topic);
@@ -696,7 +703,7 @@ export function ThreeDeeRender({ context }: { context: PanelExtensionContext }):
     }
 
     renderRef.current.needsRender = true;
-  }, [preloadedMessages, renderer, topicsToDatatypes]);
+  }, [currentTime, preloadedMessages, renderer, topicsToDatatypes]);
 
   // Handle messages and render a frame if new messages are available
   useEffect(() => {
