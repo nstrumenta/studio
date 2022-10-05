@@ -57,6 +57,11 @@ declare module "@foxglove/studio" {
     topic: string;
 
     /**
+     * If a topic has multiple datatypes, this subscribes to a specific datatype.
+     */
+    datatype?: string;
+
+    /**
      * Setting preload to _true_ hints to the data source that it should attempt to load all available
      * messages for the topic. The default behavior is to only load messages for the current frame.
      *

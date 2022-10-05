@@ -231,29 +231,6 @@ function updatePlayerStateAction(
         continue;
       }
 
-      /* fixme
-      if (prevState.messageTransformers) {
-        // fixme - need topic -> datatype lookup
-        const topic = prevState.public.sortedTopics.find((val) => val.name === messageEvent.topic);
-        if (topic) {
-          // lookup the transformer that accepts as input the datatype of our topic
-          const transformer = prevState.messageTransformers.find(
-            (val) => val.inputDatatype === topic.datatype,
-          );
-
-          if (transformer) {
-            // fixme - try/catch problems
-            const outputMsg = transformer.transformer(messageEvent.message);
-            messageEvent.transformedMessages = messageEvent.transformedMessages ?? [];
-            messageEvent.transformedMessages.push({
-              datatype: transformer.outputDatatype,
-              message: outputMsg,
-            });
-          }
-        }
-      }
-      */
-
       for (const id of ids) {
         let subscriberMessageEvents = messagesBySubscriberId.get(id);
         if (!subscriberMessageEvents) {
@@ -261,6 +238,45 @@ function updatePlayerStateAction(
           messagesBySubscriberId.set(id, subscriberMessageEvents);
         }
         subscriberMessageEvents.push(messageEvent);
+
+        if (prevState.datatypeTransformers) {
+          const subscriptions = subsById.get(id);
+          if (!subscriptions) {
+            continue;
+          }
+
+          // fixme
+          // For every subscription, see if there is a matching transformer to go from the messageEvent
+          // datatype to the subscription datatype.
+          //
+          // If we find a transformable subscription then we transform the message event and add the
+          // transformed message to our messages.
+          for (const sub of subscriptions) {
+            // Skip if the subscription does not specify a datatype
+            if (!sub.datatype) {
+              continue;
+            }
+            // lookup the transformer that accepts as input the datatype of our topic
+            const transformer = prevState.datatypeTransformers.find(
+              (val) =>
+                val.outputDatatype === sub.datatype && val.inputDatatype === messageEvent.datatype,
+            );
+            if (!transformer) {
+              continue;
+            }
+
+            subscriberMessageEvents.push({
+              receiveTime: messageEvent.receiveTime,
+              topic: messageEvent.topic,
+              publishTime: messageEvent.publishTime,
+              sizeInBytes: 0,
+              datatype: transformer.outputDatatype,
+              message: transformer.transformer(messageEvent.message),
+              // fixme
+              // originalMessageEvent: messageEvent,
+            });
+          }
+        }
       }
     }
   }
@@ -299,6 +315,11 @@ function updatePlayerStateAction(
   if (topics !== prevState.public.playerState.activeData?.topics) {
     newPublicState.sortedTopics = (topics ?? []).sort((a, b) => a.name.localeCompare(b.name));
 
+    // fixme
+    // every topic needs an additionalDatatypes field
+
+    /*
+    // fixme - creates a separate list of topics for transformation
     // Create a separate list of transformed topics
     // These are topics which produce transformed data
     const transformedTopics: Topic[] = [];
@@ -318,6 +339,7 @@ function updatePlayerStateAction(
         }
       }
     }
+    */
   }
 
   if (

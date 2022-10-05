@@ -252,6 +252,11 @@ function MapPanel(props: MapPanelProps): JSX.Element {
   // Subscribe to eligible and enabled topics
   useEffect(() => {
     const eligibleEnabled = difference(eligibleTopics, config.disabledTopics);
+
+    // fixme -
+    // subscriptions allow specifying a datatype
+    // when a datatype is specified the message pipeline will provide MessageEvents of that type
+
     context.subscribe(eligibleEnabled);
 
     const tree = buildSettingsTree(config, eligibleTopics);

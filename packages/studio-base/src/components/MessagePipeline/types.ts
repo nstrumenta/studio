@@ -17,7 +17,6 @@ type ResumeFrame = () => void;
 export type MessagePipelineContext = {
   playerState: PlayerState;
   sortedTopics: Topic[];
-  transformedTopics: Topic[];
   datatypes: RosDatatypes;
   subscriptions: SubscribePayload[];
   publishers: AdvertiseOptions[];

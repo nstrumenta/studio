@@ -33,6 +33,12 @@ L.Marker.prototype.options.icon = L.icon({
 });
 
 function initPanel(context: PanelExtensionContext) {
+  // This enables reporting topics with multiple datatypes
+  // what about reporting alternativeDatatypes on the topic?
+  // then adding the subscriber flow is separate since that can be handled by the subscription...
+  // fixme
+  // context.enable("multiple-datatypes");
+
   ReactDOM.render(
     <StrictMode>
       <MapPanel context={context} />
