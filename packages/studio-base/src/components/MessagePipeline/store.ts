@@ -8,7 +8,7 @@ import shallowequal from "shallowequal";
 import { createStore, StoreApi } from "zustand";
 
 import { Condvar } from "@foxglove/den/async";
-import { MessageEvent, RegisterDatatypeTransformerArgs, Topic } from "@foxglove/studio";
+import { MessageEvent, RegisterDatatypeTransformerArgs } from "@foxglove/studio";
 import {
   AdvertiseOptions,
   Player,
@@ -237,25 +237,19 @@ function updatePlayerStateAction(
           subscriberMessageEvents = [];
           messagesBySubscriberId.set(id, subscriberMessageEvents);
         }
-        subscriberMessageEvents.push(messageEvent);
 
-        if (prevState.datatypeTransformers) {
-          const subscriptions = subsById.get(id);
-          if (!subscriptions) {
-            continue;
+        const subscriptions = subsById.get(id);
+        if (!subscriptions) {
+          continue;
+        }
+
+        for (const sub of subscriptions) {
+          // If there's no datatype then we always pass along the data source message event
+          if (!sub.datatype || sub.datatype === messageEvent.datatype) {
+            subscriberMessageEvents.push(messageEvent);
           }
 
-          // fixme
-          // For every subscription, see if there is a matching transformer to go from the messageEvent
-          // datatype to the subscription datatype.
-          //
-          // If we find a transformable subscription then we transform the message event and add the
-          // transformed message to our messages.
-          for (const sub of subscriptions) {
-            // Skip if the subscription does not specify a datatype
-            if (!sub.datatype) {
-              continue;
-            }
+          if (prevState.datatypeTransformers) {
             // lookup the transformer that accepts as input the datatype of our topic
             const transformer = prevState.datatypeTransformers.find(
               (val) =>
@@ -315,16 +309,6 @@ function updatePlayerStateAction(
   if (topics !== prevState.public.playerState.activeData?.topics) {
     newPublicState.sortedTopics = (topics ?? []).sort((a, b) => a.name.localeCompare(b.name));
 
-    // fixme
-    // every topic needs an additionalDatatypes field
-
-    /*
-    // fixme - creates a separate list of topics for transformation
-    // Create a separate list of transformed topics
-    // These are topics which produce transformed data
-    const transformedTopics: Topic[] = [];
-    newPublicState.transformedTopics = transformedTopics;
-
     if (prevState.datatypeTransformers) {
       for (const topic of newPublicState.sortedTopics) {
         const transformer = prevState.datatypeTransformers.find(
@@ -332,14 +316,11 @@ function updatePlayerStateAction(
         );
 
         if (transformer) {
-          transformedTopics.push({
-            name: topic.name,
-            datatype: transformer.outputDatatype,
-          });
+          topic.additionalDatatypes ??= [];
+          topic.additionalDatatypes.push(transformer.outputDatatype);
         }
       }
     }
-    */
   }
 
   if (

@@ -97,12 +97,12 @@ async function activateExtensions(
 
   // fixme
   datatypeTransformers.push({
-    inputDatatype: "vehicle_gps_position",
+    inputDatatype: "Gps",
     outputDatatype: "foxglove.LocationFix",
     transformer: (msg: { lat: number; lon: number }) => {
       return {
-        latitude: msg.lat / 1e7,
-        longitude: msg.lon / 1e7,
+        latitude: msg.lat,
+        longitude: msg.lon,
       };
     },
   });

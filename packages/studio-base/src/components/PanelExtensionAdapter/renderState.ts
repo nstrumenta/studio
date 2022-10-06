@@ -140,6 +140,10 @@ function initRenderStateBuilder(): BuildRenderStateFn {
               if (!subscribedTopics.includes(messageEvent.topic)) {
                 continue;
               }
+
+              // fixme
+              // do we need to transform this or check the subscribers
+              // only provide messages which we've subscribed to
               frames.push(messageEvent);
             }
           }

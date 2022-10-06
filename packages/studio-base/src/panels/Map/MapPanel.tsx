@@ -18,13 +18,19 @@ import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } fr
 import { useResizeDetector } from "react-resize-detector";
 import { useDebouncedCallback } from "use-debounce";
 
+import { filterMap } from "@foxglove/den/collection";
 import { toSec } from "@foxglove/rostime";
-import { PanelExtensionContext, MessageEvent, SettingsTreeAction } from "@foxglove/studio";
+import {
+  PanelExtensionContext,
+  MessageEvent,
+  SettingsTreeAction,
+  Topic,
+  Subscription,
+} from "@foxglove/studio";
 import Stack from "@foxglove/studio-base/components/Stack";
 import FilteredPointLayer, {
   POINT_MARKER_RADIUS,
 } from "@foxglove/studio-base/panels/Map/FilteredPointLayer";
-import { Topic } from "@foxglove/studio-base/players/types";
 import { FoxgloveMessages } from "@foxglove/studio-base/types/FoxgloveMessages";
 import { darkColor, lightColor, lineColors } from "@foxglove/studio-base/util/plotColors";
 
@@ -47,21 +53,20 @@ function isGeoJSONMessage(msgEvent: MessageEvent<unknown>): msgEvent is GeoJsonM
   );
 }
 
-function topicMessageType(topic: Topic) {
-  switch (topic.datatype) {
+function isSupportedDatatype(datatype: string): boolean {
+  switch (datatype) {
     case "sensor_msgs/NavSatFix":
     case "sensor_msgs/msg/NavSatFix":
     case "ros.sensor_msgs.NavSatFix":
     case "foxglove_msgs/LocationFix":
     case "foxglove_msgs/msg/LocationFix":
     case "foxglove.LocationFix":
-      return "navsat";
     case "foxglove_msgs/GeoJSON":
     case "foxglove_msgs/msg/GeoJSON":
     case "foxglove.GeoJSON":
-      return "geojson";
+      return true;
     default:
-      return undefined;
+      return false;
   }
 }
 
@@ -152,7 +157,20 @@ function MapPanel(props: MapPanelProps): JSX.Element {
   const [renderDone, setRenderDone] = useState<() => void>(() => () => {});
 
   const eligibleTopics = useMemo(() => {
-    return topics.filter(topicMessageType).map((topic) => topic.name);
+    return filterMap(topics, (topic) => {
+      if (isSupportedDatatype(topic.datatype)) {
+        return topic;
+      }
+
+      if (topic.additionalDatatypes) {
+        for (const datatype of topic.additionalDatatypes) {
+          if (isSupportedDatatype(datatype)) {
+            return { name: topic.name, datatype };
+          }
+        }
+      }
+      return undefined;
+    });
   }, [topics]);
 
   const settingsActionHandler = useCallback((action: SettingsTreeAction) => {
@@ -251,13 +269,20 @@ function MapPanel(props: MapPanelProps): JSX.Element {
 
   // Subscribe to eligible and enabled topics
   useEffect(() => {
-    const eligibleEnabled = difference(eligibleTopics, config.disabledTopics);
+    const subscriptions: Subscription[] = [];
+    for (const topic of eligibleTopics) {
+      if (config.disabledTopics.includes(topic.name)) {
+        continue;
+      }
 
-    // fixme -
-    // subscriptions allow specifying a datatype
-    // when a datatype is specified the message pipeline will provide MessageEvents of that type
+      subscriptions.push({
+        topic: topic.name,
+        datatype: topic.datatype,
+        preload: true,
+      });
+    }
 
-    context.subscribe(eligibleEnabled);
+    context.subscribe(subscriptions);
 
     const tree = buildSettingsTree(config, eligibleTopics);
     context.updatePanelSettingsEditor({
@@ -286,11 +311,11 @@ function MapPanel(props: MapPanelProps): JSX.Element {
       const allFrames = new FeatureGroup();
       const currentFrame = new FeatureGroup();
       const topicGroup = new LayerGroup([allFrames, currentFrame]);
-      topicLayerMap.set(topic, {
+      topicLayerMap.set(topic.name, {
         topicGroup,
         allFrames,
         currentFrame,
-        baseColor: config.topicColors[topic] ?? lineColors[i]!,
+        baseColor: config.topicColors[topic.name] ?? lineColors[i]!,
       });
       i = (i + 1) % lineColors.length;
     }
@@ -352,6 +377,7 @@ function MapPanel(props: MapPanelProps): JSX.Element {
       }
 
       if (renderState.allFrames) {
+        console.log("all", renderState.allFrames);
         setAllMapMessages(renderState.allFrames as MapPanelMessage[]);
       }
 

@@ -364,6 +364,7 @@ function PanelExtensionAdapter(props: PanelExtensionAdapterProps): JSX.Element {
           newSubscribedTopics.push(item.topic);
           return {
             topic: item.topic,
+            datatype: item.datatype,
             preloadType: item.preload === true ? "full" : "partial",
           };
         });

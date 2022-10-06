@@ -3,13 +3,12 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
 import { Time } from "@foxglove/rostime";
-import { MessageEvent, ParameterValue } from "@foxglove/studio";
+import { MessageEvent, ParameterValue, Topic } from "@foxglove/studio";
 import {
   AdvertiseOptions,
   PlayerState,
   PublishPayload,
   SubscribePayload,
-  Topic,
 } from "@foxglove/studio-base/players/types";
 import { RosDatatypes } from "@foxglove/studio-base/types/RosDatatypes";
 

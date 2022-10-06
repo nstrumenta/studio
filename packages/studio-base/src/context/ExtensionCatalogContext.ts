@@ -5,7 +5,7 @@
 import { createContext } from "react";
 import { StoreApi, useStore } from "zustand";
 
-import { ExtensionPanelRegistration, RegisterMessageTransformerArgs } from "@foxglove/studio";
+import { ExtensionPanelRegistration, RegisterDatatypeTransformerArgs } from "@foxglove/studio";
 import useGuaranteedContext from "@foxglove/studio-base/hooks/useGuaranteedContext";
 import { ExtensionInfo, ExtensionNamespace } from "@foxglove/studio-base/types/Extensions";
 
@@ -27,7 +27,7 @@ export type ExtensionCatalog = {
 
   installedExtensions: undefined | ExtensionInfo[];
   installedPanels: undefined | Record<string, RegisteredPanel>;
-  installedDatatypeTransformers: undefined | RegisterMessageTransformerArgs[];
+  installedDatatypeTransformers: undefined | RegisterDatatypeTransformerArgs[];
 };
 
 export const ExtensionCatalogContext = createContext<undefined | StoreApi<ExtensionCatalog>>(

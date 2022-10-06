@@ -51,6 +51,12 @@ declare module "@foxglove/studio" {
      * i.e. package.Message in protobuf-like serialization or pkg/Msg in ROS systems.
      */
     datatype: string;
+
+    /**
+     * Lists any additional datatypes available for subscribers on the topic. A panel can subscribe
+     * to the topic as these datatypes to receive messages on the topic in one of these datatypes.
+     */
+    additionalDatatypes?: string[];
   };
 
   export type Subscription = {
