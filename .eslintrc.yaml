@@ -145,6 +145,11 @@ overrides:
       - "**/*.test.ts"
 
   - rules:
+      react/forbid-component-props: off
+    files:
+      - "**/*.stories.tsx"
+
+  - rules:
       no-restricted-imports: off
     files:
       # Ignore existing implementations of @mui/styled
