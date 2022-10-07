@@ -77,6 +77,11 @@ export function getColorConverter(
             getColor0bgr(output, colorValue);
             output.a = settings.explicitAlpha;
           };
+        case "argb":
+          return (output: ColorRGBA, colorValue: number) => {
+            getColor0rgb(output, colorValue);
+            output.a = settings.explicitAlpha;
+          };
       }
     case "rgba":
       switch (settings.rgbByteOrder) {
@@ -87,6 +92,8 @@ export function getColorConverter(
           return getColorBgra;
         case "abgr":
           return getColorAbgr;
+        case "argb":
+          return getColorArgb;
       }
   }
 }
@@ -136,12 +143,31 @@ function getColor0bgr(output: ColorRGBA, colorValue: number): void {
   output.a = 1;
 }
 
+// 0x00rrggbb
+function getColor0rgb(output: ColorRGBA, colorValue: number): void {
+  const num = colorValue >>> 0;
+  output.r = ((num & 0x00ff0000) >>> 16) / 255;
+  output.g = ((num & 0x0000ff00) >>> 8) / 255;
+  output.b = ((num & 0x000000ff) >>> 0) / 255;
+  output.a = 1;
+}
+
 // 0xaabbggrr
 function getColorAbgr(output: ColorRGBA, colorValue: number): void {
   const num = colorValue >>> 0;
   output.r = ((num & 0x000000ff) >>> 0) / 255;
   output.g = ((num & 0x0000ff00) >>> 8) / 255;
   output.b = ((num & 0x00ff0000) >>> 16) / 255;
+  output.a = ((num & 0xff000000) >>> 24) / 255;
+}
+
+// 0xaarrggbb
+function getColorArgb(output: ColorRGBA, colorValue: number): void {
+  const num = colorValue >>> 0;
+
+  output.r = ((num & 0x00ff0000) >>> 16) / 255;
+  output.g = ((num & 0x0000ff00) >>> 8) / 255;
+  output.b = ((num & 0x000000ff) >>> 0) / 255;
   output.a = ((num & 0xff000000) >>> 24) / 255;
 }
 

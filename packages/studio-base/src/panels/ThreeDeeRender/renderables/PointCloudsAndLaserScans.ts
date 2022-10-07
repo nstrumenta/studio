@@ -57,7 +57,7 @@ export type LayerSettingsPointCloudAndLaserScan = BaseSettings & {
   gradient: [string, string];
   colorMap: "turbo" | "rainbow";
   explicitAlpha: number;
-  rgbByteOrder: "rgba" | "bgra" | "abgr";
+  rgbByteOrder: "rgba" | "bgra" | "abgr" | "argb";
   minValue: number | undefined;
   maxValue: number | undefined;
 };
