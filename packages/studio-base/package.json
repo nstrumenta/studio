@@ -34,7 +34,7 @@
     "@foxglove/chartjs-plugin-zoom": "2.0.4",
     "@foxglove/comlink-transfer-handlers": "workspace:*",
     "@foxglove/den": "workspace:*",
-    "@foxglove/electron-socket": "2.0.0",
+    "@foxglove/electron-socket": "github:foxglove/electron-socket#4abe80cdffb995baa9ed3339b0d7577d0eea5691",
     "@foxglove/hooks": "workspace:*",
     "@foxglove/mcap-support": "workspace:*",
     "@foxglove/regl-worldview": "2.4.0",

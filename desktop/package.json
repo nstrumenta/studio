@@ -2,7 +2,7 @@
   "name": "desktop",
   "private": true,
   "dependencies": {
-    "@foxglove/electron-socket": "2.0.0",
+    "@foxglove/electron-socket": "github:foxglove/electron-socket#4abe80cdffb995baa9ed3339b0d7577d0eea5691",
     "@foxglove/studio-base": "workspace:*"
   },
   "devDependencies": {

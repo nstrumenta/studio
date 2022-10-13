@@ -2168,15 +2168,15 @@ __metadata:
   languageName: unknown
   linkType: soft
 
-"@foxglove/electron-socket@npm:2.0.0":
+"@foxglove/electron-socket@github:foxglove/electron-socket#4abe80cdffb995baa9ed3339b0d7577d0eea5691":
   version: 2.0.0
-  resolution: "@foxglove/electron-socket@npm:2.0.0"
+  resolution: "@foxglove/electron-socket@https://github.com/foxglove/electron-socket.git#commit=4abe80cdffb995baa9ed3339b0d7577d0eea5691"
   dependencies:
     dns-packet: ^5.2.4
     eventemitter3: ^4.0.7
   peerDependencies:
     electron: ">=12"
-  checksum: aaf47e91847830d5d75cf4e06bf5b1e208a5d122638403ee3a3ad1da3c5347775b200021b63d94f8b34d0b16fb1888422f67cd8f21a2f894699303ded3c6cc2b
+  checksum: dfa328a12258abbcad98b690fc4424989d7ec17a9506b437fa3aede3a451634cc7523ce4fbb95ab7cb497d6739d78beec83a1698539d0d8215b620ac1350e73a
   languageName: node
   linkType: hard
 
@@ -2281,6 +2281,20 @@ __metadata:
   bin:
     roscore: dist/nodejs/roscore.js
   checksum: 1a3957bc99f39ddad7c3ad26f64f05e440bb0aadaf41322e82ee177408e3347fae8e27c58077220105f673f26b2b316fc17be547ef3abd48aacb1eab93804ab5
+  languageName: node
+  linkType: hard
+
+"@foxglove/ros1@patch:@foxglove/ros1@1.5.1#./patches/ros1.patch::locator=foxglove-studio%40workspace%3A.":
+  version: 1.5.1
+  resolution: "@foxglove/ros1@patch:@foxglove/ros1@npm%3A1.5.1#./patches/ros1.patch::version=1.5.1&hash=a01509&locator=foxglove-studio%40workspace%3A."
+  dependencies:
+    "@foxglove/rosmsg": ^3.1.0
+    "@foxglove/rosmsg-serialization": ^1.5.2
+    "@foxglove/xmlrpc": ^1.2.1
+    eventemitter3: ^4.0.7
+  bin:
+    roscore: dist/nodejs/roscore.js
+  checksum: f2b89f03d97d7c7fb851df8367672afcb2124236784d17f7aac8025c60f8a87f2ed4c2db265e514d687d110e416f39516b0051e0b0e05d5188645e0a4dd0111f
   languageName: node
   linkType: hard
 
@@ -2433,7 +2447,7 @@ __metadata:
     "@foxglove/chartjs-plugin-zoom": 2.0.4
     "@foxglove/comlink-transfer-handlers": "workspace:*"
     "@foxglove/den": "workspace:*"
-    "@foxglove/electron-socket": 2.0.0
+    "@foxglove/electron-socket": "github:foxglove/electron-socket#4abe80cdffb995baa9ed3339b0d7577d0eea5691"
     "@foxglove/hooks": "workspace:*"
     "@foxglove/mcap-support": "workspace:*"
     "@foxglove/regl-worldview": 2.4.0
@@ -2682,15 +2696,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@foxglove/xmlrpc@npm:^1.2.1":
+"@foxglove/xmlrpc@github:foxglove/xmlrpc#977263a91d49ec2998342688b55854261ff18a9c":
   version: 1.2.1
-  resolution: "@foxglove/xmlrpc@npm:1.2.1"
+  resolution: "@foxglove/xmlrpc@https://github.com/foxglove/xmlrpc.git#commit=977263a91d49ec2998342688b55854261ff18a9c"
   dependencies:
     "@foxglove/just-fetch": ^1.2.4
     byte-base64: ^1.1.0
     sax: ^1.2.4
     xmlbuilder2: ^3.0.2
-  checksum: f7fb2f0217af2802a699465a581a453ffb36c4150dda50de4948bdd6ec98af8647ef6b2c69e93966e4ea6c2d574ccd75e00416e38ffc56274cb5adc6aa14bdc2
+  checksum: 927c6e6cf240f4f15239f912c070b6635dd5935b70e38ac58630b9ac8898ce343f9330672875116c96b57eb54571a43cf31df9f7d0bc30335e1cd07ad3923510
   languageName: node
   linkType: hard
 
@@ -10393,7 +10407,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "desktop@workspace:desktop"
   dependencies:
-    "@foxglove/electron-socket": 2.0.0
+    "@foxglove/electron-socket": "github:foxglove/electron-socket#4abe80cdffb995baa9ed3339b0d7577d0eea5691"
     "@foxglove/studio-base": "workspace:*"
     "@types/plist": ^3.0.2
     plist: 3.0.5
