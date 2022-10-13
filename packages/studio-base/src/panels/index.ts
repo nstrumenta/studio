@@ -237,4 +237,15 @@ const legacyPlot: PanelInfo[] = [
   },
 ];
 
-export default { builtin, debug, legacyPlot };
+const legacy3D: PanelInfo[] = [
+  {
+    title: "3D (Legacy)",
+    type: "3D Panel",
+    description: "Display visualization markers and models in a 3D scene.",
+    help: ThreeDimensionalVizHelp,
+    thumbnail: threeDimensionalVizThumbnail,
+    module: async () => await import("./ThreeDimensionalViz"),
+  },
+];
+
+export default { builtin, debug, legacyPlot, legacy3D };

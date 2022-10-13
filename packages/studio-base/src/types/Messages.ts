@@ -269,6 +269,17 @@ export type CompressedImage = Readonly<
   }
 >;
 
+export type VelodynePacket = Readonly<{
+  stamp: Time;
+  data: Uint8Array; // 1206 bytes
+}>;
+
+export type VelodyneScan = Readonly<
+  StampedMessage & {
+    packets: VelodynePacket[];
+  }
+>;
+
 export enum ImageMarkerType {
   CIRCLE = 0,
   LINE_STRIP = 1,
