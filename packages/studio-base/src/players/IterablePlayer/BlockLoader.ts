@@ -54,9 +54,9 @@ export class BlockLoader {
   private end: Time;
   private blockDurationNanos: number;
   private topics: Set<string> = new Set();
-  private maxCacheSize: number = 0;
+  //private maxCacheSize: number = 0;
   private activeBlockId: number = 0;
-  private problemManager: PlayerProblemManager;
+  //private problemManager: PlayerProblemManager;
   private stopped: boolean = false;
   private activeChangeCondvar: Condvar = new Condvar();
 
@@ -64,8 +64,8 @@ export class BlockLoader {
     this.source = args.source;
     this.start = args.start;
     this.end = args.end;
-    this.maxCacheSize = args.cacheSizeBytes;
-    this.problemManager = args.problemManager;
+    //this.maxCacheSize = args.cacheSizeBytes;
+    //this.problemManager = args.problemManager;
 
     const totalNs = Number(toNanoSec(subtractTimes(this.end, this.start))) + 1; // +1 since times are inclusive.
     if (totalNs > Number.MAX_SAFE_INTEGER * 0.9) {
@@ -443,6 +443,7 @@ export class BlockLoader {
     }
   }
 
+  /*
   // Evict a block while preserving blocks in the block id range (inclusive)
   private evictBlock(range: { startId: number; endId: number }): number {
     if (range.endId < range.startId) {
@@ -484,6 +485,7 @@ export class BlockLoader {
 
     return 0;
   }
+  */
 
   private calculateProgress(topics: Set<string>): Progress {
     const fullyLoadedFractionRanges = simplify(
@@ -518,6 +520,7 @@ export class BlockLoader {
     };
   }
 
+  /*
   private cacheSize(): number {
     return this.blocks.reduce((prev, block) => {
       if (!block) {
@@ -539,6 +542,7 @@ export class BlockLoader {
 
     return Number(offset / BigInt(this.blockDurationNanos));
   }
+  */
 
   private blockIdToStartTime(id: number): Time {
     return add(this.start, fromNanoSec(BigInt(id) * BigInt(this.blockDurationNanos)));
