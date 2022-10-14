@@ -210,6 +210,7 @@ const FOLLOW_TF_PATH = ["general", "followTf"];
 const NO_FRAME_SELECTED = "NO_FRAME_SELECTED";
 const FRAME_NOT_FOUND = "FRAME_NOT_FOUND";
 const TF_OVERFLOW = "TF_OVERFLOW";
+const CYCLE_DETECTED = "CYCLE_DETECTED";
 
 // An extensionId for creating the top-level settings nodes such as "Topics" and
 // "Custom Layers"
@@ -932,16 +933,37 @@ export class Renderer extends EventEmitter<RendererEvents> {
     stamp: bigint,
     translation: Vector3,
     rotation: Quaternion,
+    errorSettingsPath?: string[],
   ): void {
     const t = translation;
     const q = rotation;
 
     const transform = new Transform([t.x, t.y, t.z], [q.x, q.y, q.z, q.w]);
-    const updated = this.transformTree.addTransform(childFrameId, parentFrameId, stamp, transform);
+    const { updated, cycleDetected } = this.transformTree.addTransform(
+      childFrameId,
+      parentFrameId,
+      stamp,
+      transform,
+    );
 
     if (updated) {
       this.coordinateFrameList = this.transformTree.frameList();
       this.emit("transformTreeUpdated", this);
+    }
+
+    if (cycleDetected) {
+      this.settings.errors.add(
+        ["transforms", `frame:${childFrameId}`],
+        CYCLE_DETECTED,
+        `Transform tree cycle detected: Frame "${parentFrameId}" cannot be the parent of frame "${childFrameId}. Frame was not re-parented`,
+      );
+      if (errorSettingsPath) {
+        this.settings.errors.add(
+          errorSettingsPath,
+          CYCLE_DETECTED,
+          `Attempted to add cyclical transform: Frame "${parentFrameId}" cannot be the parent of frame "${childFrameId}. Frame was not re-parented`,
+        );
+      }
     }
 
     // Check if the transform history for this frame is at capacity and show an error if so. This

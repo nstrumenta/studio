@@ -11,18 +11,22 @@ const bigint = BigInt("0");
 describe("TransformTree", () => {
   it("does not error when adding a transform that would not create a cycle", () => {
     const tfTree = new TransformTree();
-    expect(() => {
-      tfTree.addTransform("b", "a", bigint, tf);
-      tfTree.addTransform("c", "b", bigint, tf);
-      tfTree.addTransform("d", "c", bigint, tf);
-    }).not.toThrow(/cycle/i);
+    tfTree.addTransform("b", "a", bigint, tf);
+    tfTree.addTransform("c", "b", bigint, tf);
+    expect(tfTree.addTransform("d", "c", bigint, tf)).toEqual({
+      cycleDetected: false,
+      updated: true,
+    });
   });
   it("errors when adding a transform that would create a cycle with 2 frames", () => {
     const tfTree = new TransformTree();
     // a <- b
     tfTree.addTransform("b", "a", bigint, tf);
     // b <- a <- b ERROR - cycle created
-    expect(() => tfTree.addTransform("a", "b", bigint, tf)).toThrow(/cycle/i);
+    expect(tfTree.addTransform("a", "b", bigint, tf)).toEqual({
+      cycleDetected: true,
+      updated: false,
+    });
   });
   it("errors when adding a transform that would create a cycle with 3 frames", () => {
     const tfTree = new TransformTree();
@@ -31,6 +35,9 @@ describe("TransformTree", () => {
     // a <- b <- c
     tfTree.addTransform("c", "b", bigint, tf);
     // c <- a <- b <- c  ERROR - cycle created
-    expect(() => tfTree.addTransform("a", "c", bigint, tf)).toThrow(/cycle/i);
+    expect(tfTree.addTransform("a", "c", bigint, tf)).toEqual({
+      cycleDetected: true,
+      updated: false,
+    });
   });
 });
