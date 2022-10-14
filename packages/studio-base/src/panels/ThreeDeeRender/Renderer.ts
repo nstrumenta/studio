@@ -71,7 +71,7 @@ import {
   Vector3,
 } from "./ros";
 import { BaseSettings, CustomLayerSettings, SelectEntry } from "./settings";
-import { makePose, Pose, Transform, TransformTree } from "./transforms";
+import { AddTransformResult, makePose, Pose, Transform, TransformTree } from "./transforms";
 
 const log = Logger.getLogger(__filename);
 
@@ -939,19 +939,14 @@ export class Renderer extends EventEmitter<RendererEvents> {
     const q = rotation;
 
     const transform = new Transform([t.x, t.y, t.z], [q.x, q.y, q.z, q.w]);
-    const { updated, cycleDetected } = this.transformTree.addTransform(
-      childFrameId,
-      parentFrameId,
-      stamp,
-      transform,
-    );
+    const status = this.transformTree.addTransform(childFrameId, parentFrameId, stamp, transform);
 
-    if (updated) {
+    if (status === AddTransformResult.UPDATED) {
       this.coordinateFrameList = this.transformTree.frameList();
       this.emit("transformTreeUpdated", this);
     }
 
-    if (cycleDetected) {
+    if (status === AddTransformResult.CYCLE_DETECTED) {
       this.settings.errors.add(
         ["transforms", `frame:${childFrameId}`],
         CYCLE_DETECTED,

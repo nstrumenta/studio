@@ -9,7 +9,12 @@ import { Duration, Time } from "./time";
 
 const DEFAULT_MAX_CAPACITY_PER_FRAME = 50_000;
 
-const transformStatus = { updated: false, cycleDetected: false };
+export enum AddTransformResult {
+  NOT_UPDATED,
+  UPDATED,
+  CYCLE_DETECTED,
+}
+
 /**
  * TransformTree is a collection of coordinate frames with convenience methods
  * for getting and creating frames and adding transforms between frames.
@@ -32,23 +37,27 @@ export class TransformTree {
     parentFrameId: string,
     time: Time,
     transform: Transform,
-  ): { updated: boolean; cycleDetected: boolean } {
-    transformStatus.updated = !this.hasFrame(frameId);
-    transformStatus.cycleDetected = false;
+  ): AddTransformResult {
+    let updated = !this.hasFrame(frameId);
+    let cycleDetected = false;
     const frame = this.getOrCreateFrame(frameId);
     const curParentFrame = frame.parent();
     if (curParentFrame == undefined || curParentFrame.id !== parentFrameId) {
-      transformStatus.cycleDetected = this._checkParentForCycle(frameId, parentFrameId);
+      cycleDetected = this._checkParentForCycle(frameId, parentFrameId);
       // This frame was previously unparented but now we know its parent, or we
       // are reparenting this frame
-      if (!transformStatus.cycleDetected) {
+      if (!cycleDetected) {
         frame.setParent(this.getOrCreateFrame(parentFrameId));
-        transformStatus.updated = true;
+        updated = true;
       }
     }
 
     frame.addTransform(time, transform);
-    return transformStatus;
+    return cycleDetected
+      ? AddTransformResult.CYCLE_DETECTED
+      : updated
+      ? AddTransformResult.UPDATED
+      : AddTransformResult.NOT_UPDATED;
   }
 
   public clear(): void {
