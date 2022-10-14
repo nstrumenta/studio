@@ -72,6 +72,9 @@ export class BlockLoader {
       throw new Error("Time range is too long to be supported");
     }
 
+    // fixme
+    args.maxBlocks = 20;
+
     this.blockDurationNanos = Math.ceil(
       Math.max(args.minBlockDurationNs, totalNs / args.maxBlocks),
     );
@@ -187,7 +190,14 @@ export class BlockLoader {
     const topics = this.topics;
     log.debug("load block range", { topics, beginBlockId, lastBlockId });
 
-    let totalBlockSizeBytes = this.cacheSize();
+    // fixme
+    //const totalBlockSizeBytes = this.cacheSize();
+
+    // fixme - change to use cursor that can expose single continuous reader
+    if (!this.source.getMessages) {
+      log.info("source does not have getMessages so preloading is disables");
+      return;
+    }
 
     for (let blockId = beginBlockId; blockId < lastBlockId; ++blockId) {
       // Topics we will fetch for this range
@@ -205,6 +215,44 @@ export class BlockLoader {
         // The current block needs some topics so those will be come the topics we need to fetch
         topicsToFetch = existingBlock?.needTopics ?? topics;
       }
+
+      // for now just fetch the messages for this block and move on to the next block
+      // fixme - needs to be smarter but I want to see if this is at all better
+
+      const startTime = this.blockIdToStartTime(blockId);
+      const endTime = clampTime(this.blockIdToEndTime(blockId), this.start, this.end);
+
+      const results = await this.source.getMessages({
+        topics: [...topicsToFetch],
+        start: startTime,
+        end: endTime,
+      });
+
+      const messagesByTopic: Record<string, MessageEvent<unknown>[]> = {};
+
+      for (const result of results) {
+        if (result.msgEvent) {
+          const arr = (messagesByTopic[result.msgEvent.topic] ??= []);
+          arr.push(result.msgEvent);
+        }
+      }
+
+      const existingBlock = this.blocks[blockId];
+
+      this.blocks[blockId] = {
+        needTopics: new Set(),
+        messagesByTopic: {
+          ...existingBlock?.messagesByTopic,
+          ...messagesByTopic,
+        },
+        // fixme
+        sizeInBytes: 0,
+      };
+
+      progress(this.calculateProgress(topics));
+
+      /*
+
 
       // blockId is the first block that needs loading
       // Now we look for the last block. We do this by finding blocks that need the same topics to fetch.
@@ -234,6 +282,7 @@ export class BlockLoader {
         end: iteratorEndTime,
         consumptionType: "full",
       });
+
 
       let messagesByTopic: Record<string, MessageEvent<unknown>[]> = {};
       // Set all topic arrays to empty to indicate we've read this topic
@@ -390,6 +439,7 @@ export class BlockLoader {
 
       // We've processed through endBlockId now, next cycle can skip all those blocks
       blockId = endBlockId + 1;
+      */
     }
   }
 

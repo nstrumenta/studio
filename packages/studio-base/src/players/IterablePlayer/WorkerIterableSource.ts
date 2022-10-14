@@ -8,7 +8,7 @@ import {
   abortSignalTransferHandler,
   iterableTransferHandler,
 } from "@foxglove/comlink-transfer-handlers";
-import { MessageEvent } from "@foxglove/studio";
+import { MessageEvent, Time } from "@foxglove/studio";
 
 import type {
   GetBackfillMessagesArgs,
@@ -80,6 +80,17 @@ export class WorkerIterableSource implements IIterableSource {
     // making the abort signal available within the worker.
     const { abortSignal, ...rest } = args;
     return await this._worker.getBackfillMessages(rest, abortSignal);
+  }
+
+  public async getMessages(args: {
+    topics: string[];
+    start: Time;
+    end: Time;
+  }): Promise<IteratorResult[]> {
+    if (this._worker == undefined) {
+      throw new Error(`WorkerIterableSource is not initialized`);
+    }
+    return await this._worker.getMessages(args);
   }
 
   public async terminate(): Promise<void> {

@@ -106,6 +106,8 @@ export interface IIterableSource {
    */
   getBackfillMessages(args: GetBackfillMessagesArgs): Promise<MessageEvent<unknown>[]>;
 
+  getMessages?: (args: { topics: string[]; start: Time; end: Time }) => Promise<IteratorResult[]>;
+
   /**
    * Optional method a data source can implement to cleanup resources. The player will call this
    * method when the source will no longer be used.

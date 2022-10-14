@@ -8,7 +8,7 @@ import {
   abortSignalTransferHandler,
   iterableTransferHandler,
 } from "@foxglove/comlink-transfer-handlers";
-import { MessageEvent } from "@foxglove/studio";
+import { MessageEvent, Time } from "@foxglove/studio";
 
 import type {
   GetBackfillMessagesArgs,
@@ -78,6 +78,21 @@ export class WorkerIterableSourceWorker {
       ...args,
       abortSignal,
     });
+  }
+
+  public async getMessages(args: {
+    topics: string[];
+    start: Time;
+    end: Time;
+  }): Promise<IteratorResult[]> {
+    const results: IteratorResult[] = [];
+    const iter = this.messageIterator(args);
+
+    for await (const item of iter) {
+      results.push(item);
+    }
+
+    return results;
   }
 }
 
