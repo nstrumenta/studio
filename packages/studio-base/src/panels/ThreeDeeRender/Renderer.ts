@@ -955,13 +955,13 @@ export class Renderer extends EventEmitter<RendererEvents> {
       this.settings.errors.add(
         ["transforms", `frame:${childFrameId}`],
         CYCLE_DETECTED,
-        `Transform tree cycle detected: Frame "${parentFrameId}" cannot be the parent of frame "${childFrameId}. Frame was not re-parented`,
+        `Transform tree cycle detected: Frame "${parentFrameId}" cannot be the parent of frame "${childFrameId}". Frame was not re-parented`,
       );
       if (errorSettingsPath) {
         this.settings.errors.add(
           errorSettingsPath,
           CYCLE_DETECTED,
-          `Attempted to add cyclical transform: Frame "${parentFrameId}" cannot be the parent of frame "${childFrameId}. Frame was not re-parented`,
+          `Attempted to add cyclical transform: Frame "${parentFrameId}" cannot be the parent of frame "${childFrameId}". Frame was not re-parented`,
         );
       }
     }
