@@ -955,7 +955,7 @@ export class Renderer extends EventEmitter<RendererEvents> {
       this.settings.errors.add(
         ["transforms", `frame:${childFrameId}`],
         CYCLE_DETECTED,
-        `Transform tree cycle detected: Frame "${parentFrameId}" cannot be the parent of frame "${childFrameId}". Frame was not re-parented`,
+        `Transform tree cycle detected: Received transform with parent "${parentFrameId}" and child "${childFrameId}", but "${childFrameId}" is already an ancestor of "${parentFrameId}".`,
       );
       if (errorSettingsPath) {
         this.settings.errors.add(
