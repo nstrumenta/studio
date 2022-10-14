@@ -9,6 +9,7 @@ import { Duration, Time } from "./time";
 
 const DEFAULT_MAX_CAPACITY_PER_FRAME = 50_000;
 
+const transformStatus = { updated: false, cycleDetected: false };
 /**
  * TransformTree is a collection of coordinate frames with convenience methods
  * for getting and creating frames and adding transforms between frames.
@@ -32,22 +33,22 @@ export class TransformTree {
     time: Time,
     transform: Transform,
   ): { updated: boolean; cycleDetected: boolean } {
-    let updated = !this.hasFrame(frameId);
-    let cycleDetected = false;
+    transformStatus.updated = !this.hasFrame(frameId);
+    transformStatus.cycleDetected = false;
     const frame = this.getOrCreateFrame(frameId);
     const curParentFrame = frame.parent();
     if (curParentFrame == undefined || curParentFrame.id !== parentFrameId) {
-      cycleDetected = this._checkParentForCycle(frameId, parentFrameId);
+      transformStatus.cycleDetected = this._checkParentForCycle(frameId, parentFrameId);
       // This frame was previously unparented but now we know its parent, or we
       // are reparenting this frame
-      if (!cycleDetected) {
+      if (!transformStatus.cycleDetected) {
         frame.setParent(this.getOrCreateFrame(parentFrameId));
-        updated = true;
+        transformStatus.updated = true;
       }
     }
 
     frame.addTransform(time, transform);
-    return { updated, cycleDetected };
+    return transformStatus;
   }
 
   public clear(): void {
