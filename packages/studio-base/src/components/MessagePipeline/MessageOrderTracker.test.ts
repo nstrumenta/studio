@@ -38,7 +38,7 @@ const playerStateWithMessages = (messages: any): PlayerState => ({
       sec: 1,
       nsec: 11,
     },
-    speed: 0.2,
+    playbackRate: 0.2,
     lastSeekTime: lastSeekTime(),
     startTime: { sec: 0, nsec: 0 },
     endTime: { sec: 2, nsec: 0 },

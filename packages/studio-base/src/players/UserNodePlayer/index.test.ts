@@ -94,7 +94,7 @@ const basicPlayerState: PlayerStateActiveData = {
   startTime: { sec: 0, nsec: 0 },
   endTime: { sec: 1, nsec: 0 },
   isPlaying: true,
-  speed: 0.2,
+  playbackRate: 0.2,
   lastSeekTime: 0,
   totalBytesReceived: 1234,
   messages: [],
@@ -199,17 +199,17 @@ describe("UserNodePlayer", () => {
       expect(fakePlayer.pausePlayback).toHaveBeenCalled();
     });
 
-    it("delegates setPlaybackSpeed to underlying player", () => {
+    it("delegates setPlaybackRate to underlying player", () => {
       const fakePlayer = new FakePlayer();
-      jest.spyOn(fakePlayer, "setPlaybackSpeed");
+      jest.spyOn(fakePlayer, "setPlaybackRate");
       const userNodePlayer = new UserNodePlayer(fakePlayer, defaultUserNodeActions);
       const messages = [];
       userNodePlayer.setListener(async (playerState) => {
         messages.push(playerState);
       });
-      expect(fakePlayer.setPlaybackSpeed).not.toHaveBeenCalled();
-      userNodePlayer.setPlaybackSpeed(0.4);
-      expect(fakePlayer.setPlaybackSpeed).toHaveBeenCalledWith(0.4);
+      expect(fakePlayer.setPlaybackRate).not.toHaveBeenCalled();
+      userNodePlayer.setPlaybackRate(0.4);
+      expect(fakePlayer.setPlaybackRate).toHaveBeenCalledWith(0.4);
     });
 
     it("delegates seekPlayback to underlying player", () => {

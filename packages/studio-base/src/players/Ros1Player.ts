@@ -327,7 +327,7 @@ export default class Ros1Player implements Player {
         endTime: currentTime,
         currentTime,
         isPlaying: true,
-        speed: 1,
+        playbackRate: 1,
         // We don't support seeking, so we need to set this to any fixed value. Just avoid 0 so
         // that we don't accidentally hit falsy checks.
         lastSeekTime: 1,

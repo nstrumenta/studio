@@ -117,7 +117,7 @@ function getPublicState(
               currentTime: currentTime ?? { sec: 100, nsec: 0 },
               endTime: props.endTime ?? currentTime ?? { sec: 100, nsec: 0 },
               isPlaying: props.isPlaying ?? false,
-              speed: 0.2,
+              playbackRate: 0.2,
               lastSeekTime: 0,
               totalBytesReceived: 0,
               ...props.activeData,
@@ -154,7 +154,7 @@ function getPublicState(
     startPlayback: props.startPlayback,
     playUntil: noop,
     pausePlayback: props.pausePlayback,
-    setPlaybackSpeed: noop,
+    setPlaybackRate: noop,
     seekPlayback: props.seekPlayback,
 
     pauseFrame: props.pauseFrame ?? (() => noop),

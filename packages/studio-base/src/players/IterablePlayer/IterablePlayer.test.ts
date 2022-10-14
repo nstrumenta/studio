@@ -129,13 +129,13 @@ describe("IterablePlayer", () => {
         lastSeekTime: 0,
         messages: [],
         totalBytesReceived: 0,
-        speed: 1.0,
+        playbackRate: 1.0,
         topics: [],
         topicStats: new Map(),
         publishedTopics: new Map<string, Set<string>>(),
       },
       problems: [],
-      capabilities: [PlayerCapabilities.setSpeed, PlayerCapabilities.playbackControl],
+      capabilities: [PlayerCapabilities.setPlaybackRate, PlayerCapabilities.playbackControl],
       profile: undefined,
       presence: PlayerPresence.INITIALIZING,
       progress: {},
@@ -277,13 +277,13 @@ describe("IterablePlayer", () => {
         lastSeekTime: 0,
         messages: [],
         totalBytesReceived: 0,
-        speed: 1.0,
+        playbackRate: 1.0,
         topics: [],
         topicStats: new Map(),
         publishedTopics: new Map<string, Set<string>>(),
       },
       problems: [],
-      capabilities: [PlayerCapabilities.setSpeed, PlayerCapabilities.playbackControl],
+      capabilities: [PlayerCapabilities.setPlaybackRate, PlayerCapabilities.playbackControl],
       profile: undefined,
       presence: PlayerPresence.PRESENT,
       progress: {
@@ -368,7 +368,7 @@ describe("IterablePlayer", () => {
 
     player.close();
   });
-  it("should not override seek-backfill state when setPlayback speed is called", async () => {
+  it("should not override seek-backfill state when setPlaybackRate is called", async () => {
     const source = new TestSource();
     const player = new IterablePlayer({
       source,
@@ -380,7 +380,7 @@ describe("IterablePlayer", () => {
     await store.done;
 
     player.seekPlayback({ sec: 0, nsec: 0 });
-    player.setPlaybackSpeed(1);
+    player.setPlaybackRate(1);
 
     // // Replace the message iterator to produce 1 message (for the first tick), and then
     // // set back to not producing any messages

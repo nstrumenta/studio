@@ -30,7 +30,7 @@ const TEST_LAYOUT: PanelsState = {
   userNodes: {},
   linkedGlobalVariables: [],
   playbackConfig: {
-    speed: 0.2,
+    playbackRate: 0.2,
   },
 };
 
@@ -118,7 +118,7 @@ describe("CurrentLayoutProvider", () => {
       globalVariables: { var: "hello" },
       linkedGlobalVariables: [{ topic: "/test", markerKeyPath: [], name: "var" }],
       userNodes: { node1: { name: "node", sourceCode: "node()" } },
-      playbackConfig: { speed: 0.1 },
+      playbackConfig: { playbackRate: 0.1 },
     };
     const condvar = new Condvar();
     const layoutStorageGetCalledWait = condvar.wait();
@@ -217,14 +217,14 @@ describe("CurrentLayoutProvider", () => {
     });
 
     await act(async () => await result.current.childMounted);
-    act(() => result.current.actions.setPlaybackConfig({ speed: 10 }));
+    act(() => result.current.actions.setPlaybackConfig({ playbackRate: 10 }));
     await act(async () => await layoutStoragePutCalled);
 
     const newState = {
       ...TEST_LAYOUT,
       playbackConfig: {
         ...TEST_LAYOUT.playbackConfig,
-        speed: 10,
+        playbackRate: 10,
       },
     };
 

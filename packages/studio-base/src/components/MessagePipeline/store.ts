@@ -118,7 +118,7 @@ export function createMessagePipelineStore({
       startPlayback: undefined,
       playUntil: undefined,
       pausePlayback: undefined,
-      setPlaybackSpeed: undefined,
+      setPlaybackRate: undefined,
       seekPlayback: undefined,
 
       pauseFrame(name: string) {
@@ -290,8 +290,8 @@ function updatePlayerStateAction(
     newPublicState.pausePlayback = capabilities.includes(PlayerCapabilities.playbackControl)
       ? player.pausePlayback?.bind(player)
       : undefined;
-    newPublicState.setPlaybackSpeed = capabilities.includes(PlayerCapabilities.setSpeed)
-      ? player.setPlaybackSpeed?.bind(player)
+    newPublicState.setPlaybackRate = capabilities.includes(PlayerCapabilities.setPlaybackRate)
+      ? player.setPlaybackRate?.bind(player)
       : undefined;
     newPublicState.seekPlayback = capabilities.includes(PlayerCapabilities.playbackControl)
       ? player.seekPlayback?.bind(player)
@@ -342,7 +342,7 @@ export function reducer(
           startPlayback: undefined,
           pausePlayback: undefined,
           playUntil: undefined,
-          setPlaybackSpeed: undefined,
+          setPlaybackRate: undefined,
           seekPlayback: undefined,
         },
       };

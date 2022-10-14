@@ -71,7 +71,7 @@ import {
 import { isTabPanelConfig } from "../../util/layout";
 
 export const defaultPlaybackConfig: PlaybackConfig = {
-  speed: 1.0,
+  playbackRate: 1.0,
 };
 
 function changePanelLayout(

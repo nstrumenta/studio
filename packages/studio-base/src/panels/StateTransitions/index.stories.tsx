@@ -83,7 +83,7 @@ const fixture: Fixture = {
     startTime: { sec: 1526191527, nsec: 202050 },
     endTime: { sec: 1526191551, nsec: 999997069 },
     isPlaying: false,
-    speed: 0.2,
+    playbackRate: 0.2,
   },
   frame: {
     "/some/topic/with/state": systemStateMessages.map((message, idx) => ({

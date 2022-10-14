@@ -39,7 +39,7 @@ function getPlayerState(): PlayerState {
   const player: PlayerState = {
     presence: PlayerPresence.PRESENT,
     progress: {},
-    capabilities: [PlayerCapabilities.setSpeed, PlayerCapabilities.playbackControl],
+    capabilities: [PlayerCapabilities.setPlaybackRate, PlayerCapabilities.playbackControl],
     profile: undefined,
     playerId: "1",
     activeData: {
@@ -48,7 +48,7 @@ function getPlayerState(): PlayerState {
       endTime: { sec: START_TIME + 20, nsec: 331 },
       currentTime: { sec: START_TIME + 5, nsec: 331 },
       isPlaying: true,
-      speed: 0.2,
+      playbackRate: 0.2,
       lastSeekTime: 0,
       topics: [{ name: "/empty_topic", schemaName: "VoidType" }],
       topicStats: new Map(),
@@ -90,7 +90,7 @@ function Wrapper({
   return (
     <MockMessagePipelineProvider
       isPlaying={isPlaying}
-      capabilities={["setSpeed", "playbackControl"]}
+      capabilities={["setPlaybackRate", "playbackControl"]}
       presence={presence}
       activeData={activeData}
       pausePlayback={action("pause")}

@@ -254,7 +254,7 @@ const fixture: Fixture = {
     endTime: { sec: 24, nsec: 999997069 },
     currentTime: { sec: 0, nsec: 750000000 },
     isPlaying: false,
-    speed: 0.2,
+    playbackRate: 0.2,
   },
   frame: {
     "/some_topic/location": locationMessages.map(
@@ -1024,7 +1024,7 @@ export function SuperCloseValues(): JSX.Element {
           startTime: { sec: 0, nsec: 0 },
           endTime: { sec: 10, nsec: 0 },
           isPlaying: false,
-          speed: 0.2,
+          playbackRate: 0.2,
         },
         frame: {
           "/some_number": [

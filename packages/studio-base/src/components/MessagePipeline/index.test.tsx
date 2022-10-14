@@ -103,7 +103,7 @@ describe("MessagePipelineProvider/useMessagePipeline", () => {
         callService: expect.any(Function),
         startPlayback: undefined,
         pausePlayback: undefined,
-        setPlaybackSpeed: undefined,
+        setPlaybackRate: undefined,
         seekPlayback: undefined,
         setParameter: expect.any(Function),
         pauseFrame: expect.any(Function),
@@ -154,7 +154,7 @@ describe("MessagePipelineProvider/useMessagePipeline", () => {
             startTime: { sec: 0, nsec: 0 },
             endTime: { sec: 0, nsec: 0 },
             isPlaying: false,
-            speed: 1,
+            playbackRate: 1,
             lastSeekTime: 0,
             topics: [],
             topicStats: new Map(),
@@ -172,7 +172,7 @@ describe("MessagePipelineProvider/useMessagePipeline", () => {
             startTime: { sec: 0, nsec: 0 },
             endTime: { sec: 0, nsec: 0 },
             isPlaying: false,
-            speed: 1,
+            playbackRate: 1,
             lastSeekTime: 0,
             topics: [],
             topicStats: new Map(),
@@ -215,7 +215,7 @@ describe("MessagePipelineProvider/useMessagePipeline", () => {
             startTime: { sec: 0, nsec: 0 },
             endTime: { sec: 0, nsec: 0 },
             isPlaying: false,
-            speed: 1,
+            playbackRate: 1,
             lastSeekTime: 0,
             topics: [{ name: "foo", schemaName: "Foo" }],
             topicStats: new Map(),
@@ -233,7 +233,7 @@ describe("MessagePipelineProvider/useMessagePipeline", () => {
             startTime: { sec: 0, nsec: 0 },
             endTime: { sec: 0, nsec: 0 },
             isPlaying: false,
-            speed: 1,
+            playbackRate: 1,
             lastSeekTime: 0,
             topics: [
               { name: "foo", schemaName: "Foo" },
@@ -332,7 +332,7 @@ describe("MessagePipelineProvider/useMessagePipeline", () => {
             startTime: { sec: 0, nsec: 0 },
             endTime: { sec: 1, nsec: 0 },
             isPlaying: true,
-            speed: 0.2,
+            playbackRate: 0.2,
             lastSeekTime: 1234,
             topics: [{ name: "/input/foo", schemaName: "foo" }],
             topicStats: new Map<string, TopicStats>([["/input/foo", { numMessages: 1 }]]),
@@ -432,7 +432,7 @@ describe("MessagePipelineProvider/useMessagePipeline", () => {
     const player = new FakePlayer();
     jest.spyOn(player, "startPlayback");
     jest.spyOn(player, "pausePlayback");
-    jest.spyOn(player, "setPlaybackSpeed");
+    jest.spyOn(player, "setPlaybackRate");
     jest.spyOn(player, "seekPlayback");
     const { Hook, Wrapper } = makeTestHook({ player });
     const { result } = renderHook(Hook, {
@@ -441,7 +441,7 @@ describe("MessagePipelineProvider/useMessagePipeline", () => {
 
     expect(result.current.startPlayback).toBeUndefined();
     expect(result.current.pausePlayback).toBeUndefined();
-    expect(result.current.setPlaybackSpeed).toBeUndefined();
+    expect(result.current.setPlaybackRate).toBeUndefined();
     expect(result.current.seekPlayback).toBeUndefined();
 
     player.setCapabilities([PlayerCapabilities.playbackControl]);
@@ -450,7 +450,7 @@ describe("MessagePipelineProvider/useMessagePipeline", () => {
 
     expect(result.current.startPlayback).not.toBeUndefined();
     expect(result.current.pausePlayback).not.toBeUndefined();
-    expect(result.current.setPlaybackSpeed).toBeUndefined();
+    expect(result.current.setPlaybackRate).toBeUndefined();
     expect(result.current.seekPlayback).not.toBeUndefined();
 
     expect(player.startPlayback).toHaveBeenCalledTimes(0);
@@ -463,12 +463,15 @@ describe("MessagePipelineProvider/useMessagePipeline", () => {
     expect(player.pausePlayback).toHaveBeenCalledTimes(1);
     expect(player.seekPlayback).toHaveBeenCalledWith({ sec: 1, nsec: 0 });
 
-    player.setCapabilities([PlayerCapabilities.playbackControl, PlayerCapabilities.setSpeed]);
+    player.setCapabilities([
+      PlayerCapabilities.playbackControl,
+      PlayerCapabilities.setPlaybackRate,
+    ]);
 
     await doubleAct(async () => await player.emit());
-    expect(player.setPlaybackSpeed).toHaveBeenCalledTimes(0);
-    result.current.setPlaybackSpeed!(0.5);
-    expect(player.setPlaybackSpeed).toHaveBeenCalledWith(0.5);
+    expect(player.setPlaybackRate).toHaveBeenCalledTimes(0);
+    result.current.setPlaybackRate!(0.5);
+    expect(player.setPlaybackRate).toHaveBeenCalledWith(0.5);
   });
 
   it("closes player on unmount", () => {
@@ -544,7 +547,7 @@ describe("MessagePipelineProvider/useMessagePipeline", () => {
       const { result } = renderHook(Hook, { wrapper: Wrapper });
       expect(result.current.startPlayback).toBeUndefined();
       expect(result.current.pausePlayback).toBeUndefined();
-      expect(result.current.setPlaybackSpeed).toBeUndefined();
+      expect(result.current.setPlaybackRate).toBeUndefined();
       expect(result.current.seekPlayback).toBeUndefined();
       result.current.publish({ topic: "/foo", msg: {} });
     }).not.toThrow();

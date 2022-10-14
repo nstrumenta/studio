@@ -41,15 +41,15 @@ export default class AnalyticsMetricsCollector implements PlayerMetricsCollector
     });
   }
 
-  public play(speed: number): void {
-    this.logEvent(AppEvent.PLAYER_PLAY, { speed });
+  public play(playbackRate: number): void {
+    this.logEvent(AppEvent.PLAYER_PLAY, { speed: playbackRate });
   }
 
   public seek(_time: Time): void {
     // NOTE: This event fires in more cases than user interaction
   }
 
-  public setSpeed(_speed: number): void {
+  public setPlaybackRate(_playbackRate: number): void {
     // NOTE: This event fires in more cases than user interaction
   }
 

@@ -141,7 +141,7 @@ class SinewavePlayer implements Player {
           currentTime: now,
           startTime: this.startTime,
           isPlaying: true,
-          speed: 1,
+          playbackRate: 1,
           lastSeekTime: 1,
           endTime: now,
           topics,

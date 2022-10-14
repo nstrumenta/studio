@@ -35,7 +35,7 @@ import {
   MessagePipelineContext,
   useMessagePipeline,
 } from "@foxglove/studio-base/components/MessagePipeline";
-import PlaybackSpeedControls from "@foxglove/studio-base/components/PlaybackSpeedControls";
+import PlaybackRateControls from "@foxglove/studio-base/components/PlaybackRateControls";
 import Stack from "@foxglove/studio-base/components/Stack";
 import { useCurrentUser } from "@foxglove/studio-base/context/CurrentUserContext";
 import { Player, PlayerPresence } from "@foxglove/studio-base/players/types";
@@ -212,7 +212,7 @@ export default function PlaybackControls(props: {
               icon={repeat ? <LoopIcon strokeWidth={1.9375} /> : <LoopIcon strokeWidth={1.375} />}
               activeIcon={<LoopIcon strokeWidth={1.875} />}
             />
-            <PlaybackSpeedControls />
+            <PlaybackRateControls />
           </Stack>
         </Stack>
         {createEventDialogOpen && deviceId && (

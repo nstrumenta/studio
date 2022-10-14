@@ -414,7 +414,7 @@ describe("useMessageReducer", () => {
             startTime: { sec: 0, nsec: 0 },
             endTime: { sec: 1, nsec: 0 },
             isPlaying: true,
-            speed: 0.2,
+            playbackRate: 0.2,
             lastSeekTime: 1234,
             topics: [
               { name: "/foo", schemaName: "foo" },
@@ -453,7 +453,7 @@ describe("useMessageReducer", () => {
             startTime: { sec: 0, nsec: 0 },
             endTime: { sec: 1, nsec: 0 },
             isPlaying: true,
-            speed: 0.2,
+            playbackRate: 0.2,
             lastSeekTime: 1234,
             topics: [
               { name: "/foo", schemaName: "foo" },

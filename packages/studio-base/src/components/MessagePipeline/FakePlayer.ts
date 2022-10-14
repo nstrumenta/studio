@@ -61,7 +61,7 @@ export default class FakePlayer implements Player {
   public close = (): void => {
     // no-op
   };
-  public setPlaybackSpeed = (): void => {
+  public setPlaybackRate = (): void => {
     // no-op
   };
   public pausePlayback = (): void => {

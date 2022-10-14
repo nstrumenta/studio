@@ -26,13 +26,13 @@ export default class NoopMetricsCollector implements PlayerMetricsCollectorInter
   public initialized(_args?: { isSampleDataSource: boolean }): void {
     // no-op
   }
-  public play(_speed: number): void {
+  public play(_playbackRate: number): void {
     // no-op
   }
   public seek(_time: Time): void {
     // no-op
   }
-  public setSpeed(_speed: number): void {
+  public setPlaybackRate(_playbackRate: number): void {
     // no-op
   }
   public pause(): void {

@@ -13,10 +13,10 @@
 import { storiesOf } from "@storybook/react";
 
 import MockMessagePipelineProvider from "@foxglove/studio-base/components/MessagePipeline/MockMessagePipelineProvider";
-import PlaybackSpeedControls from "@foxglove/studio-base/components/PlaybackSpeedControls";
+import PlaybackRateControls from "@foxglove/studio-base/components/PlaybackRateControls";
 import MockCurrentLayoutProvider from "@foxglove/studio-base/providers/CurrentLayoutProvider/MockCurrentLayoutProvider";
 
-const CAPABILITIES = ["setSpeed", "playbackControl"];
+const CAPABILITIES = ["setPlaybackRate", "playbackControl"];
 
 function ControlsStory() {
   return (
@@ -25,19 +25,19 @@ function ControlsStory() {
       ref={(el) => {
         setImmediate(() => {
           if (el) {
-            (el as any).querySelector("[data-testid=PlaybackSpeedControls-Dropdown]").click();
+            (el as any).querySelector("[data-testid=PlaybackRateControls-Dropdown]").click();
           }
         });
       }}
     >
-      <PlaybackSpeedControls />
+      <PlaybackRateControls />
     </div>
   );
 }
 
-storiesOf("components/PlaybackSpeedControls", module)
+storiesOf("components/PlaybackRateControls", module)
   .add(
-    "without speed capability",
+    "without rate capability",
     () => {
       return (
         <MockCurrentLayoutProvider>
@@ -50,13 +50,13 @@ storiesOf("components/PlaybackSpeedControls", module)
     { colorScheme: "dark" },
   )
   .add(
-    "without a speed from the player",
+    "without a rate from the player",
     () => {
       return (
         <MockCurrentLayoutProvider>
           <MockMessagePipelineProvider
             capabilities={CAPABILITIES}
-            activeData={{ speed: undefined }}
+            activeData={{ playbackRate: undefined }}
           >
             <ControlsStory />
           </MockMessagePipelineProvider>
@@ -66,7 +66,7 @@ storiesOf("components/PlaybackSpeedControls", module)
     { colorScheme: "dark" },
   )
   .add(
-    "with a speed",
+    "with a rate",
     () => {
       return (
         <MockCurrentLayoutProvider>
@@ -79,11 +79,14 @@ storiesOf("components/PlaybackSpeedControls", module)
     { colorScheme: "dark" },
   )
   .add(
-    "with a very small speed",
+    "with a very small rate",
     () => {
       return (
         <MockCurrentLayoutProvider>
-          <MockMessagePipelineProvider capabilities={CAPABILITIES} activeData={{ speed: 0.01 }}>
+          <MockMessagePipelineProvider
+            capabilities={CAPABILITIES}
+            activeData={{ playbackRate: 0.01 }}
+          >
             <ControlsStory />
           </MockMessagePipelineProvider>
         </MockCurrentLayoutProvider>

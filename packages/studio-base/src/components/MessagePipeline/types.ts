@@ -29,7 +29,7 @@ export type MessagePipelineContext = {
   startPlayback?: () => void;
   pausePlayback?: () => void;
   playUntil?: (time: Time) => void;
-  setPlaybackSpeed?: (speed: number) => void;
+  setPlaybackRate?: (playbackRate: number) => void;
   seekPlayback?: (time: Time) => void;
   // Don't render the next frame until the returned function has been called.
   pauseFrame: (name: string) => ResumeFrame;

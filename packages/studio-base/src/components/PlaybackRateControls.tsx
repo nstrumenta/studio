@@ -21,12 +21,12 @@ import {
   useCurrentLayoutSelector,
 } from "@foxglove/studio-base/context/CurrentLayoutContext";
 
-const SPEED_OPTIONS = [0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 0.8, 1, 2, 3, 5];
+const RATE_OPTIONS = [0.01, 0.02, 0.05, 0.1, 0.2, 0.5, 0.8, 1, 2, 3, 5];
 
-const formatSpeed = (val: number) => `${val < 0.1 ? val.toFixed(2) : val}×`;
+const formatRate = (val: number) => `${val < 0.1 ? val.toFixed(2) : val}×`;
 
-const configSpeedSelector = (state: LayoutState) =>
-  state.selectedLayout?.data?.playbackConfig.speed;
+const configRateSelector = (state: LayoutState) =>
+  state.selectedLayout?.data?.playbackConfig.playbackRate;
 
 const StyledButton = muiStyled(Button)(({ theme }) => ({
   padding: theme.spacing(0.625, 0.5),
@@ -37,21 +37,21 @@ const StyledButton = muiStyled(Button)(({ theme }) => ({
   },
 }));
 
-export default function PlaybackSpeedControls(): JSX.Element {
+export default function PlaybackRateControls(): JSX.Element {
   const [anchorEl, setAnchorEl] = useState<undefined | HTMLElement>(undefined);
   const open = Boolean(anchorEl);
-  const configSpeed = useCurrentLayoutSelector(configSpeedSelector);
-  const speed = useMessagePipeline(
-    useCallback(({ playerState }) => playerState.activeData?.speed, []),
+  const configRate = useCurrentLayoutSelector(configRateSelector);
+  const playbackRate = useMessagePipeline(
+    useCallback(({ playerState }) => playerState.activeData?.playbackRate, []),
   );
-  const setPlaybackSpeed = useMessagePipeline(useCallback((state) => state.setPlaybackSpeed, []));
+  const setPlaybackRate = useMessagePipeline(useCallback((state) => state.setPlaybackRate, []));
   const { setPlaybackConfig } = useCurrentLayoutActions();
-  const setSpeed = useCallback(
-    (newSpeed: number) => {
-      setPlaybackConfig({ speed: newSpeed });
-      setPlaybackSpeed?.(newSpeed);
+  const setRate = useCallback(
+    (newRate: number) => {
+      setPlaybackConfig({ playbackRate: newRate });
+      setPlaybackRate?.(newRate);
     },
-    [setPlaybackConfig, setPlaybackSpeed],
+    [setPlaybackConfig, setPlaybackRate],
   );
 
   const handleClick = (event: React.MouseEvent<HTMLButtonElement>) => {
@@ -62,39 +62,39 @@ export default function PlaybackSpeedControls(): JSX.Element {
     setAnchorEl(undefined);
   };
 
-  // Set the speed to the speed that we got from the config whenever we get a new Player.
+  // Set the playback rate to the rate that we got from the config whenever we get a new Player.
   useEffect(() => {
-    if (configSpeed != undefined) {
-      setPlaybackSpeed?.(configSpeed);
+    if (configRate != undefined) {
+      setPlaybackRate?.(configRate);
     }
-  }, [configSpeed, setPlaybackSpeed]);
+  }, [configRate, setPlaybackRate]);
 
-  const displayedSpeed = speed ?? configSpeed;
+  const displayedRate = playbackRate ?? configRate;
 
   return (
     <>
       <StyledButton
-        id="playback-speed-button"
-        aria-controls={open ? "playback-speed-menu" : undefined}
+        id="playback-rate-button"
+        aria-controls={open ? "playback-rate-menu" : undefined}
         aria-haspopup="true"
         aria-expanded={open ? "true" : undefined}
         onClick={handleClick}
-        data-testid="PlaybackSpeedControls-Dropdown"
-        disabled={setPlaybackSpeed == undefined}
+        data-testid="PlaybackRateControls-Dropdown"
+        disabled={setPlaybackRate == undefined}
         disableRipple
         variant="contained"
         color="inherit"
         endIcon={<ArrowDropDownIcon />}
       >
-        {displayedSpeed == undefined ? "–" : formatSpeed(displayedSpeed)}
+        {displayedRate == undefined ? "–" : formatRate(displayedRate)}
       </StyledButton>
       <Menu
-        id="playback-speed-menu"
+        id="playback-rate-menu"
         anchorEl={anchorEl}
         open={open}
         onClose={handleClose}
         MenuListProps={{
-          "aria-labelledby": "playback-speed-button",
+          "aria-labelledby": "playback-rate-button",
         }}
         anchorOrigin={{
           vertical: "top",
@@ -105,23 +105,23 @@ export default function PlaybackSpeedControls(): JSX.Element {
           horizontal: "left",
         }}
       >
-        {SPEED_OPTIONS.map((option) => (
+        {RATE_OPTIONS.map((option) => (
           <MenuItem
-            selected={displayedSpeed === option}
+            selected={displayedRate === option}
             key={option}
             onClick={() => {
-              setSpeed(option);
+              setRate(option);
               handleClose();
             }}
           >
-            {displayedSpeed === option && (
+            {displayedRate === option && (
               <ListItemIcon>
                 <CheckIcon fontSize="small" />
               </ListItemIcon>
             )}
             <ListItemText
-              inset={displayedSpeed !== option}
-              primary={formatSpeed(option)}
+              inset={displayedRate !== option}
+              primary={formatRate(option)}
               primaryTypographyProps={{ variant: "body2" }}
             />
           </MenuItem>

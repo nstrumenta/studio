@@ -361,7 +361,7 @@ export default class FoxgloveWebSocketPlayer implements Player {
         endTime: this._currentTime ?? ZERO_TIME,
         currentTime: this._currentTime ?? ZERO_TIME,
         isPlaying: true,
-        speed: 1,
+        playbackRate: 1,
         lastSeekTime: this._lastSeekTime,
         topics: _topics,
         // Always copy topic stats since message counts and timestamps are being updated

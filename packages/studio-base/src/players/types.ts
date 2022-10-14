@@ -62,9 +62,9 @@ export interface Player {
   seekPlayback?(time: Time, backfillDuration?: Time): void;
   playUntil?(time: Time): void;
   // Seek to a particular time. Might trigger backfilling.
-  // If the Player supports non-real-time speeds (i.e. PlayerState#capabilities contains
-  // PlayerCapabilities.setSpeed), set that speed. E.g. 1.0 is real time, 0.2 is 20% of real time.
-  setPlaybackSpeed?(speedFraction: number): void;
+  // If the Player supports non-real-time rates (i.e. PlayerState#capabilities contains
+  // PlayerCapabilities.setPlaybackRate), set that rate. E.g. 1.0 is real-time, 0.2 is 20% of real-time.
+  setPlaybackRate?(playbackRate: number): void;
   // Set the globalVariables for Players that support it.
   // This is generally used to pass new globalVariables to the UserNodePlayer
   setGlobalVariables(globalVariables: GlobalVariables): void;
@@ -157,10 +157,10 @@ export type PlayerStateActiveData = {
   // a seek).
   isPlaying: boolean;
 
-  // If the Player supports non-real-time speeds (i.e. PlayerState#capabilities contains
-  // PlayerCapabilities.setSpeed), this represents that speed as a fraction of real time.
-  // E.g. 1.0 is real time, 0.2 is 20% of real time.
-  speed: number;
+  // If the Player supports non-real-time rates (i.e. PlayerState#capabilities contains
+  // PlayerCapabilities.setPlaybackRate), this represents playback speed as a fraction of real-time.
+  // E.g. 1.0 is real-time, 0.2 is 20% of real-time.
+  playbackRate: number;
 
   // The last time a seek / discontinuity in messages happened. This will clear out data within
   // `PanelAPI` so we're not looking at stale data.
@@ -296,8 +296,8 @@ export const PlayerCapabilities = {
   // Calling services
   callServices: "callServices",
 
-  // Setting speed to something that is not real time.
-  setSpeed: "setSpeed",
+  // Setting playback rate to something that is not real-time.
+  setPlaybackRate: "setPlaybackRate",
 
   // Ability to play, pause, and seek in time.
   playbackControl: "playbackControl",
@@ -315,9 +315,9 @@ export interface PlayerMetricsCollectorInterface {
   setProperty(key: string, value: string | number | boolean): void;
   playerConstructed(): void;
   initialized(args?: { isSampleDataSource: boolean }): void;
-  play(speed: number): void;
+  play(rate: number): void;
   seek(time: Time): void;
-  setSpeed(speed: number): void;
+  setPlaybackRate(rate: number): void;
   pause(): void;
   close(): void;
   setSubscriptions(subscriptions: SubscribePayload[]): void;

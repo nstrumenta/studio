@@ -111,7 +111,7 @@ export class IterablePlayer implements Player {
 
   private _isPlaying: boolean = false;
   private _listener?: (playerState: PlayerState) => Promise<void>;
-  private _speed: number = 1.0;
+  private _playbackRate: number = 1.0;
   private _start: Time = { sec: 0, nsec: 0 };
   private _end: Time = { sec: 0, nsec: 0 };
   private _enablePreload = true;
@@ -127,7 +127,7 @@ export class IterablePlayer implements Player {
   private _providerDatatypes: RosDatatypes = new Map();
 
   private _capabilities: string[] = [
-    PlayerCapabilities.setSpeed,
+    PlayerCapabilities.setPlaybackRate,
     PlayerCapabilities.playbackControl,
   ];
   private _profile: string | undefined;
@@ -215,7 +215,7 @@ export class IterablePlayer implements Player {
       }
       this._untilTime = clampTime(opt.untilTime, this._start, this._end);
     }
-    this._metricsCollector.play(this._speed);
+    this._metricsCollector.play(this._playbackRate);
     this._isPlaying = true;
 
     // If we are idling we can start playing, if we have a next state queued we let that state
@@ -239,12 +239,12 @@ export class IterablePlayer implements Player {
     }
   }
 
-  public setPlaybackSpeed(speed: number): void {
+  public setPlaybackRate(playbackRate: number): void {
     delete this._lastRangeMillis;
-    this._speed = speed;
-    this._metricsCollector.setSpeed(speed);
+    this._playbackRate = playbackRate;
+    this._metricsCollector.setPlaybackRate(playbackRate);
 
-    // Queue event state update to update speed in player state to UI
+    // Queue event state update to update playbackRate in player state to UI
     this._queueEmitState();
   }
 
@@ -725,7 +725,7 @@ export class IterablePlayer implements Player {
         startTime: this._start,
         endTime: this._end,
         isPlaying: this._isPlaying,
-        speed: this._speed,
+        playbackRate: this._playbackRate,
         lastSeekTime: this._lastSeekEmitTime,
         topics: this._providerTopics,
         topicStats: this._providerTopicStats,
@@ -761,7 +761,7 @@ export class IterablePlayer implements Player {
     // Read at most 300ms worth of messages, otherwise things can get out of control if rendering
     // is very slow. Also, smooth over the range that we request, so that a single slow frame won't
     // cause the next frame to also be unnecessarily slow by increasing the frame size.
-    let rangeMillis = Math.min(durationMillis * this._speed, 300);
+    let rangeMillis = Math.min(durationMillis * this._playbackRate, 300);
     if (this._lastRangeMillis != undefined) {
       rangeMillis = this._lastRangeMillis * 0.9 + rangeMillis * 0.1;
     }
