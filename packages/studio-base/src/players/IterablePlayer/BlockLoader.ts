@@ -68,7 +68,7 @@ export class BlockLoader {
     this.problemManager = args.problemManager;
 
     // fixme
-    args.maxBlocks = 50;
+    args.maxBlocks = 400;
 
     const totalNs = Number(toNanoSec(subtractTimes(this.end, this.start))) + 1; // +1 since times are inclusive.
     if (totalNs > Number.MAX_SAFE_INTEGER * 0.9) {
@@ -235,6 +235,7 @@ export class BlockLoader {
       const cursorStartTime = this.blockIdToStartTime(blockId);
       const cursorEndTime = clampTime(this.blockIdToEndTime(endBlockId), this.start, this.end);
 
+      console.log("make cursor", cursorStartTime, cursorEndTime);
       const cursor = this.source.getMessageCursor({
         topics: Array.from(topicsToFetch),
         start: cursorStartTime,
@@ -246,7 +247,14 @@ export class BlockLoader {
       for (let currentBlockId = blockId; currentBlockId <= endBlockId; ++currentBlockId) {
         const untilTime = clampTime(this.blockIdToEndTime(currentBlockId), this.start, this.end);
 
+        // fixme - as we emit progress, this publishes a new player state and causes data to be sent to the plot
+        // the plot starts rendering on a debounce sometime into us reading the messages here and so it looks like
+        // our duration goes up reading these messages because the plot is rendering
+        const start = performance.now();
         const results = await cursor.readUntil(untilTime);
+        const end = performance.now();
+
+        console.log("read until duration ,", end - start, ",", results?.length);
 
         // fixme - set all topics to empty array because cursor is done
         if (!results) {
@@ -282,8 +290,13 @@ export class BlockLoader {
           // fixme size
           sizeInBytes: 0,
         };
-        progress(this.calculateProgress(topics));
+        //        progress(this.calculateProgress(topics));
       }
+
+      blockId = endBlockId + 1;
+
+      // fixme
+      progress(this.calculateProgress(topics));
 
       /*
       let sizeInBytes = 0;
