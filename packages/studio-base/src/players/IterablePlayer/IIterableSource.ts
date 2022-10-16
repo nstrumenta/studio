@@ -73,6 +73,18 @@ export type GetBackfillMessagesArgs = {
   abortSignal?: AbortSignal;
 };
 
+export interface IMessageCursor {
+  // Read the next message or undefined if the cursor is done
+  next(): Promise<IteratorResult | undefined>;
+
+  // Read a batch of messages until reaching end time or end of cursor
+  //
+  // return undefined when no more messages remain in the cursor
+  readUntil(end: Time): Promise<IteratorResult[] | undefined>;
+
+  // fixme - need a return method to end the cursor
+}
+
 /**
  * IIterableSource specifies an interface for initializing and accessing messages using iterators.
  *
@@ -106,7 +118,11 @@ export interface IIterableSource {
    */
   getBackfillMessages(args: GetBackfillMessagesArgs): Promise<MessageEvent<unknown>[]>;
 
-  getMessages?: (args: { topics: string[]; start: Time; end: Time }) => Promise<IteratorResult[]>;
+  // fixme
+  // return a message cursor instance
+  getMessageCursor?: (args: { topics: string[]; start: Time; end: Time }) => IMessageCursor;
+
+  //getMessages?: (args: { topics: string[]; start: Time; end: Time }) => Promise<IteratorResult[]>;
 
   /**
    * Optional method a data source can implement to cleanup resources. The player will call this

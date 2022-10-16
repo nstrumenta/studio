@@ -13,6 +13,7 @@ import { MessageEvent, Time } from "@foxglove/studio";
 import type {
   GetBackfillMessagesArgs,
   IIterableSource,
+  IMessageCursor,
   Initalization,
   IteratorResult,
   MessageIteratorArgs,
@@ -82,15 +83,24 @@ export class WorkerIterableSource implements IIterableSource {
     return await this._worker.getBackfillMessages(rest, abortSignal);
   }
 
-  public async getMessages(args: {
-    topics: string[];
-    start: Time;
-    end: Time;
-  }): Promise<IteratorResult[]> {
+  public getMessageCursor(args: { topics: string[]; start: Time; end: Time }): IMessageCursor {
     if (this._worker == undefined) {
       throw new Error(`WorkerIterableSource is not initialized`);
     }
-    return await this._worker.getMessages(args);
+
+    const messageCursorPromise = this._worker.getMessageCursor(args);
+
+    return {
+      async next() {
+        const messageCursor = await messageCursorPromise;
+        return await messageCursor.next();
+      },
+
+      async readUntil(end: Time) {
+        const messageCursor = await messageCursorPromise;
+        return await messageCursor.readUntil(end);
+      },
+    };
   }
 
   public async terminate(): Promise<void> {

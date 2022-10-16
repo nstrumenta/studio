@@ -54,9 +54,9 @@ export class BlockLoader {
   private end: Time;
   private blockDurationNanos: number;
   private topics: Set<string> = new Set();
-  //private maxCacheSize: number = 0;
+  private maxCacheSize: number = 0;
   private activeBlockId: number = 0;
-  //private problemManager: PlayerProblemManager;
+  private problemManager: PlayerProblemManager;
   private stopped: boolean = false;
   private activeChangeCondvar: Condvar = new Condvar();
 
@@ -64,16 +64,16 @@ export class BlockLoader {
     this.source = args.source;
     this.start = args.start;
     this.end = args.end;
-    //this.maxCacheSize = args.cacheSizeBytes;
-    //this.problemManager = args.problemManager;
+    this.maxCacheSize = args.cacheSizeBytes;
+    this.problemManager = args.problemManager;
+
+    // fixme
+    args.maxBlocks = 50;
 
     const totalNs = Number(toNanoSec(subtractTimes(this.end, this.start))) + 1; // +1 since times are inclusive.
     if (totalNs > Number.MAX_SAFE_INTEGER * 0.9) {
       throw new Error("Time range is too long to be supported");
     }
-
-    // fixme
-    args.maxBlocks = 20;
 
     this.blockDurationNanos = Math.ceil(
       Math.max(args.minBlockDurationNs, totalNs / args.maxBlocks),
@@ -187,17 +187,14 @@ export class BlockLoader {
     lastBlockId: number,
     progress: LoadArgs["progress"],
   ): Promise<void> {
+    if (!this.source.getMessageCursor) {
+      log.info("source does not have getMessageCursor so preloading is disabled");
+    }
+
     const topics = this.topics;
     log.debug("load block range", { topics, beginBlockId, lastBlockId });
 
-    // fixme
-    //const totalBlockSizeBytes = this.cacheSize();
-
-    // fixme - change to use cursor that can expose single continuous reader
-    if (!this.source.getMessages) {
-      log.info("source does not have getMessages so preloading is disables");
-      return;
-    }
+    const totalBlockSizeBytes = this.cacheSize();
 
     for (let blockId = beginBlockId; blockId < lastBlockId; ++blockId) {
       // Topics we will fetch for this range
@@ -215,44 +212,6 @@ export class BlockLoader {
         // The current block needs some topics so those will be come the topics we need to fetch
         topicsToFetch = existingBlock?.needTopics ?? topics;
       }
-
-      // for now just fetch the messages for this block and move on to the next block
-      // fixme - needs to be smarter but I want to see if this is at all better
-
-      const startTime = this.blockIdToStartTime(blockId);
-      const endTime = clampTime(this.blockIdToEndTime(blockId), this.start, this.end);
-
-      const results = await this.source.getMessages({
-        topics: [...topicsToFetch],
-        start: startTime,
-        end: endTime,
-      });
-
-      const messagesByTopic: Record<string, MessageEvent<unknown>[]> = {};
-
-      for (const result of results) {
-        if (result.msgEvent) {
-          const arr = (messagesByTopic[result.msgEvent.topic] ??= []);
-          arr.push(result.msgEvent);
-        }
-      }
-
-      const existingBlock = this.blocks[blockId];
-
-      this.blocks[blockId] = {
-        needTopics: new Set(),
-        messagesByTopic: {
-          ...existingBlock?.messagesByTopic,
-          ...messagesByTopic,
-        },
-        // fixme
-        sizeInBytes: 0,
-      };
-
-      progress(this.calculateProgress(topics));
-
-      /*
-
 
       // blockId is the first block that needs loading
       // Now we look for the last block. We do this by finding blocks that need the same topics to fetch.
@@ -273,25 +232,60 @@ export class BlockLoader {
         endBlockId = endIdx;
       }
 
-      const iteratorStartTime = this.blockIdToStartTime(blockId);
-      const iteratorEndTime = clampTime(this.blockIdToEndTime(endBlockId), this.start, this.end);
+      const cursorStartTime = this.blockIdToStartTime(blockId);
+      const cursorEndTime = clampTime(this.blockIdToEndTime(endBlockId), this.start, this.end);
 
-      const iterator = this.source.messageIterator({
+      const cursor = this.source.getMessageCursor({
         topics: Array.from(topicsToFetch),
-        start: iteratorStartTime,
-        end: iteratorEndTime,
-        consumptionType: "full",
+        start: cursorStartTime,
+        end: cursorEndTime,
+        // fixme
+        //consumptionType: "full",
       });
 
+      for (let currentBlockId = blockId; currentBlockId <= endBlockId; ++currentBlockId) {
+        const untilTime = clampTime(this.blockIdToEndTime(currentBlockId), this.start, this.end);
 
-      let messagesByTopic: Record<string, MessageEvent<unknown>[]> = {};
-      // Set all topic arrays to empty to indicate we've read this topic
-      for (const topic of topicsToFetch) {
-        messagesByTopic[topic] = [];
+        const results = await cursor.readUntil(untilTime);
+
+        // fixme - set all topics to empty array because cursor is done
+        if (!results) {
+          continue;
+        }
+
+        const messagesByTopic: Record<string, MessageEvent<unknown>[]> = {};
+        // Set all topic arrays to empty to indicate we've read this topic
+        // fixme - this seems wrong because it overrides any previous messages by topic...
+        /*
+        for (const topic of topicsToFetch) {
+          messagesByTopic[topic] = [];
+        }
+        */
+
+        for (const result of results) {
+          if (result.msgEvent) {
+            const arr = (messagesByTopic[result.msgEvent.topic] ??= []);
+            arr.push(result.msgEvent);
+          }
+
+          // fixme - problems?
+          //this.problemManager.addProblem(`connid-${iterResult.connectionId}`, iterResult.problem);
+        }
+
+        const existingBlock = this.blocks[currentBlockId];
+        this.blocks[currentBlockId] = {
+          needTopics: new Set(),
+          messagesByTopic: {
+            ...existingBlock?.messagesByTopic,
+            ...messagesByTopic,
+          },
+          // fixme size
+          sizeInBytes: 0,
+        };
+        progress(this.calculateProgress(topics));
       }
 
-      let currentBlockId = blockId;
-
+      /*
       let sizeInBytes = 0;
       for await (const iterResult of iterator) {
         if (iterResult.problem) {
@@ -443,7 +437,6 @@ export class BlockLoader {
     }
   }
 
-  /*
   // Evict a block while preserving blocks in the block id range (inclusive)
   private evictBlock(range: { startId: number; endId: number }): number {
     if (range.endId < range.startId) {
@@ -485,7 +478,6 @@ export class BlockLoader {
 
     return 0;
   }
-  */
 
   private calculateProgress(topics: Set<string>): Progress {
     const fullyLoadedFractionRanges = simplify(
@@ -520,7 +512,6 @@ export class BlockLoader {
     };
   }
 
-  /*
   private cacheSize(): number {
     return this.blocks.reduce((prev, block) => {
       if (!block) {
@@ -542,7 +533,6 @@ export class BlockLoader {
 
     return Number(offset / BigInt(this.blockDurationNanos));
   }
-  */
 
   private blockIdToStartTime(id: number): Time {
     return add(this.start, fromNanoSec(BigInt(id) * BigInt(this.blockDurationNanos)));

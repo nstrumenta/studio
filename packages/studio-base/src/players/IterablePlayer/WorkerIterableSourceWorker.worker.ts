@@ -8,11 +8,13 @@ import {
   abortSignalTransferHandler,
   iterableTransferHandler,
 } from "@foxglove/comlink-transfer-handlers";
+import { compare } from "@foxglove/rostime";
 import { MessageEvent, Time } from "@foxglove/studio";
 
 import type {
   GetBackfillMessagesArgs,
   IIterableSource,
+  IMessageCursor,
   Initalization,
   IterableSourceInitializeArgs,
   IteratorResult,
@@ -80,19 +82,40 @@ export class WorkerIterableSourceWorker {
     });
   }
 
-  public async getMessages(args: {
+  public getMessageCursor(args: {
     topics: string[];
     start: Time;
     end: Time;
-  }): Promise<IteratorResult[]> {
-    const results: IteratorResult[] = [];
+  }): IMessageCursor & Comlink.ProxyMarked {
     const iter = this.messageIterator(args);
 
-    for await (const item of iter) {
-      results.push(item);
-    }
+    // fixme - do I need to cleanup this proxy?
+    return Comlink.proxy({
+      async next() {
+        // something fixme
+        const result = await iter.next();
+        return result.value;
+      },
+      async readUntil(end: Time) {
+        const results: IteratorResult[] = [];
 
-    return results;
+        for (;;) {
+          const result = await iter.next();
+          if (result.done === true) {
+            break;
+          }
+
+          const value = result.value;
+          if (value.msgEvent?.receiveTime && compare(value.msgEvent.receiveTime, end) > 0) {
+            // fixme - store the last value for the next readuntil
+            break;
+          }
+          results.push(value);
+        }
+
+        return results;
+      },
+    });
   }
 }
 
