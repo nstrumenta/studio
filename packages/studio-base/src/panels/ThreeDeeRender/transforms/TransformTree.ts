@@ -52,7 +52,9 @@ export class TransformTree {
       }
     }
 
-    frame.addTransform(time, transform);
+    if (!cycleDetected) {
+      frame.addTransform(time, transform);
+    }
     return cycleDetected
       ? AddTransformResult.CYCLE_DETECTED
       : updated
