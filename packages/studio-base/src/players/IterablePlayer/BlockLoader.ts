@@ -54,9 +54,9 @@ export class BlockLoader {
   private end: Time;
   private blockDurationNanos: number;
   private topics: Set<string> = new Set();
-  private maxCacheSize: number = 0;
+  //private maxCacheSize: number = 0;
   private activeBlockId: number = 0;
-  private problemManager: PlayerProblemManager;
+  //private problemManager: PlayerProblemManager;
   private stopped: boolean = false;
   private activeChangeCondvar: Condvar = new Condvar();
 
@@ -64,8 +64,8 @@ export class BlockLoader {
     this.source = args.source;
     this.start = args.start;
     this.end = args.end;
-    this.maxCacheSize = args.cacheSizeBytes;
-    this.problemManager = args.problemManager;
+    //this.maxCacheSize = args.cacheSizeBytes;
+    //this.problemManager = args.problemManager;
 
     // fixme
     args.maxBlocks = 400;
@@ -189,12 +189,13 @@ export class BlockLoader {
   ): Promise<void> {
     if (!this.source.getMessageCursor) {
       log.info("source does not have getMessageCursor so preloading is disabled");
+      return;
     }
 
     const topics = this.topics;
     log.debug("load block range", { topics, beginBlockId, lastBlockId });
 
-    const totalBlockSizeBytes = this.cacheSize();
+    //const totalBlockSizeBytes = this.cacheSize();
 
     for (let blockId = beginBlockId; blockId < lastBlockId; ++blockId) {
       // Topics we will fetch for this range
@@ -235,7 +236,6 @@ export class BlockLoader {
       const cursorStartTime = this.blockIdToStartTime(blockId);
       const cursorEndTime = clampTime(this.blockIdToEndTime(endBlockId), this.start, this.end);
 
-      console.log("make cursor", cursorStartTime, cursorEndTime);
       const cursor = this.source.getMessageCursor({
         topics: Array.from(topicsToFetch),
         start: cursorStartTime,
@@ -290,13 +290,14 @@ export class BlockLoader {
           // fixme size
           sizeInBytes: 0,
         };
-        //        progress(this.calculateProgress(topics));
+
+        // fixme
+        // Emitting after every block results in fighting with the plot panel
+        // we aren't able to make forward progress because we are waiting for the plot panel to finish rendering
+        progress(this.calculateProgress(topics));
       }
 
       blockId = endBlockId + 1;
-
-      // fixme
-      progress(this.calculateProgress(topics));
 
       /*
       let sizeInBytes = 0;
@@ -450,6 +451,7 @@ export class BlockLoader {
     }
   }
 
+  /*
   // Evict a block while preserving blocks in the block id range (inclusive)
   private evictBlock(range: { startId: number; endId: number }): number {
     if (range.endId < range.startId) {
@@ -491,6 +493,7 @@ export class BlockLoader {
 
     return 0;
   }
+  */
 
   private calculateProgress(topics: Set<string>): Progress {
     const fullyLoadedFractionRanges = simplify(
@@ -525,6 +528,7 @@ export class BlockLoader {
     };
   }
 
+  /*
   private cacheSize(): number {
     return this.blocks.reduce((prev, block) => {
       if (!block) {
@@ -546,6 +550,7 @@ export class BlockLoader {
 
     return Number(offset / BigInt(this.blockDurationNanos));
   }
+  */
 
   private blockIdToStartTime(id: number): Time {
     return add(this.start, fromNanoSec(BigInt(id) * BigInt(this.blockDurationNanos)));
