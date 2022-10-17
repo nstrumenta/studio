@@ -4,10 +4,7 @@
 
 import * as Comlink from "comlink";
 
-import {
-  abortSignalTransferHandler,
-  iterableTransferHandler,
-} from "@foxglove/comlink-transfer-handlers";
+import { abortSignalTransferHandler } from "@foxglove/comlink-transfer-handlers";
 import { MessageEvent, Time } from "@foxglove/studio";
 
 import type {
@@ -23,7 +20,6 @@ import type {
   WorkerIterableSourceWorkerArgs,
 } from "./WorkerIterableSourceWorker.worker";
 
-Comlink.transferHandlers.set("iterable", iterableTransferHandler);
 Comlink.transferHandlers.set("abortsignal", abortSignalTransferHandler);
 
 export class WorkerIterableSource implements IIterableSource {
@@ -56,6 +52,8 @@ export class WorkerIterableSource implements IIterableSource {
     }
 
     const iter = await this._worker.messageIterator(args);
+    const ret = iter.return;
+
     try {
       for (;;) {
         const iterResult = await iter.next();
@@ -65,7 +63,12 @@ export class WorkerIterableSource implements IIterableSource {
         yield iterResult.value;
       }
     } finally {
-      await iter.return?.();
+      // Note: typescript types for iter.return don't narrow this to a function so we have this
+      // check in place to appease the types. This is not on a hot-path.
+      if (typeof ret === "function") {
+        await ret();
+      }
+      iter[Comlink.releaseProxy]();
     }
   }
 

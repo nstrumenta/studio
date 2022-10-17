@@ -4,10 +4,7 @@
 
 import * as Comlink from "comlink";
 
-import {
-  abortSignalTransferHandler,
-  iterableTransferHandler,
-} from "@foxglove/comlink-transfer-handlers";
+import { abortSignalTransferHandler } from "@foxglove/comlink-transfer-handlers";
 import { MessageEvent } from "@foxglove/studio";
 
 import type {
@@ -60,11 +57,12 @@ export class WorkerIterableSourceWorker {
 
   public messageIterator(
     args: MessageIteratorArgs,
-  ): AsyncIterableIterator<Readonly<IteratorResult>> {
+  ): AsyncIterableIterator<Readonly<IteratorResult>> & Comlink.ProxyMarked {
     if (!this._source) {
       throw new Error("uninitialized");
     }
-    return this._source.messageIterator(args);
+
+    return Comlink.proxy(this._source.messageIterator(args));
   }
 
   public async getBackfillMessages(
@@ -90,6 +88,5 @@ export class WorkerIterableSourceWorker {
   }
 }
 
-Comlink.transferHandlers.set("iterable", iterableTransferHandler);
 Comlink.transferHandlers.set("abortsignal", abortSignalTransferHandler);
 Comlink.expose(WorkerIterableSourceWorker);

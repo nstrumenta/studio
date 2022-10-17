@@ -74,18 +74,26 @@ export type GetBackfillMessagesArgs = {
 };
 
 export interface IMessageCursor {
-  // Read the next message or undefined if the cursor is done
+  /**
+   * Read the next message from the cursor. Return a result or undefined if the cursor is done
+   */
   next(): Promise<IteratorResult | undefined>;
 
-  // Read a batch of messages until reaching end time or end of cursor
-  //
-  // return undefined when no more messages remain in the cursor
+  /**
+   * Read a batch of messages until reaching end time or end of cursor
+   *
+   * return undefined when no more message remain in the cursor
+   */
   readUntil(end: Time): Promise<IteratorResult[] | undefined>;
 
-  // End the cursor
-  //
-  // Allows the cursor instance to release any held resources. Calls to next() and readUntil()
-  // should return `undefined` after a cursor is ended.
+  /**
+   * End the cursor
+   *
+   * Release any held resources by the cursor.
+   *
+   * Calls to next() and readUntil() should return `undefined` after a cursor is ended as if the
+   * cursor reached the end of its messages.
+   */
   end(): Promise<void>;
 }
 
