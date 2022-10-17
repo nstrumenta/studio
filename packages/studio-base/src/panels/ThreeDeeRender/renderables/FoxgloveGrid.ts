@@ -276,31 +276,20 @@ export class FoxgloveGrid extends SceneExtension<FoxgloveGridRenderable> {
     renderable.userData.messageTime = toNanoSec(foxgloveGrid.timestamp);
     renderable.userData.frameId = this.renderer.normalizeFrameId(foxgloveGrid.frame_id);
     if (foxgloveGrid.fields.length === 0) {
-      invalidFoxgloveGridError(
-        this.renderer,
-        renderable,
-        `Foxglove grid from topic ${renderable.userData.topic} has no fields to color by`,
-      );
+      invalidFoxgloveGridError(this.renderer, renderable, `Grid has no fields to color by`);
       return;
     }
     const { cell_stride, row_stride, column_count: cols } = foxgloveGrid;
     const rows = foxgloveGrid.data.byteLength / row_stride;
 
     if (Math.floor(cols) !== cols || Math.floor(rows) !== rows) {
-      const message = `FoxgloveGrid column count (${foxgloveGrid.column_count}) or row count (${rows} = data.byteLength / row_stride) is not an integer.`;
-      invalidFoxgloveGridError(this.renderer, renderable, message);
-      return;
-    }
-
-    const size = row_stride * rows;
-    if (foxgloveGrid.data.length !== size) {
-      const message = `FoxgloveGrid data length (${foxgloveGrid.data.length}) is not equal to cols (${cols}) * rows (${rows}) * cell_stride ${cell_stride}`;
+      const message = `Grid column count (${foxgloveGrid.column_count}) or row count (${rows} = data.byteLength ${foxgloveGrid.data.byteLength} / row_stride ${row_stride}) is not an integer.`;
       invalidFoxgloveGridError(this.renderer, renderable, message);
       return;
     }
 
     if (cell_stride * cols > row_stride) {
-      const message = `FoxgloveGrid row_stride (${row_stride}) does not fit requisite column_count (${cols}) with cell stride (${cell_stride}) = (${
+      const message = `Grid row_stride (${row_stride}) does not allow for requisite column_count (${cols}) with cell stride (${cell_stride}). Minimum requisite bytes in row_stride needed: (${
         cols * cell_stride
       }) `;
       invalidFoxgloveGridError(this.renderer, renderable, message);
