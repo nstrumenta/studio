@@ -325,13 +325,6 @@ export class BlockLoader {
           sizeInBytes: (existingBlock?.sizeInBytes ?? 0) + sizeInBytes,
         };
 
-        // fixme
-        // Emitting after every block results in fighting with the plot panel
-        // we aren't able to make forward progress because we are waiting for the plot panel to finish rendering
-        // if I change this to emit every N blocks then we are needlessly delaying the display of data into panels
-        // during the preloading phase
-        // what helps is if the plot panel moves work to another thread
-        // this lets us keep preloading blocks
         progress(this.calculateProgress(topics));
       }
 
