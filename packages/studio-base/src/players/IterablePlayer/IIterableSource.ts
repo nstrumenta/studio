@@ -82,7 +82,11 @@ export interface IMessageCursor {
   // return undefined when no more messages remain in the cursor
   readUntil(end: Time): Promise<IteratorResult[] | undefined>;
 
-  // fixme - need a return method to end the cursor
+  // End the cursor
+  //
+  // Allows the cursor instance to release any held resources. Calls to next() and readUntil()
+  // should return `undefined` after a cursor is ended.
+  end(): Promise<void>;
 }
 
 /**
@@ -118,11 +122,14 @@ export interface IIterableSource {
    */
   getBackfillMessages(args: GetBackfillMessagesArgs): Promise<MessageEvent<unknown>[]>;
 
-  // fixme
-  // return a message cursor instance
-  getMessageCursor?: (args: { topics: string[]; start: Time; end: Time }) => IMessageCursor;
-
-  //getMessages?: (args: { topics: string[]; start: Time; end: Time }) => Promise<IteratorResult[]>;
+  /**
+   * A source can optionally implement a cursor interface in addition to a messageIterator interface.
+   *
+   * A cursor interface provides methods to read messages in batches rather than one at a time.
+   * This improves performance for some workflows (i.e. message reading over webworkers) by avoiding
+   * individual "next" calls per message.
+   */
+  getMessageCursor?: (args: MessageIteratorArgs) => IMessageCursor;
 
   /**
    * Optional method a data source can implement to cleanup resources. The player will call this

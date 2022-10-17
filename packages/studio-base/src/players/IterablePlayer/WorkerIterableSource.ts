@@ -83,14 +83,14 @@ export class WorkerIterableSource implements IIterableSource {
     return await this._worker.getBackfillMessages(rest, abortSignal);
   }
 
-  public getMessageCursor(args: { topics: string[]; start: Time; end: Time }): IMessageCursor {
+  public getMessageCursor(args: MessageIteratorArgs): IMessageCursor {
     if (this._worker == undefined) {
       throw new Error(`WorkerIterableSource is not initialized`);
     }
 
     const messageCursorPromise = this._worker.getMessageCursor(args);
 
-    return {
+    const cursor: IMessageCursor = {
       async next() {
         const messageCursor = await messageCursorPromise;
         return await messageCursor.next();
@@ -100,7 +100,15 @@ export class WorkerIterableSource implements IIterableSource {
         const messageCursor = await messageCursorPromise;
         return await messageCursor.readUntil(end);
       },
+
+      async end() {
+        const messageCursor = await messageCursorPromise;
+        await messageCursor.end();
+        messageCursor[Comlink.releaseProxy]();
+      },
     };
+
+    return cursor;
   }
 
   public async terminate(): Promise<void> {

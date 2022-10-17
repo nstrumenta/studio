@@ -17,10 +17,11 @@ import {
   clampTime,
 } from "@foxglove/rostime";
 import { MessageEvent } from "@foxglove/studio";
+import { IteratorCursor } from "@foxglove/studio-base/players/IterablePlayer/IteratorCursor";
 import PlayerProblemManager from "@foxglove/studio-base/players/PlayerProblemManager";
 import { MessageBlock, Progress } from "@foxglove/studio-base/players/types";
 
-import { IIterableSource } from "./IIterableSource";
+import { IIterableSource, MessageIteratorArgs } from "./IIterableSource";
 
 const log = Log.getLogger(__filename);
 
@@ -54,9 +55,9 @@ export class BlockLoader {
   private end: Time;
   private blockDurationNanos: number;
   private topics: Set<string> = new Set();
-  //private maxCacheSize: number = 0;
+  private maxCacheSize: number = 0;
   private activeBlockId: number = 0;
-  //private problemManager: PlayerProblemManager;
+  private problemManager: PlayerProblemManager;
   private stopped: boolean = false;
   private activeChangeCondvar: Condvar = new Condvar();
 
@@ -64,11 +65,8 @@ export class BlockLoader {
     this.source = args.source;
     this.start = args.start;
     this.end = args.end;
-    //this.maxCacheSize = args.cacheSizeBytes;
-    //this.problemManager = args.problemManager;
-
-    // fixme
-    args.maxBlocks = 400;
+    this.maxCacheSize = args.cacheSizeBytes;
+    this.problemManager = args.problemManager;
 
     const totalNs = Number(toNanoSec(subtractTimes(this.end, this.start))) + 1; // +1 since times are inclusive.
     if (totalNs > Number.MAX_SAFE_INTEGER * 0.9) {
@@ -187,15 +185,10 @@ export class BlockLoader {
     lastBlockId: number,
     progress: LoadArgs["progress"],
   ): Promise<void> {
-    if (!this.source.getMessageCursor) {
-      log.info("source does not have getMessageCursor so preloading is disabled");
-      return;
-    }
-
     const topics = this.topics;
     log.debug("load block range", { topics, beginBlockId, lastBlockId });
 
-    //const totalBlockSizeBytes = this.cacheSize();
+    let totalBlockSizeBytes = this.cacheSize();
 
     for (let blockId = beginBlockId; blockId < lastBlockId; ++blockId) {
       // Topics we will fetch for this range
@@ -236,32 +229,44 @@ export class BlockLoader {
       const cursorStartTime = this.blockIdToStartTime(blockId);
       const cursorEndTime = clampTime(this.blockIdToEndTime(endBlockId), this.start, this.end);
 
-      const cursor = this.source.getMessageCursor({
+      const iteratorArgs: MessageIteratorArgs = {
         topics: Array.from(topicsToFetch),
         start: cursorStartTime,
         end: cursorEndTime,
-        // fixme
-        //consumptionType: "full",
-      });
+        consumptionType: "full",
+      };
+
+      // If the source provides a message cursor we use its message cursor, otherwise we make one
+      // using the source's message iterator.
+      const cursor =
+        this.source.getMessageCursor?.(iteratorArgs) ??
+        new IteratorCursor(this.source.messageIterator(iteratorArgs));
 
       for (let currentBlockId = blockId; currentBlockId <= endBlockId; ++currentBlockId) {
         const untilTime = clampTime(this.blockIdToEndTime(currentBlockId), this.start, this.end);
 
-        // fixme - as we emit progress, this publishes a new player state and causes data to be sent to the plot
-        // the plot starts rendering on a debounce sometime into us reading the messages here and so it looks like
-        // our duration goes up reading these messages because the plot is rendering
-        const start = performance.now();
         const results = await cursor.readUntil(untilTime);
-        const end = performance.now();
 
-        console.log("read until duration ,", end - start, ",", results?.length);
+        const messagesByTopic: Record<string, MessageEvent<unknown>[]> = {};
 
-        // fixme - set all topics to empty array because cursor is done
-        if (!results) {
+        if (!results || results.length === 0) {
+          // Set all topics to empty arrays since this block has no messages on these topics
+          for (const topic of topicsToFetch) {
+            messagesByTopic[topic] = [];
+          }
+
+          const existingBlock = this.blocks[currentBlockId];
+          this.blocks[currentBlockId] = {
+            needTopics: new Set(),
+            messagesByTopic: {
+              ...existingBlock?.messagesByTopic,
+              ...messagesByTopic,
+            },
+            sizeInBytes: existingBlock?.sizeInBytes ?? 0,
+          };
           continue;
         }
 
-        const messagesByTopic: Record<string, MessageEvent<unknown>[]> = {};
         // Set all topic arrays to empty to indicate we've read this topic
         // fixme - this seems wrong because it overrides any previous messages by topic...
         /*
@@ -270,14 +275,43 @@ export class BlockLoader {
         }
         */
 
-        for (const result of results) {
-          if (result.msgEvent) {
-            const arr = (messagesByTopic[result.msgEvent.topic] ??= []);
-            arr.push(result.msgEvent);
+        // fixme - while adding messages, we need to evict other blocks if we are going to exceed the max size
+        // we need to bail if we are at max size and would need to evict the "latest" block because we
+        // always want to have the data around _now_ preloaded
+
+        let sizeInBytes = 0;
+        for (const iterResult of results) {
+          if (iterResult.problem) {
+            this.problemManager.addProblem(`connid-${iterResult.connectionId}`, iterResult.problem);
+            continue;
           }
 
-          // fixme - problems?
-          //this.problemManager.addProblem(`connid-${iterResult.connectionId}`, iterResult.problem);
+          const arr = (messagesByTopic[iterResult.msgEvent.topic] ??= []);
+
+          const messageSizeInBytes = iterResult.msgEvent.sizeInBytes;
+          totalBlockSizeBytes += messageSizeInBytes;
+          arr.push(iterResult.msgEvent);
+
+          sizeInBytes += messageSizeInBytes;
+
+          // Evict blocks until we have space for our new message
+          while (totalBlockSizeBytes > this.maxCacheSize) {
+            const evictedSize = this.evictBlock({
+              startId: this.activeBlockId,
+              endId: currentBlockId,
+            });
+            // If we could not evict any blocks to bring our size down, then we stop loading more data
+            if (evictedSize === 0) {
+              log.debug("could not evict more blocks", {
+                totalBlockSizeBytes,
+                messageSizeInBytes,
+                maxCache: this.maxCacheSize,
+              });
+              return;
+            }
+
+            totalBlockSizeBytes -= evictedSize;
+          }
         }
 
         const existingBlock = this.blocks[currentBlockId];
@@ -287,77 +321,35 @@ export class BlockLoader {
             ...existingBlock?.messagesByTopic,
             ...messagesByTopic,
           },
-          // fixme size
-          sizeInBytes: 0,
+          sizeInBytes: (existingBlock?.sizeInBytes ?? 0) + sizeInBytes,
         };
 
-        // fixme
-        // Emitting after every block results in fighting with the plot panel
-        // we aren't able to make forward progress because we are waiting for the plot panel to finish rendering
-        progress(this.calculateProgress(topics));
-      }
-
-      blockId = endBlockId + 1;
-
-      /*
-      let sizeInBytes = 0;
-      for await (const iterResult of iterator) {
-        if (iterResult.problem) {
-          this.problemManager.addProblem(`connid-${iterResult.connectionId}`, iterResult.problem);
-          continue;
-        }
-
-        const messageBlockId = this.timeToBlockId(iterResult.msgEvent.receiveTime);
-
-        if (messageBlockId < currentBlockId) {
-          log.error("Invariant: received a message for a block in the past");
-          throw new Error("Invariant: received a message for a block in the past");
-        }
-
-        // Message is for a different block.
-        // 1. Close out the current block.
-        // 2. Fill in any block gaps.
-        // 3. start a new block.
-        if (messageBlockId !== currentBlockId) {
-          // Close out the current block with the aggregated messages. Fill any blocks between
-          // current and the new block with empty topic arrays. We can use empty arrays because we
-          // know these blocks have no messages since messages arrive in time order.
-          for (let idx = currentBlockId; idx < messageBlockId; ++idx) {
-            const existingBlock = this.blocks[idx];
-
-            this.blocks[idx] = {
-              needTopics: new Set(),
-              messagesByTopic: {
-                ...existingBlock?.messagesByTopic,
-                ...messagesByTopic,
-              },
-              sizeInBytes: sizeInBytes + (existingBlock?.sizeInBytes ?? 0),
-            };
-
-            // setup a new block cache for the next block
-            sizeInBytes = 0;
-            messagesByTopic = {};
-            // Set all topic arrays to empty to indicate we've read this topic
-            for (const topic of topicsToFetch) {
-              messagesByTopic[topic] = [];
-            }
-          }
-
-          // Set the new block to the id of our latest message
-          currentBlockId = messageBlockId;
-
-          progress(this.calculateProgress(topics));
-        }
-
-        // When the topics change we re bail and will re-load
-        // Since topics changing is in-frequent and usually indicates we need to reload blocks
+        // fixme - readuntil should have an abort controller since previously we could abort after a single message read
+        // if we abourt part way we need to avoid updating the block!
+        // now we can only abort at the readUntil level
+        // When the topics change we bail and will re-load from the outer loading loop
+        // We do this after having the results
         if (topics !== this.topics) {
           log.debug("topics changed, aborting load instance");
           return;
         }
 
-        const msgTopic = iterResult.msgEvent.topic;
-        const events = messagesByTopic[msgTopic];
+        // fixme
+        // Emitting after every block results in fighting with the plot panel
+        // we aren't able to make forward progress because we are waiting for the plot panel to finish rendering
+        // if I change this to emit every N blocks then we are needlessly delaying the display of data into panels
+        // during the preloading phase
+        // what helps is if the plot panel moves work to another thread
+        // this lets us keep preloading blocks
+        progress(this.calculateProgress(topics));
+      }
+
+      await cursor.end();
+      blockId = endBlockId + 1;
+
+      /*
+       consider problem check for message on unexpected topic
+      const events = messagesByTopic[msgTopic];
 
         const problemKey = `unexpected-topic-${msgTopic}`;
         if (!events) {
@@ -369,29 +361,9 @@ export class BlockLoader {
           continue;
         }
         this.problemManager.removeProblem(problemKey);
+        */
 
-        const messageSizeInBytes = iterResult.msgEvent.sizeInBytes;
-        sizeInBytes += messageSizeInBytes;
-
-        // Evict blocks until we have space for our new message
-        while (totalBlockSizeBytes + messageSizeInBytes > this.maxCacheSize) {
-          const evictedSize = this.evictBlock({
-            startId: this.activeBlockId,
-            endId: currentBlockId,
-          });
-          // If we could not evict any blocks to bring our size down, then we stop loading more data
-          if (evictedSize === 0) {
-            log.debug("could not evict more blocks", {
-              totalBlockSizeBytes,
-              messageSizeInBytes,
-              maxCache: this.maxCacheSize,
-            });
-            return;
-          }
-
-          totalBlockSizeBytes -= evictedSize;
-        }
-
+      /*
         // When the active block id changes, we need to check whether the active block
         // is loaded through where we are loading (or the end if active block is after currentBlockId)
         if (beginBlockId !== this.activeBlockId) {
@@ -413,45 +385,10 @@ export class BlockLoader {
             }
           }
         }
-
-        totalBlockSizeBytes += messageSizeInBytes;
-        events.push(iterResult.msgEvent);
-      }
-
-      // Close out the current block with the aggregated messages. Fill any blocks between
-      // current and the new block with empty topic arrays. We can use empty arrays because we
-      // know these blocks have no messages since messages arrive in time order.
-      for (let idx = currentBlockId; idx <= endBlockId; ++idx) {
-        const existingBlock = this.blocks[idx];
-
-        this.blocks[idx] = {
-          needTopics: new Set(),
-          messagesByTopic: {
-            ...existingBlock?.messagesByTopic,
-            ...messagesByTopic,
-          },
-          sizeInBytes: sizeInBytes + (existingBlock?.sizeInBytes ?? 0),
-        };
-
-        sizeInBytes = 0;
-        messagesByTopic = {};
-        // Set all topic arrays to empty to indicate we've read this topic
-        for (const topic of topicsToFetch) {
-          messagesByTopic[topic] = [];
-        }
-      }
-
-      if (currentBlockId <= endBlockId) {
-        progress(this.calculateProgress(topics));
-      }
-
-      // We've processed through endBlockId now, next cycle can skip all those blocks
-      blockId = endBlockId + 1;
-      */
+        */
     }
   }
 
-  /*
   // Evict a block while preserving blocks in the block id range (inclusive)
   private evictBlock(range: { startId: number; endId: number }): number {
     if (range.endId < range.startId) {
@@ -493,7 +430,6 @@ export class BlockLoader {
 
     return 0;
   }
-  */
 
   private calculateProgress(topics: Set<string>): Progress {
     const fullyLoadedFractionRanges = simplify(
@@ -528,7 +464,6 @@ export class BlockLoader {
     };
   }
 
-  /*
   private cacheSize(): number {
     return this.blocks.reduce((prev, block) => {
       if (!block) {
@@ -538,19 +473,6 @@ export class BlockLoader {
       return prev + block.sizeInBytes;
     }, 0);
   }
-
-  // Convert a time to a blockId. Return -1 if the time cannot be converted to a valid block id
-  private timeToBlockId(stamp: Time): number {
-    const startNs = toNanoSec(this.start);
-    const stampNs = toNanoSec(stamp);
-    const offset = stampNs - startNs;
-    if (offset < 0) {
-      return -1;
-    }
-
-    return Number(offset / BigInt(this.blockDurationNanos));
-  }
-  */
 
   private blockIdToStartTime(id: number): Time {
     return add(this.start, fromNanoSec(BigInt(id) * BigInt(this.blockDurationNanos)));
