@@ -12,7 +12,6 @@
 //   You may not use this file except in compliance with the License.
 
 import CursorIcon from "@mdi/svg/svg/cursor-default.svg";
-import { Typography } from "@mui/material";
 
 import type { LayoutActions } from "@foxglove/studio";
 import ExpandingToolbar, {
@@ -59,14 +58,15 @@ const InteractionsBaseComponent = React.memo<Props>(function InteractionsBaseCom
   return (
     <ExpandingToolbar
       tooltip="Inspect objects"
+      checked={interactionsTabType != undefined}
       icon={<CursorIcon />}
-      selectedTab={interactionsTabType}
+      selectedTab={originalMessage ? interactionsTabType : undefined}
       onSelectTab={(newSelectedTab) => setInteractionsTabType(newSelectedTab)}
     >
       <ToolGroup name={OBJECT_TAB_TYPE}>
-        <ToolGroupFixedSizePane>
-          {originalMessage ? (
-            <>
+        <>
+          {originalMessage && (
+            <ToolGroupFixedSizePane>
               {selectedInteractionData.topic && (
                 <TopicLink addPanel={addPanel} topic={selectedInteractionData.topic} />
               )}
@@ -75,13 +75,9 @@ const InteractionsBaseComponent = React.memo<Props>(function InteractionsBaseCom
                 selectedObject={originalMessage}
                 interactionData={selectedInteractionData}
               />
-            </>
-          ) : (
-            <Typography variant="body2" color="text.disabled" gutterBottom>
-              Click an object in the 3D view to select it.
-            </Typography>
+            </ToolGroupFixedSizePane>
           )}
-        </ToolGroupFixedSizePane>
+        </>
       </ToolGroup>
     </ExpandingToolbar>
   );

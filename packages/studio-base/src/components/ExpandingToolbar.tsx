@@ -92,7 +92,7 @@ export default function ExpandingToolbar<T extends string>({
           color={checked === true ? "info" : "default"}
           title={tooltip}
           data-testid={`ExpandingToolbar-${tooltip}`}
-          onClick={() => onSelectTab(selectedTabLocal)}
+          onClick={() => onSelectTab(checked === true ? undefined : selectedTabLocal)}
         >
           {icon}
         </StyledIconButton>
