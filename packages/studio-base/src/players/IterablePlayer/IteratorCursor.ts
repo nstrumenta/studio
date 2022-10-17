@@ -11,17 +11,33 @@ import type { IMessageCursor, IteratorResult } from "./IIterableSource";
 class IteratorCursor implements IMessageCursor {
   private _iter: AsyncIterableIterator<Readonly<IteratorResult>>;
   private _lastIteratorResult?: IteratorResult;
+  private _abort?: AbortSignal;
 
-  public constructor(iterator: AsyncIterableIterator<Readonly<IteratorResult>>) {
+  public constructor(
+    iterator: AsyncIterableIterator<Readonly<IteratorResult>>,
+    abort?: AbortSignal,
+  ) {
     this._iter = iterator;
+    this._abort = abort;
   }
 
   public async next(): ReturnType<IMessageCursor["next"]> {
+    if (this._abort?.aborted === true) {
+      return undefined;
+    }
+
     const result = await this._iter.next();
     return result.value;
   }
 
   public async readUntil(end: Time): ReturnType<IMessageCursor["readUntil"]> {
+    // Assign to a variable to fool typescript control flow analysis which does not understand
+    // that this value could change after the _await_
+    const isAborted = this._abort?.aborted;
+    if (isAborted === true) {
+      return undefined;
+    }
+
     const results: IteratorResult[] = [];
 
     // if the last result is still past end time, return empty results
@@ -39,6 +55,10 @@ class IteratorCursor implements IMessageCursor {
 
     for (;;) {
       const result = await this._iter.next();
+      if (this._abort?.aborted === true) {
+        return undefined;
+      }
+
       if (result.done === true) {
         break;
       }

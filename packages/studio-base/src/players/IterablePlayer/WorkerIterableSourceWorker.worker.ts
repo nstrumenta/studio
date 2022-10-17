@@ -80,9 +80,12 @@ export class WorkerIterableSourceWorker {
     });
   }
 
-  public getMessageCursor(args: MessageIteratorArgs): IMessageCursor & Comlink.ProxyMarked {
+  public getMessageCursor(
+    args: Omit<MessageIteratorArgs, "abort">,
+    abort?: AbortSignal,
+  ): IMessageCursor & Comlink.ProxyMarked {
     const iter = this.messageIterator(args);
-    const cursor = new IteratorCursor(iter);
+    const cursor = new IteratorCursor(iter, abort);
 
     return Comlink.proxy(cursor);
   }

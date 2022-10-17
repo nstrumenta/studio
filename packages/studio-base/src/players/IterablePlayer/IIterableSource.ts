@@ -137,7 +137,7 @@ export interface IIterableSource {
    * This improves performance for some workflows (i.e. message reading over webworkers) by avoiding
    * individual "next" calls per message.
    */
-  getMessageCursor?: (args: MessageIteratorArgs) => IMessageCursor;
+  getMessageCursor?: (args: MessageIteratorArgs & { abort?: AbortSignal }) => IMessageCursor;
 
   /**
    * Optional method a data source can implement to cleanup resources. The player will call this

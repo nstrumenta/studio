@@ -86,12 +86,16 @@ export class WorkerIterableSource implements IIterableSource {
     return await this._worker.getBackfillMessages(rest, abortSignal);
   }
 
-  public getMessageCursor(args: MessageIteratorArgs): IMessageCursor {
+  public getMessageCursor(args: MessageIteratorArgs & { abort?: AbortSignal }): IMessageCursor {
     if (this._worker == undefined) {
       throw new Error(`WorkerIterableSource is not initialized`);
     }
 
-    const messageCursorPromise = this._worker.getMessageCursor(args);
+    // An AbortSignal is not clonable, so we remove it from the args and send it as a separate argumet
+    // to our worker getBackfillMessages call. Our installed Comlink handler for AbortSignal handles
+    // making the abort signal available within the worker.
+    const { abort, ...rest } = args;
+    const messageCursorPromise = this._worker.getMessageCursor(rest, abort);
 
     const cursor: IMessageCursor = {
       async next() {
