@@ -2270,9 +2270,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@foxglove/ros1@github:foxglove/ros1#ac6f34bf85fc3444952aeafb45327a47a29d9679":
+"@foxglove/ros1@github:foxglove/ros1#b4dd0819dea1dbe33ce26cf1f21ffc5467faf475":
   version: 1.5.1
-  resolution: "@foxglove/ros1@https://github.com/foxglove/ros1.git#commit=ac6f34bf85fc3444952aeafb45327a47a29d9679"
+  resolution: "@foxglove/ros1@https://github.com/foxglove/ros1.git#commit=b4dd0819dea1dbe33ce26cf1f21ffc5467faf475"
   dependencies:
     "@foxglove/rosmsg": ^3.1.0
     "@foxglove/rosmsg-serialization": ^1.5.2
@@ -2281,7 +2281,7 @@ __metadata:
     ipaddr.js: ^2.0.1
   bin:
     roscore: ./dist/nodejs/roscore.js
-  checksum: ed76e10d65df45d114761e12a41b37eb109568a25a2383ff53eae211ddb0665de98f9cb5e9e415f1fe9856d92450efcb17464135e373798fd39b119e0ad2fcb3
+  checksum: ca6253a103e11b7cd4084920a7b89c121ef2b74dbb39a3515d95d02b45fe839e1baf01312e7d566403b46c7e9a038c14a2c2c382bd1c8b8cc733907955d40290
   languageName: node
   linkType: hard
 
@@ -2438,7 +2438,7 @@ __metadata:
     "@foxglove/hooks": "workspace:*"
     "@foxglove/mcap-support": "workspace:*"
     "@foxglove/regl-worldview": 2.4.0
-    "@foxglove/ros1": "github:foxglove/ros1#ac6f34bf85fc3444952aeafb45327a47a29d9679"
+    "@foxglove/ros1": "github:foxglove/ros1#b4dd0819dea1dbe33ce26cf1f21ffc5467faf475"
     "@foxglove/ros2": 3.4.0
     "@foxglove/rosbag": 0.2.3
     "@foxglove/rosbag2-web": 4.0.5
