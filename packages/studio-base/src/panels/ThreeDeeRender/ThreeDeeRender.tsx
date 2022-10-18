@@ -672,14 +672,20 @@ export function ThreeDeeRender({ context }: { context: PanelExtensionContext }):
 
   // Handle preloaded messages and render a frame if new messages are available
   useEffect(() => {
-    if (!renderer || !preloadedMessages) {
+    if (!renderer || !preloadedMessages || preloadedMessages.length === 0) {
       return;
     }
 
+    let prevMessage = preloadedMessages[0]!;
     for (const message of preloadedMessages) {
       // Skip preloaded messages before the last receiveTime we've previously processed
       if (isLessThan(message.receiveTime, lastPreloadedMessageTimeRef.current)) {
         continue;
+      }
+
+      // Check if receiveTime is going backwards in the `allFrames` array
+      if (isLessThan(message.receiveTime, prevMessage.receiveTime)) {
+        throw new Error("Messages in `allFrames` are not sorted by receiveTime");
       }
 
       const datatype = topicsToDatatypes.get(message.topic);
@@ -688,6 +694,7 @@ export function ThreeDeeRender({ context }: { context: PanelExtensionContext }):
       }
 
       renderer.addMessageEvent(message, datatype);
+      prevMessage = message;
     }
 
     const lastMessage = preloadedMessages[preloadedMessages.length - 1];
