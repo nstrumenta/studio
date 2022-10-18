@@ -345,6 +345,7 @@ export class Renderer extends EventEmitter<RendererEvents> {
       canvas,
       alpha: true,
       antialias: true,
+      logarithmicDepthBuffer: config.cameraState.logarithmicDepth,
     });
     if (!this.gl.capabilities.isWebGL2) {
       throw new Error("WebGL2 is not supported");
@@ -817,6 +818,7 @@ export class Renderer extends EventEmitter<RendererEvents> {
       fovy: this.config.cameraState.fovy,
       near: this.config.cameraState.near,
       far: this.config.cameraState.far,
+      logarithmicDepth: this.config.cameraState.logarithmicDepth,
     };
   }
 

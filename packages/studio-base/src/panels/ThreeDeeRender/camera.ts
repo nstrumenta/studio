@@ -27,6 +27,7 @@ export type CameraState = {
   fovy: number;
   near: number;
   far: number;
+  logarithmicDepth: boolean;
 };
 
 export const DEFAULT_CAMERA_STATE: CameraState = {
@@ -40,4 +41,5 @@ export const DEFAULT_CAMERA_STATE: CameraState = {
   fovy: 45,
   near: 0.01,
   far: 5000,
+  logarithmicDepth: false,
 };

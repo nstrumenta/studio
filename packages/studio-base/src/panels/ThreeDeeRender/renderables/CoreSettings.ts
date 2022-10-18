@@ -173,6 +173,7 @@ export class CoreSettings extends SceneExtension {
               fields: {
                 distance: {
                   label: "Distance",
+                  help: "Camera distance from the origin of the display frame",
                   input: "number",
                   step: 1,
                   precision: PRECISION_DISTANCE,
@@ -181,6 +182,7 @@ export class CoreSettings extends SceneExtension {
                 perspective: { label: "Perspective", input: "boolean", value: camera.perspective },
                 targetOffset: {
                   label: "Target",
+                  help: "Translational offset from the origin of the display frame",
                   input: "vec3",
                   labels: ["X", "Y", "Z"],
                   precision: PRECISION_DISTANCE,
@@ -188,6 +190,7 @@ export class CoreSettings extends SceneExtension {
                 },
                 thetaOffset: {
                   label: "Theta",
+                  help: "Azimuthal angle offset from the origin of the display frame in degrees",
                   input: "number",
                   step: 1,
                   precision: PRECISION_DEGREES,
@@ -196,6 +199,7 @@ export class CoreSettings extends SceneExtension {
                 ...(camera.perspective && {
                   phi: {
                     label: "Phi",
+                    help: "Polar angle offset from the origin of the display frame in degrees",
                     input: "number",
                     step: 1,
                     precision: PRECISION_DEGREES,
@@ -203,6 +207,7 @@ export class CoreSettings extends SceneExtension {
                   },
                   fovy: {
                     label: "Y-Axis FOV",
+                    help: "Vertical field of view in degrees",
                     input: "number",
                     step: 1,
                     precision: PRECISION_DEGREES,
@@ -211,6 +216,7 @@ export class CoreSettings extends SceneExtension {
                 }),
                 near: {
                   label: "Near",
+                  help: "Near clipping plane distance",
                   input: "number",
                   step: DEFAULT_CAMERA_STATE.near,
                   precision: PRECISION_DISTANCE,
@@ -218,10 +224,17 @@ export class CoreSettings extends SceneExtension {
                 },
                 far: {
                   label: "Far",
+                  help: "Far clipping plane distance",
                   input: "number",
                   step: 1,
                   precision: PRECISION_DISTANCE,
                   value: camera.far,
+                },
+                logarithmicDepth: {
+                  label: "Logarithmic depth",
+                  help: "Enable logarithmic depth buffer for more uniform depth precision. May result in rendering artifacts or performance degradation.",
+                  input: "boolean",
+                  value: camera.logarithmicDepth,
                 },
               },
             },

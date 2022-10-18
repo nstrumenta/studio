@@ -401,7 +401,12 @@ export function ThreeDeeRender({ context }: { context: PanelExtensionContext }):
       rendererRef.current?.dispose();
       rendererRef.current = undefined;
     };
-  }, [canvas, configRef, config.scene.transforms?.enablePreloading]);
+  }, [
+    canvas,
+    configRef,
+    config.scene.transforms?.enablePreloading,
+    config.cameraState.logarithmicDepth,
+  ]);
 
   const [colorScheme, setColorScheme] = useState<"dark" | "light" | undefined>();
   const [topics, setTopics] = useState<ReadonlyArray<Topic> | undefined>();
