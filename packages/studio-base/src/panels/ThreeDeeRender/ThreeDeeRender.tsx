@@ -401,12 +401,7 @@ export function ThreeDeeRender({ context }: { context: PanelExtensionContext }):
       rendererRef.current?.dispose();
       rendererRef.current = undefined;
     };
-  }, [
-    canvas,
-    configRef,
-    config.scene.transforms?.enablePreloading,
-    config.cameraState.logarithmicDepth,
-  ]);
+  }, [canvas, configRef, config.scene.transforms?.enablePreloading]);
 
   const [colorScheme, setColorScheme] = useState<"dark" | "light" | undefined>();
   const [topics, setTopics] = useState<ReadonlyArray<Topic> | undefined>();
@@ -497,6 +492,11 @@ export function ThreeDeeRender({ context }: { context: PanelExtensionContext }):
       renderRef.current.needsRender = true;
     }
   }, [config, renderer]);
+  // Hard reset when GL renderer needs to be re-initialized
+  useEffect(() => {
+    rendererRef.current?.resetWebGLRenderer();
+    renderRef.current.needsRender = true;
+  }, [config.cameraState.logarithmicDepth]);
 
   // Update the renderer's reference to `topics` when it changes
   useEffect(() => {
