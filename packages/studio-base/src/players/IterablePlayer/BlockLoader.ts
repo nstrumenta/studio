@@ -268,18 +268,6 @@ export class BlockLoader {
           continue;
         }
 
-        // Set all topic arrays to empty to indicate we've read this topic
-        // fixme - this seems wrong because it overrides any previous messages by topic...
-        /*
-        for (const topic of topicsToFetch) {
-          messagesByTopic[topic] = [];
-        }
-        */
-
-        // fixme - while adding messages, we need to evict other blocks if we are going to exceed the max size
-        // we need to bail if we are at max size and would need to evict the "latest" block because we
-        // always want to have the data around _now_ preloaded
-
         let sizeInBytes = 0;
         for (const iterResult of results) {
           if (iterResult.problem) {
@@ -331,7 +319,7 @@ export class BlockLoader {
       await cursor.end();
       blockId = endBlockId + 1;
 
-      /*
+      /* fixme
        consider problem check for message on unexpected topic
       const events = messagesByTopic[msgTopic];
 
@@ -347,7 +335,7 @@ export class BlockLoader {
         this.problemManager.removeProblem(problemKey);
         */
 
-      /*
+      /* fixme
         // When the active block id changes, we need to check whether the active block
         // is loaded through where we are loading (or the end if active block is after currentBlockId)
         if (beginBlockId !== this.activeBlockId) {
