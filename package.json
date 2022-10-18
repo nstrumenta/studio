@@ -57,9 +57,7 @@
   },
   "resolutions": {
     "@types/node": "15.3.0",
-    "react-dnd": "14.0.2",
-    "@foxglove/xmlrpc": "github:foxglove/xmlrpc#977263a91d49ec2998342688b55854261ff18a9c",
-    "@foxglove/ros1": "patch:@foxglove/ros1@1.5.1#./patches/ros1.patch"
+    "react-dnd": "14.0.2"
   },
   "devDependencies": {
     "@actions/core": "1.6.0",
