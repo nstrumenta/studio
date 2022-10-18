@@ -52,12 +52,6 @@ export class TransformTree {
     this._frames.clear();
   }
 
-  public clearAfter(time: Time): void {
-    for (const frame of this._frames.values()) {
-      frame.removeTransformsAfter(time);
-    }
-  }
-
   public hasFrame(id: string): boolean {
     return this._frames.has(id);
   }

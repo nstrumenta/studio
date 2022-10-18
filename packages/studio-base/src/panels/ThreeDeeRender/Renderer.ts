@@ -442,21 +442,17 @@ export class Renderer extends EventEmitter<RendererEvents> {
     this.addDatatypeSubscriptions(FRAME_TRANSFORM_DATATYPES, {
       handler: this.handleFrameTransform,
       forced: true,
-      // Disabled until we can efficiently preload transforms. See
-      // <https://github.com/foxglove/studio/issues/4657> for more details.
-      // preload: config.scene.transforms?.enablePreloading ?? true,
+      preload: config.scene.transforms?.enablePreloading ?? true,
     });
     this.addDatatypeSubscriptions(TF_DATATYPES, {
       handler: this.handleTFMessage,
       forced: true,
-      // Disabled until we can efficiently preload transforms
-      // preload: config.scene.transforms?.enablePreloading ?? true,
+      preload: config.scene.transforms?.enablePreloading ?? true,
     });
     this.addDatatypeSubscriptions(TRANSFORM_STAMPED_DATATYPES, {
       handler: this.handleTransformStamped,
       forced: true,
-      // Disabled until we can efficiently preload transforms
-      // preload: config.scene.transforms?.enablePreloading ?? true,
+      preload: config.scene.transforms?.enablePreloading ?? true,
     });
 
     this.addSceneExtension(this.coreSettings);
@@ -525,9 +521,8 @@ export class Renderer extends EventEmitter<RendererEvents> {
    * This is useful when seeking to a new playback position or when a new data source is loaded.
    */
   public clear(): void {
-    // These must be cleared before calling `SceneExtension#removeAllRenderables()` to allow
-    // extensions to add transforms and errors back afterward
-    this.transformTree.clearAfter(this.currentTime);
+    // This must be cleared before calling `SceneExtension#removeAllRenderables()` to allow
+    // extensions to add errors back afterward
     this.settings.errors.clear();
 
     for (const extension of this.sceneExtensions.values()) {
@@ -853,7 +848,7 @@ export class Renderer extends EventEmitter<RendererEvents> {
     return this.config.cameraState.perspective ? this.perspectiveCamera : this.orthographicCamera;
   }
 
-  public addMessageEvent(messageEvent: Readonly<MessageEvent<unknown>>): void {
+  public addMessageEvent(messageEvent: Readonly<MessageEvent<unknown>>, datatype: string): void {
     const { message } = messageEvent;
 
     const maybeHasHeader = message as DeepPartial<{ header: Header }>;
@@ -884,7 +879,7 @@ export class Renderer extends EventEmitter<RendererEvents> {
     }
 
     handleMessage(messageEvent, this.topicHandlers.get(messageEvent.topic));
-    handleMessage(messageEvent, this.datatypeHandlers.get(messageEvent.schemaName));
+    handleMessage(messageEvent, this.datatypeHandlers.get(datatype));
   }
 
   /** Match the behavior of `tf::Transformer` by stripping leading slashes from
