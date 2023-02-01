@@ -28,6 +28,14 @@ import diagnosticSummaryThumbnail from "./diagnostics/thumbnails/diagnostic-summ
 
 const builtin: PanelInfo[] = [
   {
+    title: "FORT",
+    type: "FORT type",
+    description: "tracking app",
+    thumbnail: threeDeeRenderThumbnail,
+    module: async () => await import("./FORT"),
+    settingsOnboardingTooltip: "Open settings to configure topics and layers.",
+  },
+  {
     title: "3D",
     type: "3D",
     description: "Display markers, camera images, meshes, URDFs, and more in a 3D scene.",
