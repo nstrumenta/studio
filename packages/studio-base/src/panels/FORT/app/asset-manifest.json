@@ -1,12 +1,13 @@
 {
   "files": {
     "main.js": "./index.js",
-    "main.css": "./static/css/main.c4fc3cf7.css",
+    "main.css": "./static/css/main.0f23b6f0.css",
+    "static/media/WasmModule.wasm": "./static/media/WasmModule.f60b4cf3345920640e64.wasm",
     "index.js.map": "./index.js.map",
-    "main.c4fc3cf7.css.map": "./static/css/main.c4fc3cf7.css.map"
+    "main.0f23b6f0.css.map": "./static/css/main.0f23b6f0.css.map"
   },
   "entrypoints": [
     "index.js",
-    "static/css/main.c4fc3cf7.css"
+    "static/css/main.0f23b6f0.css"
   ]
 }

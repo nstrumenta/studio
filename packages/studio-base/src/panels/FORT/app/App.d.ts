@@ -3,7 +3,6 @@ import type { IProps, IState } from './App.types';
 import type { ChangeFields } from './components/Startup';
 import { Playback } from './components/Playback';
 import type { LoadRes } from './components/LoadDisc';
-import { PdrLogManager } from './PdrLogManager';
 import type { Fields } from './components/TruthSettings';
 import type { RegenFields } from './components/PathGen';
 import type { SelectedRow } from './components/LoadRemoteTable';
@@ -18,7 +17,6 @@ export declare class App extends Component<IProps, IState> {
     constructor(props: IProps);
     componentDidMount(): void;
     openErrorModal(errorMsg: string): void;
-    closeErrorModal(): void;
     startupHandle(): void;
     startupChange(fields: ChangeFields): void;
     playbackLoadStart(): void;
@@ -31,7 +29,7 @@ export declare class App extends Component<IProps, IState> {
     mergeOpen(): void;
     mergeClose(): void;
     mergeStart(): void;
-    mergeDone(pdrLogManager: PdrLogManager | null): void;
+    mergeDone(): void;
     pathGenOpen(): void;
     pathGenClose(): void;
     pathGenAction(fields: RegenFields): void;

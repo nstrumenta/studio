@@ -6,9 +6,9 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Launch to Chrome",
+      "name": "attach to Chrome",
       "port": 9222,
-      "request": "launch",
+      "request": "attach",
       "type": "chrome",
       "url": "http://localhost:8081",
       "webRoot": "${workspaceFolder}"
