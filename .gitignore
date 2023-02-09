@@ -20,3 +20,5 @@ storybook-static/
 
 .idea/
 .vscode/
+
+packages/studio-base/src/panels/FORT/app

@@ -28,7 +28,9 @@ export default function ThemeProvider({
     document.documentElement.setAttribute("data-color-mode", isDark ? "dark" : "light");
   }, [isDark]);
 
-  const muiTheme = useMemo(() => createMuiTheme(isDark ? "dark" : "light"), [isDark]);
+  const muiTheme = useMemo(() => {
+    return createMuiTheme(isDark ? "dark" : "light")
+  }, [isDark]);
 
   useLayoutEffect(() => {
     // Set the theme color to match the sidebar and playback bar

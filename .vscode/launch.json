@@ -6,11 +6,18 @@
   "version": "0.2.0",
   "configurations": [
     {
+      "name": "Launch Chrome",
+      "request": "launch",
+      "type": "chrome",
+      "url": "http://localhost:8082?mapsApiKey=AIzaSyBfrSnwt7P4ezTOR1NmG_UKhKwWhvS8q9Y",
+      "webRoot": "${workspaceFolder}"
+    },
+    {
       "name": "attach to Chrome",
       "port": 9222,
       "request": "attach",
       "type": "chrome",
-      "url": "http://localhost:8081",
+      "url": "http://localhost:8082",
       "webRoot": "${workspaceFolder}"
     },
     {
