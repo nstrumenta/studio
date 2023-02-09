@@ -9,7 +9,7 @@
       "name": "Launch Chrome",
       "request": "launch",
       "type": "chrome",
-      "url": "http://localhost:8082?mapsApiKey=AIzaSyBfrSnwt7P4ezTOR1NmG_UKhKwWhvS8q9Y",
+      "url": "http://localhost:8082",
       "webRoot": "${workspaceFolder}"
     },
     {
