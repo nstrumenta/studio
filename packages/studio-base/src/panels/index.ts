@@ -25,14 +25,23 @@ import URDFViewerThumbnail from "./URDFViewer/thumbnail.png";
 import variableSliderThumbnail from "./VariableSlider/thumbnail.png";
 import diagnosticStatusThumbnail from "./diagnostics/thumbnails/diagnostic-status.png";
 import diagnosticSummaryThumbnail from "./diagnostics/thumbnails/diagnostic-summary.png";
+import nstrumentaLogo from "../assets/nstrumenta-logo.png";
 
 const builtin: PanelInfo[] = [
   {
     title: "FORT",
     type: "FORT type",
     description: "tracking app",
-    thumbnail: threeDeeRenderThumbnail,
+    thumbnail: nstrumentaLogo,
     module: async () => await import("./FORT"),
+    settingsOnboardingTooltip: "Open settings to configure topics and layers.",
+  },
+  {
+    title: "video",
+    type: "video",
+    description: "video playback",
+    thumbnail: nstrumentaLogo,
+    module: async () => await import("./video"),
     settingsOnboardingTooltip: "Open settings to configure topics and layers.",
   },
   {

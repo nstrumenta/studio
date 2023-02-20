@@ -17,7 +17,7 @@
 // License, v2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
-import React, { StrictMode, useState, useEffect, useLayoutEffect } from 'react';
+import React, { StrictMode, useState, useEffect, useRef, useLayoutEffect, useCallback } from 'react';
 import ReactDOM from 'react-dom';
 
 import { CompressedImage } from '@foxglove/schemas';
@@ -27,9 +27,6 @@ import { PanelExtensionAdapter } from '@foxglove/studio-base/components/PanelExt
 import ThemeProvider from '@foxglove/studio-base/theme/ThemeProvider';
 import type { SaveConfig } from '@foxglove/studio-base/types/panels';
 
-import { App } from './app';
-
-// import { FORTPanel } from './app';
 
 type ImageMessage = MessageEvent<CompressedImage>;
 
@@ -37,14 +34,47 @@ type PanelState = {
   topic?: string;
 };
 
+// Draws the compressed image data into our canvas.
+async function drawImageOnCanvas(imgData: Uint8Array, canvas: HTMLCanvasElement, format: string) {
+  // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+  if (!canvas) {
+    return;
+  }
+  const ctx = canvas.getContext('2d');
+  // eslint-disable-next-line @foxglove/strict-equality
+  if (ctx === undefined) {
+    return;
+  }
+
+  // Create a bitmap from our raw compressed image data.
+  const blob = new Blob([imgData], { type: `image/${format}` });
+  const bitmap = await createImageBitmap(blob);
+
+  // Adjust for aspect ratio.
+
+  canvas.width = Math.round((canvas.height * bitmap.width) / bitmap.height);
+
+  // Draw the image.
+  ctx!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
+  ctx!.resetTransform();
+}
+
 export const FORTPanel = ({ context }: { context: PanelExtensionContext }): JSX.Element => {
   // panel extensions must notify when they've completed rendering
   // onRender will setRenderDone to a done callback which we can invoke after we've rendered
   const [topics, setTopics] = useState<readonly Topic[] | undefined>();
-  const [, setMessage] = useState<ImageMessage>();
-  const [, setAllFrames] = useState<MessageEvent<unknown>[]>([]);
-  const [, setCurrentTime] = useState<Time>({ sec: 0, nsec: 0 });
+  const [message, setMessage] = useState<ImageMessage>();
+  const [allFrames, setAllFrames] = useState<MessageEvent<unknown>[]>([]);
+  const [currentTime, setCurrentTime] = useState<Time>({ sec: 0, nsec: 0 });
   const [renderDone, setRenderDone] = useState<(() => void) | undefined>();
+  const [videoDimensions, setVideoDimensions] = useState({ width: 320, height: 200 });
+  // eslint-disable-next-line no-restricted-syntax
+  const inputRef = React.useRef<HTMLInputElement>(null);
+  // eslint-disable-next-line no-restricted-syntax
+  const videoRef = React.useRef<HTMLVideoElement>(null);
+
+  // eslint-disable-next-line no-restricted-syntax
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Restore our state from the layout via the context.initialState property.
   const [state, setState] = useState<PanelState>(() => context.initialState as PanelState);
@@ -84,6 +114,19 @@ export const FORTPanel = ({ context }: { context: PanelExtensionContext }): JSX.
     }
   }, [state.topic, imageTopics]);
 
+  // Every time we get a new image message draw it to the canvas.
+  useEffect(() => {
+    if (message) {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
+      drawImageOnCanvas(message.message.data, canvasRef.current!, message.message.format).catch(
+        // eslint-disable-next-line no-restricted-syntax
+        (error) => console.log(error),
+      );
+    }
+  }, [message]);
+
   // Set up our onRender function and start watching topics and currentFrame for messages.
   useLayoutEffect(() => {
     context.onRender = (renderState: RenderState, done) => {
@@ -122,9 +165,105 @@ export const FORTPanel = ({ context }: { context: PanelExtensionContext }): JSX.
     renderDone?.();
   }, [renderDone]);
 
+  const handleClick = useCallback(() => {
+    inputRef.current?.click();
+  }, []);
+
+  const handleChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!event.target.files) {
+      return;
+    }
+    const [file] = Array.from(event.target.files);
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const data = e.target?.result;
+      // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+      if (!data || !videoRef.current) {
+        return;
+      }
+      const blob = new Blob([new Uint8Array(data as ArrayBuffer)], { type: file?.type });
+      const source = document.createElement('source');
+      // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+      source.setAttribute('src', (window.URL || window.webkitURL).createObjectURL(blob));
+      videoRef.current.appendChild(source);
+      videoRef.current.addEventListener('loadedmetadata', () => {
+        setVideoDimensions({
+          width: videoRef.current?.videoWidth ?? 320,
+          height: videoRef.current?.videoHeight ?? 200,
+        });
+        // videoRef.current?.play();
+      });
+      videoRef.current.load();
+    };
+    reader.readAsArrayBuffer(file as File);
+  }, []);
+
+  function handleSlider() {
+    // // move to video component
+    // if (videoRef.current) {
+    //   videoRef.current.currentTime = Number(event.target.value);
+    // }
+    // setCurrentTime(Number(event.target.value));
+  }
+
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+  const start = allFrames[0] ? allFrames[0].receiveTime : { sec: 0, nsec: 0 };
+  const end = allFrames[allFrames.length - 1]
+  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  // @ts-ignore
+    ? allFrames[allFrames.length - 1]!.receiveTime
+    : { sec: 0, nsec: 0 };
+  const currentTimestamp = currentTime.sec * 1000 + currentTime.nsec / 1000000;
+  // duration = end?.sec * 1000 + end?.nsec / 1000000 - (start?.sec * 1000 + start?.nsec / 1000000);
+  const currentOffset = currentTimestamp - (start.sec * 1000 + start.nsec / 1000000);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.currentTime = currentOffset / 1000;
+    }
+  }, [currentOffset]);
+
   return (
     <div className="App">
-      <App />
+      <video
+        ref={videoRef}
+        width={videoDimensions.width}
+        height={videoDimensions.height}
+        autoPlay={false}
+      />
+      <div className="card">
+        current offset:
+        {Math.floor(currentOffset)}
+      </div>
+      <div className="card">
+        <input
+          type="range"
+          min={start.sec * 1000 + start.nsec / 1000000}
+          max={end.sec * 1000 + end.nsec / 1000000}
+          value={currentTimestamp}
+          onChange={handleSlider}
+          className="slider"
+          id="myRange"
+        />
+        <label htmlFor="myRange">
+          Current Time:
+          {currentTimestamp}
+        </label>
+      </div>
+      <p className="read-the-docs">
+        <button type="button" onClick={handleClick} name="upload">
+          get video
+        </button>
+        <input
+          type="file"
+          aria-label="add files"
+          ref={inputRef}
+          multiple={false}
+          onChange={handleChange}
+          style={{ display: 'none' }}
+        />
+      </p>
       <div className="copyright">Copyright © 2022 PNI Sensor</div>
     </div>
   );
