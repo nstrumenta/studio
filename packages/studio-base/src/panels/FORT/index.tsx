@@ -7,27 +7,21 @@
 // License, v2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
-
-
-
-
-
-
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
-import React, { StrictMode, useState, useEffect, useLayoutEffect } from 'react';
-import ReactDOM from 'react-dom';
+import React, { StrictMode, useState, useEffect, useLayoutEffect } from "react";
+import ReactDOM from "react-dom";
 
-import { CompressedImage } from '@foxglove/schemas';
-import type { PanelExtensionContext, RenderState, Time, Topic } from '@foxglove/studio';
-import Panel from '@foxglove/studio-base/components/Panel';
-import { PanelExtensionAdapter } from '@foxglove/studio-base/components/PanelExtensionAdapter';
-import ThemeProvider from '@foxglove/studio-base/theme/ThemeProvider';
-import type { SaveConfig } from '@foxglove/studio-base/types/panels';
+import { CompressedImage } from "@foxglove/schemas";
+import type { PanelExtensionContext, RenderState, Time, Topic } from "@foxglove/studio";
+import Panel from "@foxglove/studio-base/components/Panel";
+import { PanelExtensionAdapter } from "@foxglove/studio-base/components/PanelExtensionAdapter";
+import ThemeProvider from "@foxglove/studio-base/theme/ThemeProvider";
+import type { SaveConfig } from "@foxglove/studio-base/types/panels";
 
-import { App } from './app';
+import { App } from "./app";
 
 // import { FORTPanel } from './app';
 
@@ -55,17 +49,19 @@ export const FORTPanel = ({ context }: { context: PanelExtensionContext }): JSX.
   }, []);
 
   // Filter all of our topics to find the ones with a CompresssedImage message.
-  const imageTopics = (topics ?? []).filter((topic) => [
-      'START_DOM',
-      'START_VIDEO',
-      'DEBUG',
-      'DS_IN',
-      'AR',
-      'GPS',
-      'TIMESTAMP_FULL',
-      'DOM',
-      'STOP_DOM',
-    ].includes(topic.name));
+  const imageTopics = (topics ?? []).filter((topic) =>
+    [
+      "START_DOM",
+      "START_VIDEO",
+      "DEBUG",
+      "DS_IN",
+      "AR",
+      "GPS",
+      "TIMESTAMP_FULL",
+      "DOM",
+      "STOP_DOM",
+    ].includes(topic.name),
+  );
 
   useEffect(() => {
     // Save our state to the layout when the topic changes.
@@ -92,7 +88,9 @@ export const FORTPanel = ({ context }: { context: PanelExtensionContext }): JSX.
 
       // Save the most recent message on our image topic.
       if (renderState.currentFrame && renderState.currentFrame.length > 0) {
-        setMessage(renderState.currentFrame[renderState.currentFrame.length - 1] as unknown as ImageMessage);
+        setMessage(
+          renderState.currentFrame[renderState.currentFrame.length - 1] as unknown as ImageMessage,
+        );
         setCurrentTime(renderState.currentFrame[renderState.currentFrame.length - 1]!.receiveTime);
       }
 
@@ -112,9 +110,9 @@ export const FORTPanel = ({ context }: { context: PanelExtensionContext }): JSX.
       }
     };
 
-    context.watch('topics');
-    context.watch('currentFrame');
-    context.watch('allFrames');
+    context.watch("topics");
+    context.watch("currentFrame");
+    context.watch("allFrames");
   }, [context]);
 
   // Call our done function at the end of each render.
@@ -131,11 +129,11 @@ export const FORTPanel = ({ context }: { context: PanelExtensionContext }): JSX.
 };
 
 class CustomErrorBoundary extends React.Component {
-  public override state: { hasError: boolean }
+  public override state: { hasError: boolean };
 
   public constructor(props: Record<string, unknown>) {
     if (props == undefined) {
-      console.error('props is undefined');
+      console.error("props is undefined");
     }
     super(props);
     this.state = { hasError: false };
@@ -149,11 +147,10 @@ class CustomErrorBoundary extends React.Component {
   public override componentDidCatch(error: unknown, errorInfo: unknown) {
     // You can also log the error to an error reporting service
     // eslint-disable-next-line no-restricted-syntax
-    console.log('FORT >', error, errorInfo);
+    console.log("FORT >", error, errorInfo);
   }
 
   public override render() {
-
     if (this.state.hasError) {
       // You can render any custom fallback UI
       return (
@@ -161,7 +158,7 @@ class CustomErrorBoundary extends React.Component {
           <h1>Something went wrong.</h1>
           {this.props.children}
         </>
-        );
+      );
     }
 
     return this.props.children;
@@ -199,7 +196,7 @@ const FORTPanelAdapter = (props: Props) => (
   />
 );
 
-FORTPanelAdapter.panelType = 'FORT';
+FORTPanelAdapter.panelType = "FORT";
 FORTPanelAdapter.defaultConfig = {};
 
 export default Panel(FORTPanelAdapter);

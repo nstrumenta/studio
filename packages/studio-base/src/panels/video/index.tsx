@@ -7,26 +7,28 @@
 // License, v2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
-
-
-
-
-
-
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
-import React, { StrictMode, useState, useEffect, useRef, useLayoutEffect, useCallback } from 'react';
-import ReactDOM from 'react-dom';
+import React, {
+  StrictMode,
+  useState,
+  useEffect,
+  useRef,
+  useLayoutEffect,
+  useCallback,
+} from "react";
+import ReactDOM from "react-dom";
+import { makeStyles } from "tss-react/mui";
 
-import { CompressedImage } from '@foxglove/schemas';
-import type { PanelExtensionContext, RenderState, Time, Topic } from '@foxglove/studio';
-import Panel from '@foxglove/studio-base/components/Panel';
-import { PanelExtensionAdapter } from '@foxglove/studio-base/components/PanelExtensionAdapter';
-import ThemeProvider from '@foxglove/studio-base/theme/ThemeProvider';
-import type { SaveConfig } from '@foxglove/studio-base/types/panels';
-
+import { CompressedImage } from "@foxglove/schemas";
+import type { PanelExtensionContext, RenderState, Time, Topic } from "@foxglove/studio";
+import Panel from "@foxglove/studio-base/components/Panel";
+import { PanelExtensionAdapter } from "@foxglove/studio-base/components/PanelExtensionAdapter";
+import ThemeProvider from "@foxglove/studio-base/theme/ThemeProvider";
+import type { SaveConfig } from "@foxglove/studio-base/types/panels";
+import { fonts } from "@foxglove/studio-base/util/sharedStyleConstants";
 
 type ImageMessage = MessageEvent<CompressedImage>;
 
@@ -34,13 +36,39 @@ type PanelState = {
   topic?: string;
 };
 
+const useStyles = makeStyles()((_, _params) => {
+  return {
+    root: {
+      display: "flex",
+      flexDirection: "column",
+      height: "100%",
+      width: "100%",
+      padding: "1em",
+      justifyContent: "center",
+      fontFamily: fonts.MONOSPACE,
+      alignItems: "center",
+    },
+    debug: {
+      display: "flex",
+      position: "absolute",
+      flexDirection: "column",
+      bottom: 0,
+      right: 0,
+      opacity: 0.5,
+      padding: "1em",
+      backgroundColor: "darkblue",
+      justifyContent: "center",
+    },
+  };
+});
+
 // Draws the compressed image data into our canvas.
 async function drawImageOnCanvas(imgData: Uint8Array, canvas: HTMLCanvasElement, format: string) {
   // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
   if (!canvas) {
     return;
   }
-  const ctx = canvas.getContext('2d');
+  const ctx = canvas.getContext("2d");
   // eslint-disable-next-line @foxglove/strict-equality
   if (ctx === undefined) {
     return;
@@ -59,9 +87,10 @@ async function drawImageOnCanvas(imgData: Uint8Array, canvas: HTMLCanvasElement,
   ctx!.resetTransform();
 }
 
-export const FORTPanel = ({ context }: { context: PanelExtensionContext }): JSX.Element => {
+export const VideoPanel = ({ context }: { context: PanelExtensionContext }): JSX.Element => {
   // panel extensions must notify when they've completed rendering
   // onRender will setRenderDone to a done callback which we can invoke after we've rendered
+  const { cx, classes } = useStyles();
   const [topics, setTopics] = useState<readonly Topic[] | undefined>();
   const [message, setMessage] = useState<ImageMessage>();
   const [allFrames, setAllFrames] = useState<MessageEvent<unknown>[]>([]);
@@ -85,17 +114,9 @@ export const FORTPanel = ({ context }: { context: PanelExtensionContext }): JSX.
   }, []);
 
   // Filter all of our topics to find the ones with a CompresssedImage message.
-  const imageTopics = (topics ?? []).filter((topic) => [
-      'START_DOM',
-      'START_VIDEO',
-      'DEBUG',
-      'DS_IN',
-      'AR',
-      'GPS',
-      'TIMESTAMP_FULL',
-      'DOM',
-      'STOP_DOM',
-    ].includes(topic.name));
+  const imageTopics = (topics ?? []).filter((topic) =>
+    ["ACCEL_RAW", "GPS_RAW", "MAXWELL"].includes(topic.name),
+  );
 
   useEffect(() => {
     // Save our state to the layout when the topic changes.
@@ -135,7 +156,9 @@ export const FORTPanel = ({ context }: { context: PanelExtensionContext }): JSX.
 
       // Save the most recent message on our image topic.
       if (renderState.currentFrame && renderState.currentFrame.length > 0) {
-        setMessage(renderState.currentFrame[renderState.currentFrame.length - 1] as unknown as ImageMessage);
+        setMessage(
+          renderState.currentFrame[renderState.currentFrame.length - 1] as unknown as ImageMessage,
+        );
         setCurrentTime(renderState.currentFrame[renderState.currentFrame.length - 1]!.receiveTime);
       }
 
@@ -155,9 +178,9 @@ export const FORTPanel = ({ context }: { context: PanelExtensionContext }): JSX.
       }
     };
 
-    context.watch('topics');
-    context.watch('currentFrame');
-    context.watch('allFrames');
+    context.watch("topics");
+    context.watch("currentFrame");
+    context.watch("allFrames");
   }, [context]);
 
   // Call our done function at the end of each render.
@@ -182,11 +205,11 @@ export const FORTPanel = ({ context }: { context: PanelExtensionContext }): JSX.
         return;
       }
       const blob = new Blob([new Uint8Array(data as ArrayBuffer)], { type: file?.type });
-      const source = document.createElement('source');
+      const source = document.createElement("source");
       // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-      source.setAttribute('src', (window.URL || window.webkitURL).createObjectURL(blob));
+      source.setAttribute("src", (window.URL || window.webkitURL).createObjectURL(blob));
       videoRef.current.appendChild(source);
-      videoRef.current.addEventListener('loadedmetadata', () => {
+      videoRef.current.addEventListener("loadedmetadata", () => {
         setVideoDimensions({
           width: videoRef.current?.videoWidth ?? 320,
           height: videoRef.current?.videoHeight ?? 200,
@@ -210,9 +233,9 @@ export const FORTPanel = ({ context }: { context: PanelExtensionContext }): JSX.
   // @ts-ignore
   const start = allFrames[0] ? allFrames[0].receiveTime : { sec: 0, nsec: 0 };
   const end = allFrames[allFrames.length - 1]
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-    ? allFrames[allFrames.length - 1]!.receiveTime
+    ? // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+      // @ts-ignore
+      allFrames[allFrames.length - 1]!.receiveTime
     : { sec: 0, nsec: 0 };
   const currentTimestamp = currentTime.sec * 1000 + currentTime.nsec / 1000000;
   // duration = end?.sec * 1000 + end?.nsec / 1000000 - (start?.sec * 1000 + start?.nsec / 1000000);
@@ -225,17 +248,13 @@ export const FORTPanel = ({ context }: { context: PanelExtensionContext }): JSX.
   }, [currentOffset]);
 
   return (
-    <div className="App">
+    <div className={cx(classes.root)}>
       <video
         ref={videoRef}
         width={videoDimensions.width}
         height={videoDimensions.height}
         autoPlay={false}
       />
-      <div className="card">
-        current offset:
-        {Math.floor(currentOffset)}
-      </div>
       <div className="card">
         <input
           type="range"
@@ -261,20 +280,36 @@ export const FORTPanel = ({ context }: { context: PanelExtensionContext }): JSX.
           ref={inputRef}
           multiple={false}
           onChange={handleChange}
-          style={{ display: 'none' }}
+          style={{ display: "none" }}
         />
       </p>
       <div className="copyright">Copyright © 2022 PNI Sensor</div>
+      <div className={cx(classes.debug)}>
+        <div>current offset: {Math.floor(currentOffset)}</div>
+        <div>allFrame length: {allFrames.length}</div>
+        <div>currentTimestamp: {currentTimestamp}</div>
+        <div>currentOffset: {currentOffset}</div>
+        <div>
+          Topics:
+          {topics && (
+            <ul>
+              {topics.map((topic) => (
+                <li key={topic.name}>{topic.name}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      </div>
     </div>
   );
 };
 
 class CustomErrorBoundary extends React.Component {
-  public override state: { hasError: boolean }
+  public override state: { hasError: boolean };
 
   public constructor(props: Record<string, unknown>) {
     if (props == undefined) {
-      console.error('props is undefined');
+      console.error("props is undefined");
     }
     super(props);
     this.state = { hasError: false };
@@ -288,11 +323,10 @@ class CustomErrorBoundary extends React.Component {
   public override componentDidCatch(error: unknown, errorInfo: unknown) {
     // You can also log the error to an error reporting service
     // eslint-disable-next-line no-restricted-syntax
-    console.log('FORT >', error, errorInfo);
+    console.log("FORT >", error, errorInfo);
   }
 
   public override render() {
-
     if (this.state.hasError) {
       // You can render any custom fallback UI
       return (
@@ -300,7 +334,7 @@ class CustomErrorBoundary extends React.Component {
           <h1>Something went wrong.</h1>
           {this.props.children}
         </>
-        );
+      );
     }
 
     return this.props.children;
@@ -312,7 +346,7 @@ function initPanel(context: PanelExtensionContext) {
     <StrictMode>
       <ThemeProvider isDark>
         <CustomErrorBoundary>
-          <FORTPanel context={context} />
+          <VideoPanel context={context} />
         </CustomErrorBoundary>
       </ThemeProvider>
     </StrictMode>,
@@ -330,7 +364,7 @@ type Props = {
   saveConfig: SaveConfig<Config>;
 };
 
-const FORTPanelAdapter = (props: Props) => (
+const VideoPanelAdapter = (props: Props) => (
   <PanelExtensionAdapter
     config={props.config}
     saveConfig={props.saveConfig}
@@ -338,7 +372,7 @@ const FORTPanelAdapter = (props: Props) => (
   />
 );
 
-FORTPanelAdapter.panelType = 'FORT';
-FORTPanelAdapter.defaultConfig = {};
+VideoPanelAdapter.panelType = "FORT";
+VideoPanelAdapter.defaultConfig = {};
 
-export default Panel(FORTPanelAdapter);
+export default Panel(VideoPanelAdapter);
