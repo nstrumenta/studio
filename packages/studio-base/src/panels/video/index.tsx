@@ -1,12 +1,4 @@
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/
-
 /* eslint-disable @typescript-eslint/no-unnecessary-condition */
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/
-
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
@@ -108,14 +100,9 @@ export const VideoPanel = ({ context }: { context: PanelExtensionContext }): JSX
   // Restore our state from the layout via the context.initialState property.
   const [state, setState] = useState<PanelState>(() => context.initialState as PanelState);
 
-  // keyboard listeners for the 3d view to reset the camera
-  useEffect(() => {
-    //
-  }, []);
-
   // Filter all of our topics to find the ones with a CompresssedImage message.
   const imageTopics = (topics ?? []).filter((topic) =>
-    ["ACCEL_RAW", "GPS_RAW", "MAXWELL"].includes(topic.name),
+    ["ACCEL_RAW", "GPS_RAW", "MAXWELL", "START"].includes(topic.name),
   );
 
   useEffect(() => {
@@ -138,11 +125,9 @@ export const VideoPanel = ({ context }: { context: PanelExtensionContext }): JSX
   // Every time we get a new image message draw it to the canvas.
   useEffect(() => {
     if (message) {
-      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       drawImageOnCanvas(message.message.data, canvasRef.current!, message.message.format).catch(
-        // eslint-disable-next-line no-restricted-syntax
         (error) => console.log(error),
       );
     }
@@ -163,17 +148,6 @@ export const VideoPanel = ({ context }: { context: PanelExtensionContext }): JSX
       }
 
       if (renderState.allFrames) {
-        // console.log("renderState.allFrames", renderState.allFrames.length);
-        // const start = renderState.allFrames[0]
-        //   ? renderState.allFrames[0].receiveTime
-        //   : { sec: 0, nsec: 0 };
-        // const end = renderState.allFrames[renderState.allFrames.length - 1]
-        //   ? renderState.allFrames[renderState.allFrames.length - 1]!.receiveTime
-        //   : { sec: 0, nsec: 0 };
-        // setDuration(
-        //   end?.sec * 1000 + end?.nsec / 1000000 - (start?.sec * 1000 + start?.nsec / 1000000)
-        // );
-        // console.log(renderState.allFrames.map((frame) => frame.topic));
         setAllFrames(renderState.allFrames as unknown as MessageEvent<unknown>[]);
       }
     };
