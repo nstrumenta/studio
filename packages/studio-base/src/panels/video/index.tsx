@@ -1,8 +1,13 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
 /* eslint-disable @typescript-eslint/no-unnecessary-condition */
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
+import { NstrumentaBrowserClient } from "nstrumenta/dist/browser/client";
 import React, {
   StrictMode,
   useState,
@@ -18,6 +23,12 @@ import { CompressedImage } from "@foxglove/schemas";
 import type { PanelExtensionContext, RenderState, Time, Topic } from "@foxglove/studio";
 import Panel from "@foxglove/studio-base/components/Panel";
 import { PanelExtensionAdapter } from "@foxglove/studio-base/components/PanelExtensionAdapter";
+// import NstrumentaContext from "@foxglove/studio-base/context/NstrumentaContext";
+import {
+  NstrumentaContextType,
+  NstrumentaFoxgloveData,
+} from "@foxglove/studio-base/context/NstrumentaContext";
+import { usePlayerSelection } from "@foxglove/studio-base/context/PlayerSelectionContext";
 import ThemeProvider from "@foxglove/studio-base/theme/ThemeProvider";
 import type { SaveConfig } from "@foxglove/studio-base/types/panels";
 import { fonts } from "@foxglove/studio-base/util/sharedStyleConstants";
@@ -26,6 +37,15 @@ type ImageMessage = MessageEvent<CompressedImage>;
 
 type PanelState = {
   topic?: string;
+};
+
+const nstrumentaClient = new NstrumentaBrowserClient();
+const defaultNstrumentaData: NstrumentaContextType = {
+  nstrumentaClient,
+  tag: "",
+  handleUpdateNstrumenta: () => {},
+  showModal: false,
+  data: {},
 };
 
 const useStyles = makeStyles()((_, _params) => {
@@ -89,6 +109,9 @@ export const VideoPanel = ({ context }: { context: PanelExtensionContext }): JSX
   const [currentTime, setCurrentTime] = useState<Time>({ sec: 0, nsec: 0 });
   const [renderDone, setRenderDone] = useState<(() => void) | undefined>();
   const [videoDimensions, setVideoDimensions] = useState({ width: 320, height: 200 });
+  const [nstrumentaData, setNstrumentaData] =
+    useState<NstrumentaContextType>(defaultNstrumentaData);
+
   // eslint-disable-next-line no-restricted-syntax
   const inputRef = React.useRef<HTMLInputElement>(null);
   // eslint-disable-next-line no-restricted-syntax
@@ -100,10 +123,46 @@ export const VideoPanel = ({ context }: { context: PanelExtensionContext }): JSX
   // Restore our state from the layout via the context.initialState property.
   const [state, setState] = useState<PanelState>(() => context.initialState as PanelState);
 
+  // const { data: nstrumentaData, handleUpdateNstrumenta } =
+  //   React.useContext(NstrumentaContext) ?? {};
+
   // Filter all of our topics to find the ones with a CompresssedImage message.
   const imageTopics = (topics ?? []).filter((topic) =>
     ["ACCEL_RAW", "GPS_RAW", "MAXWELL", "START"].includes(topic.name),
   );
+
+  const { selectSource } = usePlayerSelection();
+
+  useEffect(() => {
+    nstrumentaClient
+      .connect({ wsUrl: "wss://foxglove-test-lceup5dmo5k4rnhtj4vz.vm.nstrumenta.com" })
+      .then(() => {
+        setNstrumentaData((prevData) => {
+          return { ...prevData, client: nstrumentaClient };
+        });
+      })
+      .catch(console.error);
+  }, []);
+
+  useEffect(() => {
+    if (nstrumentaData?.data.mp4) {
+      const video = videoRef.current;
+      if (video) {
+        const blobUrl = URL.createObjectURL(nstrumentaData.data.mp4);
+        video.src = blobUrl;
+      }
+    }
+  }, [nstrumentaData.data.mp4]);
+
+  useEffect(() => {
+    if (nstrumentaData?.data.mcap) {
+      const video = videoRef.current;
+      if (video) {
+        const file = new File([nstrumentaData.data.mcap], "nstrumenta.mcap");
+        selectSource("nstrumenta", { type: "file", files: [file] });
+      }
+    }
+  }, [nstrumentaData.data.mcap, selectSource]);
 
   useEffect(() => {
     // Save our state to the layout when the topic changes.
@@ -125,9 +184,11 @@ export const VideoPanel = ({ context }: { context: PanelExtensionContext }): JSX
   // Every time we get a new image message draw it to the canvas.
   useEffect(() => {
     if (message) {
+      // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       drawImageOnCanvas(message.message.data, canvasRef.current!, message.message.format).catch(
+        // eslint-disable-next-line no-restricted-syntax
         (error) => console.log(error),
       );
     }
@@ -203,6 +264,47 @@ export const VideoPanel = ({ context }: { context: PanelExtensionContext }): JSX
     // setCurrentTime(Number(event.target.value));
   }
 
+  const handleUpdateNstrumenta = React.useCallback(async () => {
+    const data: NstrumentaFoxgloveData = {};
+    const queryResponse =
+      (await nstrumentaClient.storage?.query({
+        tag: nstrumentaData.tag ? [nstrumentaData.tag] : undefined,
+      })) ?? [];
+
+    for (const result of queryResponse) {
+      const filetype = result.filePath.split(".").pop()?.toLocaleLowerCase();
+      let blob: Blob | undefined;
+      const path = result.filePath.replace(/^projects\/[^/]+\//, "");
+      switch (filetype) {
+        case "json":
+          blob = await nstrumentaClient.storage?.download(path);
+          data.json = await new Response(blob).json();
+          break;
+        case "mcap":
+          data.mcap = await nstrumentaClient.storage?.download(path);
+          break;
+        case "mp4":
+          data.mp4 = await nstrumentaClient.storage?.download(path);
+          break;
+        default:
+          break;
+      }
+    }
+
+    setNstrumentaData((prev) => ({
+      ...prev,
+      data,
+    }));
+    return data;
+  }, [nstrumentaData.tag]);
+
+  useEffect(() => {
+    setNstrumentaData((prev) => ({
+      ...prev,
+      handleUpdateNstrumenta,
+    }));
+  }, [handleUpdateNstrumenta]);
+
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   const start = allFrames[0] ? allFrames[0].receiveTime : { sec: 0, nsec: 0 };
@@ -256,6 +358,19 @@ export const VideoPanel = ({ context }: { context: PanelExtensionContext }): JSX
           onChange={handleChange}
           style={{ display: "none" }}
         />
+      </p>
+      <p>
+        <button
+          type="button"
+          onClick={() => {
+            const tag = prompt("enter data tag", nstrumentaData.tag);
+            if (tag) {
+              nstrumentaData.handleUpdateNstrumenta(tag);
+            }
+          }}
+        >
+          Update data tag
+        </button>
       </p>
       <div className="copyright">Copyright © 2022 PNI Sensor</div>
       <div className={cx(classes.debug)}>
