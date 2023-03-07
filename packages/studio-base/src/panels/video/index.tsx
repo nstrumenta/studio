@@ -1,12 +1,10 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
+/* eslint-disable no-restricted-syntax */
 
-/* eslint-disable @typescript-eslint/no-unnecessary-condition */
-// This Source Code Form is subject to the terms of the Mozilla Public
-// License, v2.0. If a copy of the MPL was not distributed with this
-// file, You can obtain one at http://mozilla.org/MPL/2.0/
-
+// import { Theme } from "@mui/material";
+import { styled } from "@mui/material/styles";
 import { NstrumentaBrowserClient } from "nstrumenta/dist/browser/client";
 import React, {
   StrictMode,
@@ -17,7 +15,6 @@ import React, {
   useCallback,
 } from "react";
 import ReactDOM from "react-dom";
-import { makeStyles } from "tss-react/mui";
 
 import { CompressedImage } from "@foxglove/schemas";
 import type { PanelExtensionContext, RenderState, Time, Topic } from "@foxglove/studio";
@@ -48,43 +45,46 @@ const defaultNstrumentaData: NstrumentaContextType = {
   data: {},
 };
 
-const useStyles = makeStyles()((_, _params) => {
-  return {
-    root: {
-      display: "flex",
-      flexDirection: "column",
-      height: "100%",
-      width: "100%",
-      padding: "1em",
-      justifyContent: "center",
-      fontFamily: fonts.MONOSPACE,
-      alignItems: "center",
-    },
-    debug: {
-      display: "flex",
-      position: "absolute",
-      flexDirection: "column",
-      bottom: 0,
-      right: 0,
-      opacity: 0.5,
-      padding: "1em",
-      backgroundColor: "darkblue",
-      justifyContent: "center",
-    },
-  };
-});
+const Root = styled("div")(() => ({
+  display: "flex",
+  flexDirection: "column",
+  height: "100%",
+  width: "100%",
+  padding: "1em",
+  justifyContent: "center",
+  fontFamily: fonts.MONOSPACE,
+  alignItems: "center",
+}));
+
+const Debug = styled("div")(() => ({
+  display: "flex",
+  position: "absolute",
+  flexDirection: "column",
+  bottom: 0,
+  right: 0,
+  opacity: 0.5,
+  padding: "1em",
+  backgroundColor: "darkblue",
+  justifyContent: "center",
+}));
+
+const Overlay = styled("div")<{ dataIsFetching: boolean }>(({ dataIsFetching }) => ({
+  display: dataIsFetching ? "flex" : "none",
+  position: "absolute",
+  flexDirection: "column",
+  bottom: 0,
+  right: 0,
+  top: 0,
+  left: 0,
+  justifyContent: "center",
+  backgroundColor: "rgba(0,0,0,0.5)",
+  alignItems: "center",
+  pointerEvents: "none",
+}));
 
 // Draws the compressed image data into our canvas.
 async function drawImageOnCanvas(imgData: Uint8Array, canvas: HTMLCanvasElement, format: string) {
-  // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
-  if (!canvas) {
-    return;
-  }
   const ctx = canvas.getContext("2d");
-  // eslint-disable-next-line @foxglove/strict-equality
-  if (ctx === undefined) {
-    return;
-  }
 
   // Create a bitmap from our raw compressed image data.
   const blob = new Blob([imgData], { type: `image/${format}` });
@@ -102,7 +102,6 @@ async function drawImageOnCanvas(imgData: Uint8Array, canvas: HTMLCanvasElement,
 export const VideoPanel = ({ context }: { context: PanelExtensionContext }): JSX.Element => {
   // panel extensions must notify when they've completed rendering
   // onRender will setRenderDone to a done callback which we can invoke after we've rendered
-  const { cx, classes } = useStyles();
   const [topics, setTopics] = useState<readonly Topic[] | undefined>();
   const [message, setMessage] = useState<ImageMessage>();
   const [allFrames, setAllFrames] = useState<MessageEvent<unknown>[]>([]);
@@ -111,13 +110,11 @@ export const VideoPanel = ({ context }: { context: PanelExtensionContext }): JSX
   const [videoDimensions, setVideoDimensions] = useState({ width: 320, height: 200 });
   const [nstrumentaData, setNstrumentaData] =
     useState<NstrumentaContextType>(defaultNstrumentaData);
+  const [dataIsFetching, setDataIsFetching] = useState(false);
 
-  // eslint-disable-next-line no-restricted-syntax
   const inputRef = React.useRef<HTMLInputElement>(null);
-  // eslint-disable-next-line no-restricted-syntax
   const videoRef = React.useRef<HTMLVideoElement>(null);
 
-  // eslint-disable-next-line no-restricted-syntax
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Restore our state from the layout via the context.initialState property.
@@ -127,9 +124,17 @@ export const VideoPanel = ({ context }: { context: PanelExtensionContext }): JSX
   //   React.useContext(NstrumentaContext) ?? {};
 
   // Filter all of our topics to find the ones with a CompresssedImage message.
-  const imageTopics = (topics ?? []).filter((topic) =>
-    ["ACCEL_RAW", "GPS_RAW", "MAXWELL", "START"].includes(topic.name),
-  );
+  const imageTopics = (topics ?? []).filter((topic) => {
+    return [
+      "ACCEL_RAW",
+      "MAXWELL",
+      "GYRO_RAW",
+      "START",
+      "START_VIDEO",
+      "TIMESTAMP_FULL",
+      "STOP",
+    ].includes(topic.name);
+  });
 
   const { selectSource } = usePlayerSelection();
 
@@ -145,7 +150,7 @@ export const VideoPanel = ({ context }: { context: PanelExtensionContext }): JSX
   }, []);
 
   useEffect(() => {
-    if (nstrumentaData?.data.mp4) {
+    if (nstrumentaData.data.mp4) {
       const video = videoRef.current;
       if (video) {
         const blobUrl = URL.createObjectURL(nstrumentaData.data.mp4);
@@ -155,7 +160,7 @@ export const VideoPanel = ({ context }: { context: PanelExtensionContext }): JSX
   }, [nstrumentaData.data.mp4]);
 
   useEffect(() => {
-    if (nstrumentaData?.data.mcap) {
+    if (nstrumentaData.data.mcap) {
       const video = videoRef.current;
       if (video) {
         const file = new File([nstrumentaData.data.mcap], "nstrumenta.mcap");
@@ -169,6 +174,7 @@ export const VideoPanel = ({ context }: { context: PanelExtensionContext }): JSX
     context.saveState({ topic: state.topic });
 
     if (state.topic) {
+      console.log("subscribing to", state.topic);
       // Subscribe to the new image topic when a new topic is chosen.
       context.subscribe([state.topic]);
     }
@@ -176,7 +182,11 @@ export const VideoPanel = ({ context }: { context: PanelExtensionContext }): JSX
 
   // Choose our first available image topic as a default once we have a list of topics available.
   useEffect(() => {
-    if (state.topic == undefined) {
+    console.log("state.topic", state.topic, imageTopics[0]?.name);
+    const savedTopicIsExistsInCurrentDataSource = Boolean(
+      imageTopics.find((topic) => topic.name === state.topic),
+    );
+    if (state.topic == undefined || !savedTopicIsExistsInCurrentDataSource) {
       setState({ topic: imageTopics[0]?.name });
     }
   }, [state.topic, imageTopics]);
@@ -184,11 +194,11 @@ export const VideoPanel = ({ context }: { context: PanelExtensionContext }): JSX
   // Every time we get a new image message draw it to the canvas.
   useEffect(() => {
     if (message) {
+      console.log("message", message);
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-ignore
       // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
       drawImageOnCanvas(message.message.data, canvasRef.current!, message.message.format).catch(
-        // eslint-disable-next-line no-restricted-syntax
         (error) => console.log(error),
       );
     }
@@ -241,7 +251,7 @@ export const VideoPanel = ({ context }: { context: PanelExtensionContext }): JSX
       }
       const blob = new Blob([new Uint8Array(data as ArrayBuffer)], { type: file?.type });
       const source = document.createElement("source");
-      // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions
+      // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions, @typescript-eslint/no-unnecessary-condition
       source.setAttribute("src", (window.URL || window.webkitURL).createObjectURL(blob));
       videoRef.current.appendChild(source);
       videoRef.current.addEventListener("loadedmetadata", () => {
@@ -265,6 +275,7 @@ export const VideoPanel = ({ context }: { context: PanelExtensionContext }): JSX
   }
 
   const handleUpdateNstrumenta = React.useCallback(async () => {
+    console.log("handleUpdateNstrumenta", nstrumentaData.tag);
     const data: NstrumentaFoxgloveData = {};
     const queryResponse =
       (await nstrumentaClient.storage?.query({
@@ -277,14 +288,20 @@ export const VideoPanel = ({ context }: { context: PanelExtensionContext }): JSX
       const path = result.filePath.replace(/^projects\/[^/]+\//, "");
       switch (filetype) {
         case "json":
+          setDataIsFetching(true);
           blob = await nstrumentaClient.storage?.download(path);
           data.json = await new Response(blob).json();
+          setDataIsFetching(false);
           break;
         case "mcap":
+          setDataIsFetching(true);
           data.mcap = await nstrumentaClient.storage?.download(path);
+          setDataIsFetching(false);
           break;
         case "mp4":
+          setDataIsFetching(true);
           data.mp4 = await nstrumentaClient.storage?.download(path);
+          setDataIsFetching(false);
           break;
         default:
           break;
@@ -298,6 +315,7 @@ export const VideoPanel = ({ context }: { context: PanelExtensionContext }): JSX
     return data;
   }, [nstrumentaData.tag]);
 
+  // handleUpdateNstrumenta starts as undefined on mount, so we need to set it's defined
   useEffect(() => {
     setNstrumentaData((prev) => ({
       ...prev,
@@ -324,7 +342,8 @@ export const VideoPanel = ({ context }: { context: PanelExtensionContext }): JSX
   }, [currentOffset]);
 
   return (
-    <div className={cx(classes.root)}>
+    <Root>
+      <Overlay dataIsFetching={dataIsFetching}>Fetching data</Overlay>
       <video
         ref={videoRef}
         width={videoDimensions.width}
@@ -373,11 +392,10 @@ export const VideoPanel = ({ context }: { context: PanelExtensionContext }): JSX
         </button>
       </p>
       <div className="copyright">Copyright © 2022 PNI Sensor</div>
-      <div className={cx(classes.debug)}>
+      <Debug>
         <div>current offset: {Math.floor(currentOffset)}</div>
         <div>allFrame length: {allFrames.length}</div>
         <div>currentTimestamp: {currentTimestamp}</div>
-        <div>currentOffset: {currentOffset}</div>
         <div>
           Topics:
           {topics && (
@@ -388,8 +406,8 @@ export const VideoPanel = ({ context }: { context: PanelExtensionContext }): JSX
             </ul>
           )}
         </div>
-      </div>
-    </div>
+      </Debug>
+    </Root>
   );
 };
 
@@ -397,9 +415,9 @@ class CustomErrorBoundary extends React.Component {
   public override state: { hasError: boolean };
 
   public constructor(props: Record<string, unknown>) {
-    if (props == undefined) {
-      console.error("props is undefined");
-    }
+    // if (props == undefined) {
+    //   console.error("props is undefined");
+    // }
     super(props);
     this.state = { hasError: false };
   }
@@ -411,7 +429,7 @@ class CustomErrorBoundary extends React.Component {
 
   public override componentDidCatch(error: unknown, errorInfo: unknown) {
     // You can also log the error to an error reporting service
-    // eslint-disable-next-line no-restricted-syntax
+
     console.log("FORT >", error, errorInfo);
   }
 
