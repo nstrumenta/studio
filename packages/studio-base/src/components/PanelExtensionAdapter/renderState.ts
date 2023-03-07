@@ -171,8 +171,8 @@ function initRenderStateBuilder(): BuildRenderStateFn {
         const topics = sortedTopics.map<Topic>((topic) => {
           const newTopic: Topic = {
             name: topic.name,
-            datatype: topic.schemaName,
-            schemaName: topic.schemaName,
+            datatype: topic.schemaName ?? "",
+            schemaName: topic.schemaName ?? "",
           };
 
           if (messageConverters) {
@@ -329,16 +329,23 @@ function initRenderStateBuilder(): BuildRenderStateFn {
     }
 
     if (watchedFields.has("currentTime")) {
-      const currentTime = activeData?.currentTime;
-
-      if (currentTime != undefined && currentTime !== renderState.currentTime) {
+      if (renderState.currentTime !== activeData?.currentTime) {
+        renderState.currentTime = activeData?.currentTime;
         shouldRender = true;
-        renderState.currentTime = currentTime;
-      } else {
-        if (renderState.currentTime != undefined) {
-          shouldRender = true;
-        }
-        renderState.currentTime = undefined;
+      }
+    }
+
+    if (watchedFields.has("startTime")) {
+      if (renderState.startTime !== activeData?.startTime) {
+        renderState.startTime = activeData?.startTime;
+        shouldRender = true;
+      }
+    }
+
+    if (watchedFields.has("endTime")) {
+      if (renderState.endTime !== activeData?.endTime) {
+        renderState.endTime = activeData?.endTime;
+        shouldRender = true;
       }
     }
 

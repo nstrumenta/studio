@@ -26,6 +26,7 @@ class SampleNuscenesDataSourceFactory implements IDataSourceFactory {
     const source = new WorkerIterableSource({
       initWorker: () => {
         return new Worker(
+          // foxglove-depcheck-used: babel-plugin-transform-import-meta
           new URL(
             "@foxglove/studio-base/players/IterablePlayer/Mcap/McapIterableSourceWorker.worker",
             import.meta.url,
@@ -38,7 +39,7 @@ class SampleNuscenesDataSourceFactory implements IDataSourceFactory {
     return new IterablePlayer({
       source,
       isSampleDataSource: true,
-      name: "Adapted from nuScenes dataset.\nCopyright © 2020 nuScenes.\nhttps://www.nuscenes.org/terms-of-use",
+      name: "Adapted from nuScenes dataset. Copyright © 2020 nuScenes. https://www.nuscenes.org/terms-of-use",
       metricsCollector: args.metricsCollector,
       // Use blank url params so the data source is set in the url
       urlParams: {},

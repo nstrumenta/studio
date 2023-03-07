@@ -9,6 +9,7 @@ export enum AppSetting {
   TIME_FORMAT = "time.format",
   MESSAGE_RATE = "messageRate",
   UPDATES_ENABLED = "updates.enabled",
+  LANGUAGE = "language",
 
   // ROS
   ROS_PACKAGE_PATH = "ros.ros_package_path",
@@ -21,6 +22,7 @@ export enum AppSetting {
   SHOW_DEBUG_PANELS = "showDebugPanels",
   ENABLE_LEGACY_PLOT_PANEL = "enableLegacyPlotPanel",
   ENABLE_NEW_TOPNAV = "enableNewTopNav",
+  ENABLE_URDF_VIEWER = "enableUrdfViewer",
 
   // Miscellaneous
   HIDE_SIGN_IN_PROMPT = "hideSignInPrompt",

@@ -4,6 +4,7 @@
 
 import { alpha, Theme } from "@mui/material";
 import { CSSProperties } from "react";
+import tinycolor from "tinycolor2";
 
 type MuiLabComponents = {
   MuiFocusVisible?: {
@@ -364,30 +365,19 @@ export default function muiComponents(theme: Theme): Theme["components"] & MuiLa
         },
       },
     },
-    MuiListItem: {
-      // variants: [
-      //   {
-      //     props: { showSecondaryActionsOnHover: true },
-      //     style: {
-      //       "@media (pointer: fine)": {
-      //         "& .MuiListItemSecondaryAction-root .MuiIconButton-root:last-child": {
-      //           visibility: "hidden",
-      //         },
-      //         "&:hover": {
-      //           "& .MuiListItemSecondaryAction-root .MuiIconButton-root:last-child": {
-      //             visibility: "visible",
-      //           },
-      //         },
-      //       },
-      //     },
-      //   },
-      // ],
-    },
     MuiListItemButton: {
       defaultProps: { disableRipple: true },
       styleOverrides: {
         root: {
           ...disableBackgroundColorTransition,
+        },
+      },
+    },
+    MuiListItemText: {
+      styleOverrides: {
+        dense: {
+          marginTop: theme.spacing(0.25),
+          marginBottom: theme.spacing(0.25),
         },
       },
     },
@@ -526,12 +516,33 @@ export default function muiComponents(theme: Theme): Theme["components"] & MuiLa
       },
       styleOverrides: {
         arrow: {
-          color: theme.palette.grey[700],
+          color: tinycolor(theme.palette.grey[700]).setAlpha(0.86).toRgbString(),
+          backdropFilter: "blur(3px)",
         },
         tooltip: {
-          backgroundColor: theme.palette.grey[700],
+          backgroundColor: tinycolor(theme.palette.grey[700]).setAlpha(0.86).toRgbString(),
+          backdropFilter: "blur(3px)",
           fontWeight: "normal",
           fontSize: "0.75rem",
+        },
+      },
+    },
+    MuiTypography: {
+      defaultProps: {
+        // Remap typography variants to be <div> elements to
+        // avoid triggering react's validateDOMNesting error
+        variantMapping: {
+          h1: "div",
+          h2: "div",
+          h3: "div",
+          h4: "div",
+          h5: "div",
+          h6: "div",
+          subtitle1: "div",
+          subtitle2: "div",
+          body1: "div",
+          body2: "div",
+          inherit: "div",
         },
       },
     },

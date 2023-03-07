@@ -9,11 +9,12 @@ import {
   Tabs,
   styled as muiStyled,
   Divider,
-  Box,
   CircularProgress,
 } from "@mui/material";
-import { useState, PropsWithChildren, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { makeStyles } from "tss-react/mui";
 
+import { AppSetting } from "@foxglove/studio-base/AppSetting";
 import { EventsList } from "@foxglove/studio-base/components/DataSourceSidebar/EventsList";
 import {
   MessagePipelineContext,
@@ -23,6 +24,7 @@ import { SidebarContent } from "@foxglove/studio-base/components/SidebarContent"
 import Stack from "@foxglove/studio-base/components/Stack";
 import { useCurrentUser } from "@foxglove/studio-base/context/CurrentUserContext";
 import { EventsStore, useEvents } from "@foxglove/studio-base/context/EventsContext";
+import { useAppConfigurationValue } from "@foxglove/studio-base/hooks/useAppConfigurationValue";
 import { PlayerPresence } from "@foxglove/studio-base/players/types";
 
 import { ProblemsList } from "./ProblemsList";
@@ -33,11 +35,18 @@ type Props = {
   onSelectDataSourceAction: () => void;
 };
 
+const useStyles = makeStyles()({
+  tabContent: {
+    flex: "auto",
+  },
+});
+
 const StyledTab = muiStyled(Tab)(({ theme }) => ({
-  minHeight: "auto",
+  minHeight: 30,
   minWidth: theme.spacing(8),
-  padding: theme.spacing(1.5, 2),
+  padding: theme.spacing(0, 1.5),
   color: theme.palette.text.secondary,
+  fontSize: "0.6875rem",
 
   "&.Mui-selected": {
     color: theme.palette.text.primary,
@@ -61,33 +70,13 @@ const ProblemCount = muiStyled("div")(({ theme }) => ({
   borderRadius: 8,
 }));
 
-const TabPanel = (
-  props: PropsWithChildren<{
-    index: number;
-    value: number;
-  }>,
-): JSX.Element => {
-  const { children, value, index, ...other } = props;
-
-  return (
-    <Box
-      role="tabpanel"
-      hidden={value !== index}
-      id={`tabpanel-${index}`}
-      aria-labelledby={`tab-${index}`}
-      flex="auto"
-      {...other}
-    >
-      {value === index && <>{children}</>}
-    </Box>
-  );
-};
-
 const selectPlayerPresence = ({ playerState }: MessagePipelineContext) => playerState.presence;
 const selectPlayerProblems = ({ playerState }: MessagePipelineContext) => playerState.problems;
 const selectPlayerSourceId = ({ playerState }: MessagePipelineContext) =>
   playerState.urlState?.sourceId;
 const selectSelectedEventId = (store: EventsStore) => store.selectedEventId;
+
+type DataSourceSidebarTab = "topics" | "events" | "problems";
 
 export default function DataSourceSidebar(props: Props): JSX.Element {
   const { onSelectDataSourceAction } = props;
@@ -96,9 +85,13 @@ export default function DataSourceSidebar(props: Props): JSX.Element {
   const { currentUser } = useCurrentUser();
   const playerSourceId = useMessagePipeline(selectPlayerSourceId);
   const selectedEventId = useEvents(selectSelectedEventId);
-  const [activeTab, setActiveTab] = useState(0);
+  const [activeTab, setActiveTab] = useState<DataSourceSidebarTab>("topics");
+  const { classes } = useStyles();
 
-  const showEventsTab = currentUser != undefined && playerSourceId === "foxglove-data-platform";
+  const [enableNewTopNav = false] = useAppConfigurationValue<boolean>(AppSetting.ENABLE_NEW_TOPNAV);
+
+  const showEventsTab =
+    !enableNewTopNav && currentUser != undefined && playerSourceId === "foxglove-data-platform";
 
   const isLoading = useMemo(
     () =>
@@ -109,9 +102,9 @@ export default function DataSourceSidebar(props: Props): JSX.Element {
 
   useEffect(() => {
     if (playerPresence === PlayerPresence.ERROR || playerPresence === PlayerPresence.RECONNECTING) {
-      setActiveTab(2);
+      setActiveTab("problems");
     } else if (showEventsTab && selectedEventId != undefined) {
-      setActiveTab(1);
+      setActiveTab("events");
     }
   }, [playerPresence, showEventsTab, selectedEventId]);
 
@@ -137,18 +130,19 @@ export default function DataSourceSidebar(props: Props): JSX.Element {
       ].filter(Boolean)}
     >
       <Stack fullHeight>
-        <DataSourceInfoView />
+        <Stack paddingX={2} paddingBottom={2}>
+          <DataSourceInfoView />
+        </Stack>
         {playerPresence !== PlayerPresence.NOT_PRESENT && (
           <>
-            <Divider />
             <Stack flex={1}>
               <StyledTabs
                 value={activeTab}
-                onChange={(_ev, newValue: number) => setActiveTab(newValue)}
+                onChange={(_ev, newValue: DataSourceSidebarTab) => setActiveTab(newValue)}
                 textColor="inherit"
               >
-                <StyledTab disableRipple label="Topics" value={0} />
-                {showEventsTab && <StyledTab disableRipple label="Events" value={1} />}
+                <StyledTab disableRipple label="Topics" value="topics" />
+                {showEventsTab && <StyledTab disableRipple label="Events" value="events" />}
                 <StyledTab
                   disableRipple
                   label={
@@ -159,19 +153,25 @@ export default function DataSourceSidebar(props: Props): JSX.Element {
                       )}
                     </Stack>
                   }
-                  value={2}
+                  value="problems"
                 />
               </StyledTabs>
               <Divider />
-              <TabPanel value={activeTab} index={0}>
-                <TopicList />
-              </TabPanel>
-              <TabPanel value={activeTab} index={1}>
-                <EventsList />
-              </TabPanel>
-              <TabPanel value={activeTab} index={2}>
-                <ProblemsList problems={playerProblems} />
-              </TabPanel>
+              {activeTab === "topics" && (
+                <div className={classes.tabContent}>
+                  <TopicList />
+                </div>
+              )}
+              {activeTab === "events" && (
+                <div className={classes.tabContent}>
+                  <EventsList />
+                </div>
+              )}
+              {activeTab === "problems" && (
+                <div className={classes.tabContent}>
+                  <ProblemsList problems={playerProblems} />
+                </div>
+              )}
             </Stack>
           </>
         )}

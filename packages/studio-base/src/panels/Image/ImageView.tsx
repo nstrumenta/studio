@@ -13,14 +13,13 @@
 
 import { Typography } from "@mui/material";
 import produce from "immer";
-import { difference, set, union } from "lodash";
+import { difference, keyBy, set, union } from "lodash";
 import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import ReactDOM from "react-dom";
-import { useUpdateEffect } from "react-use";
 import { DeepPartial } from "ts-essentials";
 import { makeStyles } from "tss-react/mui";
 
-import { PanelExtensionContext, SettingsTreeAction, Topic } from "@foxglove/studio";
+import { PanelExtensionContext, SettingsTreeAction, Subscription, Topic } from "@foxglove/studio";
 import {
   PanelContextMenu,
   PanelContextMenuItem,
@@ -30,7 +29,6 @@ import inScreenshotTests from "@foxglove/studio-base/stories/inScreenshotTests";
 import ThemeProvider from "@foxglove/studio-base/theme/ThemeProvider";
 import { CameraInfo } from "@foxglove/studio-base/types/Messages";
 import { mightActuallyBePartial } from "@foxglove/studio-base/util/mightActuallyBePartial";
-import { getTopicsByTopicName } from "@foxglove/studio-base/util/selectors";
 import { fonts } from "@foxglove/studio-base/util/sharedStyleConstants";
 import { formatTimeRaw } from "@foxglove/studio-base/util/time";
 
@@ -45,6 +43,24 @@ import type { Config, PixelData, RawMarkerData } from "./types";
 type Props = {
   context: PanelExtensionContext;
 };
+
+const SUPPORTED_IMAGE_SCHEMAS = new Set(NORMALIZABLE_IMAGE_DATATYPES);
+const SUPPORTED_ANNOTATION_SCHEMAS = new Set(ANNOTATION_DATATYPES);
+
+function topicIsConvertibleToSchema(topic: Topic, supportedSchemaNames: Set<string>): boolean {
+  return (
+    supportedSchemaNames.has(topic.schemaName) ||
+    (topic.convertibleTo?.some((name) => supportedSchemaNames.has(name)) ?? false)
+  );
+}
+
+function pickConvertToSchema(topic: Topic, supportedSchemaNames: Set<string>): string | undefined {
+  if (supportedSchemaNames.has(topic.schemaName)) {
+    // This topic schema is supported, don't use a conversion
+    return undefined;
+  }
+  return topic.convertibleTo?.find((name) => supportedSchemaNames.has(name));
+}
 
 const useStyles = makeStyles<void, "timestamp">()((theme, _params, classes) => ({
   timestamp: {
@@ -96,22 +112,59 @@ export function ImageView({ context }: Props): JSX.Element {
   });
 
   const { cameraTopic, enabledMarkerTopics, transformMarkers } = config;
+  const topicsByTopicName = useMemo(() => keyBy(topics, ({ name }) => name), [topics]);
   const cameraTopicFullObject = useMemo(
-    () => getTopicsByTopicName(topics)[cameraTopic],
-    [cameraTopic, topics],
+    () => topicsByTopicName[cameraTopic],
+    [cameraTopic, topicsByTopicName],
   );
   const [activePixelData, setActivePixelData] = useState<PixelData | undefined>();
 
   const shouldSynchronize = config.synchronize && enabledMarkerTopics.length > 0;
 
   const cameraInfoTopic = useMemo(() => getCameraInfoTopic(cameraTopic), [cameraTopic]);
-  const subscriptions = useMemo(() => {
-    const subs = [cameraTopic, ...enabledMarkerTopics];
-    if (cameraInfoTopic != undefined) {
-      subs.push(cameraInfoTopic);
+  const cameraInfoTopicFullObject = useMemo(
+    () => (cameraInfoTopic != undefined ? topicsByTopicName[cameraInfoTopic] : undefined),
+    [cameraInfoTopic, topicsByTopicName],
+  );
+
+  const enabledMarkerTopicsFullObjects = useMemo(
+    () => enabledMarkerTopics.map((topic) => topicsByTopicName[topic]),
+    [enabledMarkerTopics, topicsByTopicName],
+  );
+
+  const subscriptions = useMemo<Subscription[]>(() => {
+    const subs: Subscription[] = [];
+    if (
+      cameraTopicFullObject &&
+      topicIsConvertibleToSchema(cameraTopicFullObject, SUPPORTED_IMAGE_SCHEMAS)
+    ) {
+      subs.push({
+        topic: cameraTopicFullObject.name,
+        preload: false,
+        convertTo: pickConvertToSchema(cameraTopicFullObject, SUPPORTED_IMAGE_SCHEMAS),
+      });
     }
-    return subs.map((topic) => ({ topic, preload: false }));
-  }, [cameraTopic, cameraInfoTopic, enabledMarkerTopics]);
+    if (
+      cameraInfoTopicFullObject &&
+      topicIsConvertibleToSchema(cameraInfoTopicFullObject, SUPPORTED_IMAGE_SCHEMAS)
+    ) {
+      subs.push({
+        topic: cameraInfoTopicFullObject.name,
+        preload: false,
+        convertTo: pickConvertToSchema(cameraInfoTopicFullObject, SUPPORTED_IMAGE_SCHEMAS),
+      });
+    }
+    for (const topic of enabledMarkerTopicsFullObjects) {
+      if (topic && topicIsConvertibleToSchema(topic, SUPPORTED_ANNOTATION_SCHEMAS)) {
+        subs.push({
+          topic: topic.name,
+          preload: false,
+          convertTo: pickConvertToSchema(topic, SUPPORTED_ANNOTATION_SCHEMAS),
+        });
+      }
+    }
+    return subs;
+  }, [cameraTopicFullObject, cameraInfoTopicFullObject, enabledMarkerTopicsFullObjects]);
 
   const [colorScheme, setColorScheme] = useState<"dark" | "light">("light");
 
@@ -157,7 +210,7 @@ export function ImageView({ context }: Props): JSX.Element {
   }, [context, actions]);
 
   const imageTopics = useMemo(() => {
-    return topics.filter(({ schemaName }) => NORMALIZABLE_IMAGE_DATATYPES.includes(schemaName));
+    return topics.filter((topic) => topicIsConvertibleToSchema(topic, SUPPORTED_IMAGE_SCHEMAS));
   }, [topics]);
 
   // If no cameraTopic is selected, automatically select the first available image topic
@@ -229,7 +282,7 @@ export function ImageView({ context }: Props): JSX.Element {
 
   const markerTopics = useMemo(() => {
     return topics
-      .filter((topic) => (ANNOTATION_DATATYPES as readonly string[]).includes(topic.schemaName))
+      .filter((topic) => topicIsConvertibleToSchema(topic, SUPPORTED_ANNOTATION_SCHEMAS))
       .map((topic) => topic.name);
   }, [topics]);
 
@@ -257,22 +310,11 @@ export function ImageView({ context }: Props): JSX.Element {
   const lastImageMessageRef = useRef(image);
 
   useEffect(() => {
-    if (image) {
-      lastImageMessageRef.current = image;
-    }
+    lastImageMessageRef.current = image;
   }, [image]);
 
-  // Keep the last image message, if it exists, to render on the ImageCanvas.
-  // Improve perf by hiding the ImageCanvas while seeking, instead of unmounting and remounting it.
-  const imageMessageToRender = image ?? lastImageMessageRef.current;
-
-  // Clear our cached last image when the camera topic changes since it came from the old topic.
-  useUpdateEffect(() => {
-    lastImageMessageRef.current = undefined;
-  }, [cameraTopic]);
-
   const doDownloadImage = useCallback(async () => {
-    if (!imageMessageToRender) {
+    if (!lastImageMessageRef.current) {
       return;
     }
 
@@ -281,8 +323,8 @@ export function ImageView({ context }: Props): JSX.Element {
       return;
     }
 
-    await downloadImage(imageMessageToRender, topic, config);
-  }, [imageTopics, cameraTopic, config, imageMessageToRender]);
+    await downloadImage(lastImageMessageRef.current, topic, config);
+  }, [imageTopics, cameraTopic, config]);
 
   const contextMenuItemsForClickPosition = useCallback<() => PanelContextMenuItem[]>(
     () => [
@@ -361,7 +403,7 @@ export function ImageView({ context }: Props): JSX.Element {
           {/* Always render the ImageCanvas because it's expensive to unmount and start up. */}
           <ImageCanvas
             topic={cameraTopicFullObject}
-            image={imageMessageToRender}
+            image={image}
             rawMarkerData={rawMarkerData}
             config={config}
             saveConfig={saveConfigWithMerging}
