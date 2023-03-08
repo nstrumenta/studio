@@ -4,7 +4,7 @@
 /* eslint-disable no-restricted-syntax */
 
 // import { Theme } from "@mui/material";
-import { styled } from "@mui/material/styles";
+import { styled, keyframes } from "@mui/material/styles";
 import { NstrumentaBrowserClient } from "nstrumenta/dist/browser/client";
 import React, {
   StrictMode,
@@ -68,6 +68,17 @@ const Debug = styled("div")(() => ({
   justifyContent: "center",
 }));
 
+const Footer = styled("div")(() => ({
+  display: "flex",
+  position: "absolute",
+  flexDirection: "column",
+  bottom: 0,
+  left: 0,
+  right: 0,
+  padding: "1em",
+  alignItems: "center",
+}));
+
 const Overlay = styled("div")<{ dataIsFetching: boolean }>(({ dataIsFetching }) => ({
   display: dataIsFetching ? "flex" : "none",
   position: "absolute",
@@ -80,6 +91,29 @@ const Overlay = styled("div")<{ dataIsFetching: boolean }>(({ dataIsFetching }) 
   backgroundColor: "rgba(0,0,0,0.5)",
   alignItems: "center",
   pointerEvents: "none",
+}));
+
+const rotate360 = keyframes`
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+`;
+
+const Spinner = styled("div")(() => ({
+  animation: `${rotate360} 1s linear infinite`,
+  transform: `translateZ(0)`,
+  "border-top": `2px solid rgba(255, 255, 255, 0.2)`,
+  "border-right": `2px solid rgba(255, 255, 255, 0.2)`,
+  "border-bottom": `2px solid rgba(255, 255, 255, 0.2)`,
+  "border-left": `2px solid #ffffff`,
+  background: `transparent`,
+  width: `24px`,
+  height: `24px`,
+  borderRadius: `50%`,
 }));
 
 // Draws the compressed image data into our canvas.
@@ -107,10 +141,10 @@ export const VideoPanel = ({ context }: { context: PanelExtensionContext }): JSX
   const [allFrames, setAllFrames] = useState<MessageEvent<unknown>[]>([]);
   const [currentTime, setCurrentTime] = useState<Time>({ sec: 0, nsec: 0 });
   const [renderDone, setRenderDone] = useState<(() => void) | undefined>();
-  const [videoDimensions, setVideoDimensions] = useState({ width: 320, height: 200 });
   const [nstrumentaData, setNstrumentaData] =
     useState<NstrumentaContextType>(defaultNstrumentaData);
   const [dataIsFetching, setDataIsFetching] = useState(false);
+  const [showDebug, setShowDebug] = useState(false);
 
   const inputRef = React.useRef<HTMLInputElement>(null);
   const videoRef = React.useRef<HTMLVideoElement>(null);
@@ -137,6 +171,20 @@ export const VideoPanel = ({ context }: { context: PanelExtensionContext }): JSX
   });
 
   const { selectSource } = usePlayerSelection();
+
+  useEffect(() => {
+    const listener = (event: KeyboardEvent) => {
+      if (event.key === "d" && event.ctrlKey) {
+        console.log("toggle debug");
+        setShowDebug((prev) => !prev);
+      }
+    };
+
+    document.addEventListener("keydown", listener);
+    return () => {
+      document.removeEventListener("keydown", listener);
+    };
+  }, []);
 
   useEffect(() => {
     nstrumentaClient
@@ -182,7 +230,6 @@ export const VideoPanel = ({ context }: { context: PanelExtensionContext }): JSX
 
   // Choose our first available image topic as a default once we have a list of topics available.
   useEffect(() => {
-    console.log("state.topic", state.topic, imageTopics[0]?.name);
     const savedTopicIsExistsInCurrentDataSource = Boolean(
       imageTopics.find((topic) => topic.name === state.topic),
     );
@@ -254,25 +301,10 @@ export const VideoPanel = ({ context }: { context: PanelExtensionContext }): JSX
       // eslint-disable-next-line @typescript-eslint/strict-boolean-expressions, @typescript-eslint/no-unnecessary-condition
       source.setAttribute("src", (window.URL || window.webkitURL).createObjectURL(blob));
       videoRef.current.appendChild(source);
-      videoRef.current.addEventListener("loadedmetadata", () => {
-        setVideoDimensions({
-          width: videoRef.current?.videoWidth ?? 320,
-          height: videoRef.current?.videoHeight ?? 200,
-        });
-        // videoRef.current?.play();
-      });
       videoRef.current.load();
     };
     reader.readAsArrayBuffer(file as File);
   }, []);
-
-  function handleSlider() {
-    // // move to video component
-    // if (videoRef.current) {
-    //   videoRef.current.currentTime = Number(event.target.value);
-    // }
-    // setCurrentTime(Number(event.target.value));
-  }
 
   const handleUpdateNstrumenta = React.useCallback(async () => {
     console.log("handleUpdateNstrumenta", nstrumentaData.tag);
@@ -326,11 +358,11 @@ export const VideoPanel = ({ context }: { context: PanelExtensionContext }): JSX
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
   const start = allFrames[0] ? allFrames[0].receiveTime : { sec: 0, nsec: 0 };
-  const end = allFrames[allFrames.length - 1]
-    ? // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-      // @ts-ignore
-      allFrames[allFrames.length - 1]!.receiveTime
-    : { sec: 0, nsec: 0 };
+  // const end = allFrames[allFrames.length - 1]
+  //   ? // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+  //     // @ts-ignore
+  //     allFrames[allFrames.length - 1]!.receiveTime
+  //   : { sec: 0, nsec: 0 };
   const currentTimestamp = currentTime.sec * 1000 + currentTime.nsec / 1000000;
   // duration = end?.sec * 1000 + end?.nsec / 1000000 - (start?.sec * 1000 + start?.nsec / 1000000);
   const currentOffset = currentTimestamp - (start.sec * 1000 + start.nsec / 1000000);
@@ -343,70 +375,56 @@ export const VideoPanel = ({ context }: { context: PanelExtensionContext }): JSX
 
   return (
     <Root>
-      <Overlay dataIsFetching={dataIsFetching}>Fetching data</Overlay>
-      <video
-        ref={videoRef}
-        width={videoDimensions.width}
-        height={videoDimensions.height}
-        autoPlay={false}
-      />
-      <div className="card">
-        <input
-          type="range"
-          min={start.sec * 1000 + start.nsec / 1000000}
-          max={end.sec * 1000 + end.nsec / 1000000}
-          value={currentTimestamp}
-          onChange={handleSlider}
-          className="slider"
-          id="myRange"
-        />
-        <label htmlFor="myRange">
-          Current Time:
-          {currentTimestamp}
-        </label>
-      </div>
-      <p className="read-the-docs">
-        <button type="button" onClick={handleClick} name="upload">
-          get video
-        </button>
-        <input
-          type="file"
-          aria-label="add files"
-          ref={inputRef}
-          multiple={false}
-          onChange={handleChange}
-          style={{ display: "none" }}
-        />
-      </p>
-      <p>
-        <button
-          type="button"
-          onClick={() => {
-            const tag = prompt("enter data tag", nstrumentaData.tag);
-            if (tag) {
-              nstrumentaData.handleUpdateNstrumenta(tag);
-            }
-          }}
-        >
-          Update data tag
-        </button>
-      </p>
-      <div className="copyright">Copyright © 2022 PNI Sensor</div>
-      <Debug>
-        <div>current offset: {Math.floor(currentOffset)}</div>
-        <div>allFrame length: {allFrames.length}</div>
-        <div>currentTimestamp: {currentTimestamp}</div>
-        <div>
-          Topics:
-          {topics && (
-            <ul>
-              {topics.map((topic) => (
-                <li key={topic.name}>{topic.name}</li>
-              ))}
-            </ul>
-          )}
+      <Overlay dataIsFetching={dataIsFetching}>
+        <Spinner />
+        Fetching data
+      </Overlay>
+      <video ref={videoRef} autoPlay={false} />
+      <Footer>
+        <div className="card">
+          <button type="button" onClick={handleClick} name="upload">
+            open video file
+          </button>
+          <input
+            type="file"
+            aria-label="add files"
+            ref={inputRef}
+            multiple={false}
+            onChange={handleChange}
+            style={{ display: "none" }}
+          />
+
+          <button
+            type="button"
+            onClick={() => {
+              const tag = prompt("enter data tag", nstrumentaData.tag);
+              if (tag) {
+                nstrumentaData.handleUpdateNstrumenta(tag);
+              }
+            }}
+          >
+            Update data tag
+          </button>
         </div>
-      </Debug>
+        <div className="copyright">Copyright © 2022 PNI Sensor</div>
+      </Footer>
+      {showDebug && (
+        <Debug>
+          <div>current offset: {Math.floor(currentOffset)}</div>
+          <div>allFrame length: {allFrames.length}</div>
+          <div>currentTimestamp: {currentTimestamp}</div>
+          <div>
+            Topics:
+            {topics && (
+              <ul>
+                {topics.map((topic) => (
+                  <li key={topic.name}>{topic.name}</li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </Debug>
+      )}
     </Root>
   );
 };
