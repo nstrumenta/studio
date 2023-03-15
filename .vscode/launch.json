@@ -6,10 +6,18 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Attach to Chrome",
+      "name": "Launch Chrome",
+      "request": "launch",
+      "type": "chrome",
+      "url": "http://localhost:8082",
+      "webRoot": "${workspaceFolder}"
+    },
+    {
+      "name": "attach to Chrome",
       "port": 9222,
       "request": "attach",
-      "type": "pwa-chrome",
+      "type": "chrome",
+      "url": "http://localhost:8082",
       "webRoot": "${workspaceFolder}"
     },
     {
@@ -23,8 +31,7 @@
         "NODE_OPTIONS": "--require ts-node/register"
       },
       "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen",
-      "disableOptimisticBPs": true
+      "internalConsoleOptions": "neverOpen"
     }
   ]
 }

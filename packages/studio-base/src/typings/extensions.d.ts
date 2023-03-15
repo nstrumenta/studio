@@ -32,6 +32,11 @@ declare module "*.png" {
   export default Path;
 }
 
+declare module "*.png" {
+  const Path: string;
+  export default Path;
+}
+
 declare module "*.glb" {
   const content: string;
   export default content;

@@ -120,6 +120,7 @@ export default {
       delay: 100,
     },
     colorScheme: "dark",
+    disableI18n: true,
   },
 };
 
@@ -131,6 +132,9 @@ export const Basic: Story = (_args) => {
       <ChartComponent {...props} onFinishRender={readySignal} />
     </div>
   );
+};
+Basic.play = async (ctx) => {
+  await ctx.parameters.storyReady;
 };
 Basic.parameters = {
   useReadySignal: true,
@@ -145,7 +149,9 @@ export const WithDatalabels: Story = (_args) => {
     </div>
   );
 };
-
+WithDatalabels.play = async (ctx) => {
+  await ctx.parameters.storyReady;
+};
 WithDatalabels.parameters = {
   useReadySignal: true,
 };
@@ -184,7 +190,9 @@ export const AllowsClickingOnDatalabels: Story = (_args) => {
     </div>
   );
 };
-
+AllowsClickingOnDatalabels.play = async (ctx) => {
+  await ctx.parameters.storyReady;
+};
 AllowsClickingOnDatalabels.parameters = {
   useReadySignal: true,
 };

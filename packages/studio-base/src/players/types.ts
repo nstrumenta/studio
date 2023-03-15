@@ -13,7 +13,7 @@
 
 import { DeepReadonly } from "ts-essentials";
 
-import { RosMsgDefinition } from "@foxglove/rosmsg";
+import { MessageDefinition } from "@foxglove/message-definition";
 import { Time } from "@foxglove/rostime";
 import type { MessageEvent, ParameterValue } from "@foxglove/studio";
 import { GlobalVariables } from "@foxglove/studio-base/hooks/useGlobalVariables";
@@ -28,7 +28,7 @@ export type MessageDefinitionsByTopic = {
   [topic: string]: string;
 };
 export type ParsedMessageDefinitionsByTopic = {
-  [topic: string]: RosMsgDefinition[];
+  [topic: string]: MessageDefinition[];
 };
 
 // A `Player` is a class that manages playback state. It manages subscriptions,
@@ -204,8 +204,10 @@ export type Topic = {
   // a consistent representation for topics that people recognize though.
   name: string;
   // Name of the datatype (see `type PlayerStateActiveData` for details).
-  schemaName: string;
+  schemaName: string | undefined;
 };
+
+export type TopicWithSchemaName = Topic & { schemaName: string };
 
 export type TopicStats = {
   // The number of messages observed on the topic.

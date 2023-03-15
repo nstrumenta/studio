@@ -13,22 +13,16 @@
 import { Link, Typography } from "@mui/material";
 import { useSnackbar } from "notistack";
 import { extname } from "path";
-import {
-  useState,
-  useEffect,
-  useRef,
-  useCallback,
-  useMemo,
-  useLayoutEffect,
-  useContext,
-} from "react";
+import { useState, useEffect, useRef, useCallback, useMemo, useLayoutEffect } from "react";
 import { makeStyles } from "tss-react/mui";
 
 import Logger from "@foxglove/log";
 import { AppSetting } from "@foxglove/studio-base/AppSetting";
 import AccountSettings from "@foxglove/studio-base/components/AccountSettingsSidebar/AccountSettings";
-import { AppBar, CustomWindowControlsProps } from "@foxglove/studio-base/components/AppBar";
+import { AppBar } from "@foxglove/studio-base/components/AppBar";
+import { CustomWindowControlsProps } from "@foxglove/studio-base/components/AppBar/CustomWindowControls";
 import { DataSourceSidebar } from "@foxglove/studio-base/components/DataSourceSidebar";
+import { EventsList } from "@foxglove/studio-base/components/DataSourceSidebar/EventsList";
 import DocumentDropListener from "@foxglove/studio-base/components/DocumentDropListener";
 import ExtensionsSettings from "@foxglove/studio-base/components/ExtensionsSettings";
 import KeyListener from "@foxglove/studio-base/components/KeyListener";
@@ -46,15 +40,16 @@ import PanelSettings from "@foxglove/studio-base/components/PanelSettings";
 import PlaybackControls from "@foxglove/studio-base/components/PlaybackControls";
 import Preferences from "@foxglove/studio-base/components/Preferences";
 import RemountOnValueChange from "@foxglove/studio-base/components/RemountOnValueChange";
-import Sidebar, { SidebarItem } from "@foxglove/studio-base/components/Sidebar";
 import { SidebarContent } from "@foxglove/studio-base/components/SidebarContent";
+import Sidebars, { SidebarItem } from "@foxglove/studio-base/components/Sidebars";
+import { NewSidebarItem } from "@foxglove/studio-base/components/Sidebars/NewSidebar";
 import { SignInFormModal } from "@foxglove/studio-base/components/SignInFormModal";
 import Stack from "@foxglove/studio-base/components/Stack";
 import { StudioLogsSettingsSidebar } from "@foxglove/studio-base/components/StudioLogsSettingsSidebar";
 import { SyncAdapters } from "@foxglove/studio-base/components/SyncAdapters";
-import VariablesSidebar from "@foxglove/studio-base/components/VariablesSidebar";
+import VariablesList from "@foxglove/studio-base/components/VariablesList";
+import { useAnalytics } from "@foxglove/studio-base/context/AnalyticsContext";
 import { useAssets } from "@foxglove/studio-base/context/AssetsContext";
-import ConsoleApiContext from "@foxglove/studio-base/context/ConsoleApiContext";
 import {
   LayoutState,
   useCurrentLayoutSelector,
@@ -105,6 +100,8 @@ type SidebarItemKey =
   | "help"
   | "studio-logs-settings";
 
+type RightSidebarItemKey = "variables" | "events";
+
 const selectedLayoutIdSelector = (state: LayoutState) => state.selectedLayout?.id;
 
 function activeElementIsInput() {
@@ -150,7 +147,6 @@ function ExtensionsSidebar() {
 
 type WorkspaceProps = CustomWindowControlsProps & {
   deepLinks?: string[];
-  disableSignin?: boolean;
   appBarLeftInset?: number;
   onAppBarDoubleClick?: () => void;
 };
@@ -166,6 +162,8 @@ const selectPlay = (ctx: MessagePipelineContext) => ctx.startPlayback;
 const selectSeek = (ctx: MessagePipelineContext) => ctx.seekPlayback;
 const selectPlayUntil = (ctx: MessagePipelineContext) => ctx.playUntil;
 const selectPlayerId = (ctx: MessagePipelineContext) => ctx.playerState.playerId;
+const selectPlayerSourceId = ({ playerState }: MessagePipelineContext) =>
+  playerState.urlState?.sourceId;
 
 export default function Workspace(props: WorkspaceProps): JSX.Element {
   const { classes } = useStyles();
@@ -185,34 +183,32 @@ export default function Workspace(props: WorkspaceProps): JSX.Element {
     return extensions;
   }, [availableSources]);
 
-  const supportsAccountSettings =
-    useContext(ConsoleApiContext) != undefined && props.disableSignin !== true;
-
   // We use playerId to detect when a player changes for RemountOnValueChange below
   // see comment below above the RemountOnValueChange component
   const playerId = useMessagePipeline(selectPlayerId);
+  const playerSourceId = useMessagePipeline(selectPlayerSourceId);
 
   const isPlayerPresent = playerPresence !== PlayerPresence.NOT_PRESENT;
 
   const { currentUser, signIn } = useCurrentUser();
+  const supportsAccountSettings = signIn != undefined;
 
   const { currentUserRequired } = useInitialDeepLinkState(props.deepLinks ?? DEFAULT_DEEPLINKS);
 
   useDefaultWebLaunchPreference();
 
-  const [showOpenDialogOnStartup = true] = useAppConfigurationValue<boolean>(
+  const [showOpenDialogOnStartup = false] = useAppConfigurationValue<boolean>(
     AppSetting.SHOW_OPEN_DIALOG_ON_STARTUP,
   );
-
   const [enableStudioLogsSidebar = false] = useAppConfigurationValue<boolean>(
     AppSetting.SHOW_DEBUG_PANELS,
   );
-
   // Since we can't toggle the title bar on an electron window, keep the setting at its initial
   // value until the app is reloaded/relaunched.
   const [currentEnableNewTopNav = false] = useAppConfigurationValue<boolean>(
     AppSetting.ENABLE_NEW_TOPNAV,
   );
+
   const [initialEnableNewTopNav] = useState(currentEnableNewTopNav);
   const enableNewTopNav = isDesktopApp() ? initialEnableNewTopNav : currentEnableNewTopNav;
 
@@ -225,6 +221,10 @@ export default function Workspace(props: WorkspaceProps): JSX.Element {
   const [selectedSidebarItem, setSelectedSidebarItem] = useState<SidebarItemKey | undefined>(
     "connection",
   );
+
+  const [selectedRightSidebarItem, setSelectedRightSidebarItem] = useState<
+    RightSidebarItemKey | undefined
+  >(undefined);
 
   // When a player is present we hide the connection sidebar. To prevent hiding the connection sidebar
   // when the user wants to select a new connection we track whether the sidebar item opened
@@ -353,6 +353,7 @@ export default function Workspace(props: WorkspaceProps): JSX.Element {
   const { enqueueSnackbar } = useSnackbar();
 
   const { loadFromFile } = useAssets();
+  const analytics = useAnalytics();
 
   const installExtension = useExtensionCatalog((state) => state.installExtension);
 
@@ -380,7 +381,7 @@ export default function Workspace(props: WorkspaceProps): JSX.Element {
         }
       } else {
         try {
-          if (await loadFromFile(file, { basePath })) {
+          if (await loadFromFile(file, { basePath, analytics, source: "local_file" })) {
             return;
           }
         } catch (err) {
@@ -398,7 +399,7 @@ export default function Workspace(props: WorkspaceProps): JSX.Element {
         selectSource(matchedSource.id, { type: "file", handle });
       }
     },
-    [availableSources, enqueueSnackbar, installExtension, loadFromFile, selectSource],
+    [analytics, availableSources, enqueueSnackbar, installExtension, loadFromFile, selectSource],
   );
 
   const openFiles = useCallback(
@@ -425,7 +426,7 @@ export default function Workspace(props: WorkspaceProps): JSX.Element {
           }
         } else {
           try {
-            if (!(await loadFromFile(file, { basePath }))) {
+            if (!(await loadFromFile(file, { basePath, analytics, source: "local_file" }))) {
               otherFiles.push(file);
             }
           } catch (err) {
@@ -451,7 +452,7 @@ export default function Workspace(props: WorkspaceProps): JSX.Element {
         }
       }
     },
-    [availableSources, enqueueSnackbar, installExtension, loadFromFile, selectSource],
+    [analytics, availableSources, enqueueSnackbar, installExtension, loadFromFile, selectSource],
   );
 
   // files the main thread told us to open
@@ -477,15 +478,19 @@ export default function Workspace(props: WorkspaceProps): JSX.Element {
     [openFiles, openHandle],
   );
 
-  const workspaceActions = useMemo(
+  const workspaceContextValue = useMemo(
     () => ({
       panelSettingsOpen: selectedSidebarItem === "panel-settings",
       openPanelSettings: () => setSelectedSidebarItem("panel-settings"),
       openHelp: () => setSelectedSidebarItem("help"),
       openAccountSettings: () => supportsAccountSettings && setSelectedSidebarItem("account"),
       openLayoutBrowser: () => setSelectedSidebarItem("layouts"),
+      rightSidebarOpen: selectedRightSidebarItem != undefined,
+      // eslint-disable-next-line @foxglove/no-boolean-parameters
+      setRightSidebarOpen: (open: boolean) =>
+        setSelectedRightSidebarItem(open ? "variables" : undefined),
     }),
-    [selectedSidebarItem, supportsAccountSettings],
+    [selectedSidebarItem, selectedRightSidebarItem, supportsAccountSettings],
   );
 
   // Since the _component_ field of a sidebar item entry is a component and accepts no additional
@@ -518,18 +523,37 @@ export default function Workspace(props: WorkspaceProps): JSX.Element {
               : undefined,
         },
       ],
-      [
-        "layouts",
-        { iconName: "FiveTileGrid", title: "Layouts", component: ConnectedLayoutBrowser },
-      ],
-      ["add-panel", { iconName: "RectangularClipping", title: "Add panel", component: AddPanel }],
-      [
-        "panel-settings",
-        { iconName: "PanelSettings", title: "Panel settings", component: PanelSettings },
-      ],
-      ["variables", { iconName: "Variable2", title: "Variables", component: VariablesSidebar }],
     ]);
 
+    if (!enableNewTopNav) {
+      topItems.set("layouts", {
+        iconName: "FiveTileGrid",
+        title: "Layouts",
+        component: ConnectedLayoutBrowser,
+      });
+      topItems.set("add-panel", {
+        iconName: "RectangularClipping",
+        title: "Add panel",
+        component: AddPanel,
+      });
+    }
+    topItems.set("panel-settings", {
+      iconName: "PanelSettings",
+      title: "Panel settings",
+      component: PanelSettings,
+    });
+    if (!enableNewTopNav) {
+      topItems.set("variables", {
+        iconName: "Variable2",
+        title: "Variables",
+        component: VariablesList,
+      });
+      topItems.set("extensions", {
+        iconName: "AddIn",
+        title: "Extensions",
+        component: ExtensionsSidebar,
+      });
+    }
     if (enableStudioLogsSidebar) {
       topItems.set("studio-logs-settings", {
         iconName: "BacklogList",
@@ -541,12 +565,6 @@ export default function Workspace(props: WorkspaceProps): JSX.Element {
     const bottomItems = new Map<SidebarItemKey, SidebarItem>([]);
 
     if (!enableNewTopNav) {
-      topItems.set("extensions", {
-        iconName: "AddIn",
-        title: "Extensions",
-        component: ExtensionsSidebar,
-      });
-
       if (supportsAccountSettings) {
         bottomItems.set("account", {
           iconName: currentUser != undefined ? "BlockheadFilled" : "Blockhead",
@@ -572,6 +590,17 @@ export default function Workspace(props: WorkspaceProps): JSX.Element {
     supportsAccountSettings,
     currentUser,
   ]);
+
+  const showEventsTab = currentUser != undefined && playerSourceId === "foxglove-data-platform";
+  const rightSidebarItems = useMemo(() => {
+    const items = new Map<RightSidebarItemKey, NewSidebarItem>([
+      ["variables", { title: "Variables", component: VariablesList }],
+    ]);
+    if (showEventsTab) {
+      items.set("events", { title: "Events", component: EventsList });
+    }
+    return items;
+  }, [showEventsTab]);
 
   const keyDownHandlers = useMemo(
     () => ({
@@ -606,7 +635,7 @@ export default function Workspace(props: WorkspaceProps): JSX.Element {
     <MultiProvider
       providers={[
         /* eslint-disable react/jsx-key */
-        <WorkspaceContext.Provider value={workspaceActions} />,
+        <WorkspaceContext.Provider value={workspaceContextValue} />,
         <PanelStateContextProvider />,
         /* eslint-enable react/jsx-key */
       ]}
@@ -626,7 +655,6 @@ export default function Workspace(props: WorkspaceProps): JSX.Element {
         {enableNewTopNav && (
           <AppBar
             currentUser={currentUser}
-            disableSignin={props.disableSignin}
             signIn={signIn}
             leftInset={props.appBarLeftInset}
             onDoubleClick={props.onAppBarDoubleClick}
@@ -636,33 +664,37 @@ export default function Workspace(props: WorkspaceProps): JSX.Element {
             onMaximizeWindow={props.onMaximizeWindow}
             onUnmaximizeWindow={props.onUnmaximizeWindow}
             onCloseWindow={props.onCloseWindow}
+            onSelectDataSourceAction={() => setShowOpenDialog({ view: "start" })}
           />
         )}
-        <Sidebar
+        <Sidebars
           items={sidebarItems}
           bottomItems={sidebarBottomItems}
           selectedKey={selectedSidebarItem}
           onSelectKey={selectSidebarItem}
+          rightItems={rightSidebarItems}
+          selectedRightKey={selectedRightSidebarItem}
+          onSelectRightKey={setSelectedRightSidebarItem}
         >
           {/* To ensure no stale player state remains, we unmount all panels when players change */}
           <RemountOnValueChange value={playerId}>
             <Stack>
               <PanelLayout />
-              {play && pause && seek && (
-                <div style={{ flexShrink: 0 }}>
-                  <PlaybackControls
-                    play={play}
-                    pause={pause}
-                    seek={seek}
-                    playUntil={playUntil}
-                    isPlaying={isPlaying}
-                    getTimeInfo={getTimeInfo}
-                  />
-                </div>
-              )}
             </Stack>
           </RemountOnValueChange>
-        </Sidebar>
+        </Sidebars>
+        {play && pause && seek && (
+          <div style={{ flexShrink: 0 }}>
+            <PlaybackControls
+              play={play}
+              pause={pause}
+              seek={seek}
+              playUntil={playUntil}
+              isPlaying={isPlaying}
+              getTimeInfo={getTimeInfo}
+            />
+          </div>
+        )}
       </div>
     </MultiProvider>
   );
