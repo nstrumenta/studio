@@ -315,28 +315,33 @@ export const VideoPanel = ({ context }: { context: PanelExtensionContext }): JSX
       })) ?? [];
 
     for (const result of queryResponse) {
-      const filetype = result.filePath.split(".").pop()?.toLocaleLowerCase();
-      let blob: Blob | undefined;
-      const path = result.filePath.replace(/^projects\/[^/]+\//, "");
-      switch (filetype) {
-        case "json":
-          setDataIsFetching(true);
-          blob = await nstrumentaClient.storage?.download(path);
-          data.json = await new Response(blob).json();
-          setDataIsFetching(false);
-          break;
-        case "mcap":
-          setDataIsFetching(true);
-          data.mcap = await nstrumentaClient.storage?.download(path);
-          setDataIsFetching(false);
-          break;
-        case "mp4":
-          setDataIsFetching(true);
-          data.mp4 = await nstrumentaClient.storage?.download(path);
-          setDataIsFetching(false);
-          break;
-        default:
-          break;
+      try {
+        const filetype = result.filePath.split(".").pop()?.toLocaleLowerCase();
+        let blob: Blob | undefined;
+        const path = result.filePath.replace(/^projects\/[^/]+\//, "");
+        switch (filetype) {
+          case "json":
+            setDataIsFetching(true);
+            blob = await nstrumentaClient.storage?.download(path);
+            data.json = await new Response(blob).json();
+            setDataIsFetching(false);
+            break;
+          case "mcap":
+            setDataIsFetching(true);
+            data.mcap = await nstrumentaClient.storage?.download(path);
+            setDataIsFetching(false);
+            break;
+          case "mp4":
+            setDataIsFetching(true);
+            data.mp4 = await nstrumentaClient.storage?.download(path);
+            setDataIsFetching(false);
+            break;
+          default:
+            break;
+        }
+      } catch (error) {
+        console.error(error);
+        setDataIsFetching(false);
       }
     }
 
@@ -448,7 +453,7 @@ class CustomErrorBoundary extends React.Component {
   public override componentDidCatch(error: unknown, errorInfo: unknown) {
     // You can also log the error to an error reporting service
 
-    console.log("FORT >", error, errorInfo);
+    console.log("nstrumenta-video >", error, errorInfo);
   }
 
   public override render() {
@@ -497,7 +502,7 @@ const VideoPanelAdapter = (props: Props) => (
   />
 );
 
-VideoPanelAdapter.panelType = "FORT";
+VideoPanelAdapter.panelType = "nstrumenta-video";
 VideoPanelAdapter.defaultConfig = {};
 
 export default Panel(VideoPanelAdapter);
