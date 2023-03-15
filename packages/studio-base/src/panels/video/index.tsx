@@ -308,6 +308,7 @@ export const VideoPanel = ({ context }: { context: PanelExtensionContext }): JSX
 
   const handleUpdateNstrumenta = React.useCallback(async () => {
     console.log("handleUpdateNstrumenta", nstrumentaData.tag);
+    setDataIsFetching(true);
     const data: NstrumentaFoxgloveData = {};
     const queryResponse =
       (await nstrumentaClient.storage?.query({
@@ -321,18 +322,15 @@ export const VideoPanel = ({ context }: { context: PanelExtensionContext }): JSX
         const path = result.filePath.replace(/^projects\/[^/]+\//, "");
         switch (filetype) {
           case "json":
-            setDataIsFetching(true);
             blob = await nstrumentaClient.storage?.download(path);
             data.json = await new Response(blob).json();
             setDataIsFetching(false);
             break;
           case "mcap":
-            setDataIsFetching(true);
             data.mcap = await nstrumentaClient.storage?.download(path);
             setDataIsFetching(false);
             break;
           case "mp4":
-            setDataIsFetching(true);
             data.mp4 = await nstrumentaClient.storage?.download(path);
             setDataIsFetching(false);
             break;
