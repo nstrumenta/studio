@@ -420,6 +420,21 @@ export default function Start(props: IStartProps): JSX.Element {
 
   const startItems = useMemo(() => {
     return [
+      //m -1114.8305,26.57376 c -0.312,-30.5474575 6.8429,-69.502155 32.8273,-85.566127 16.286,-10.068185 39.5067,-1.823418 57.1701,5.566123 38.39679,16.063485 95.47457,55.4687475 95.87059,80.000004 -0.0802,26.21501 -56.81524,65.6115 -95.87059,80 -17.8828,6.58823 -41.2997,11.15525 -57.1701,0.60397 -24.1587,-16.06176 -32.5311,-51.59469 -32.8273,-80.60397 z
+      {
+        key: "open-nst-data",
+        text: "Open nstrumenta data",
+        secondaryText: "Fetch datafrom your nstrumenta project.",
+        icon: (
+          <SvgIcon fontSize="large" color="primary" viewBox="0 0 2048 2048">
+            <path d="m 121.356 982.5901 c -2.496 -244.3797 54.7432 -556.0172 262.6184 -684.529 c 130.288 -80.5455 316.0536 -14.5873 457.3608 44.529 c 307.1743 128.5079 763.7966 443.75 766.9647 640 c -0.6416 209.7201 -454.5219 524.892 -766.9647 640 c -143.0624 52.7058 -330.3976 89.242 -457.3608 4.8318 c -193.2696 -128.4941 -260.2488 -412.7575 -262.6184 -644.8318 z" />
+          </SvgIcon>
+        ),
+        onClick: () => {
+          onSelectView("nst");
+          void analytics.logEvent(AppEvent.DIALOG_SELECT_VIEW, { type: "nst" });
+        },
+      },
       {
         key: "open-local-file",
         text: "Open local file",

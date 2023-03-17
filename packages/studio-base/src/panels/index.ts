@@ -25,8 +25,17 @@ import URDFViewerThumbnail from "./URDFViewer/thumbnail.png";
 import variableSliderThumbnail from "./VariableSlider/thumbnail.png";
 import diagnosticStatusThumbnail from "./diagnostics/thumbnails/diagnostic-status.png";
 import diagnosticSummaryThumbnail from "./diagnostics/thumbnails/diagnostic-summary.png";
+import nstrumentaLogo from "../assets/nstrumenta-logo.png";
 
 export const builtin: PanelInfo[] = [
+  {
+    title: "video",
+    type: "video",
+    description: "video playback",
+    thumbnail: nstrumentaLogo,
+    module: async () => await import("./video"),
+    settingsOnboardingTooltip: "Open settings to configure topics and layers.",
+  },
   {
     title: "3D",
     type: "3D",
