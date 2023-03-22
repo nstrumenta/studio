@@ -205,7 +205,7 @@ export default function Workspace(props: WorkspaceProps): JSX.Element {
 
   useDefaultWebLaunchPreference();
 
-  const [showOpenDialogOnStartup = false] = useAppConfigurationValue<boolean>(
+  const [showOpenDialogOnStartup = true] = useAppConfigurationValue<boolean>(
     AppSetting.SHOW_OPEN_DIALOG_ON_STARTUP,
   );
   const [enableStudioLogsSidebar = false] = useAppConfigurationValue<boolean>(
