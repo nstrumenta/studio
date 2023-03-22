@@ -29,6 +29,14 @@ import nstrumentaLogo from "../assets/nstrumenta-logo.png";
 
 export const builtin: PanelInfo[] = [
   {
+    title: "FORT",
+    type: "FORT",
+    description: "FORT labeling",
+    thumbnail: nstrumentaLogo,
+    module: async () => await import("./FORT/index"),
+    settingsOnboardingTooltip: "Open settings to configure topics and layers.",
+  },
+  {
     title: "video",
     type: "video",
     description: "video playback",

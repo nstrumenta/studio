@@ -259,6 +259,7 @@ export const VideoPanel = ({ context }: { context: PanelExtensionContext }): JSX
 
       // Save the most recent message on our image topic.
       if (renderState.currentFrame && renderState.currentFrame.length > 0) {
+        console.log(renderState.currentFrame[renderState.currentFrame.length - 1]);
         setMessage(
           renderState.currentFrame[renderState.currentFrame.length - 1] as unknown as ImageMessage,
         );
