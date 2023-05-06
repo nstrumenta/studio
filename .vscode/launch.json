@@ -6,32 +6,18 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Launch Chrome",
+      "name": "web",
       "request": "launch",
       "type": "chrome",
-      "url": "http://localhost:8082",
-      "webRoot": "${workspaceFolder}"
+      "url": "http://localhost:8081",
+      "webRoot": "${workspaceFolder}/nstrumenta/studio"
     },
     {
-      "name": "attach to Chrome",
-      "port": 9222,
-      "request": "attach",
-      "type": "chrome",
-      "url": "http://localhost:8082",
-      "webRoot": "${workspaceFolder}"
-    },
-    {
-      "type": "node",
-      "name": "vscode-jest-tests",
+      "name": "storybook",
       "request": "launch",
-      "program": "${workspaceFolder}/node_modules/.bin/jest",
-      "args": ["--runInBand", "${relativeFileDirname}"],
-      "cwd": "${workspaceFolder}",
-      "env": {
-        "NODE_OPTIONS": "--require ts-node/register"
-      },
-      "console": "integratedTerminal",
-      "internalConsoleOptions": "neverOpen"
+      "type": "chrome",
+      "url": "http://localhost:9009",
+      "webRoot": "${workspaceFolder}"
     }
   ]
 }
