@@ -2,7 +2,9 @@
 // License, v2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
-import { Story } from "@storybook/react";
+/* eslint-disable storybook/story-exports */
+
+import { StoryFn } from "@storybook/react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 
@@ -13,6 +15,7 @@ import PanelCatalogContext, {
   PanelInfo,
 } from "@foxglove/studio-base/context/PanelCatalogContext";
 import MockCurrentLayoutProvider from "@foxglove/studio-base/providers/CurrentLayoutProvider/MockCurrentLayoutProvider";
+import WorkspaceContextProvider from "@foxglove/studio-base/providers/WorkspaceContextProvider";
 
 const SamplePanel1 = function () {
   return <div></div>;
@@ -58,19 +61,22 @@ class MockPanelCatalog implements PanelCatalog {
 }
 
 export default {
+  title: "components/AppBar",
   excludeStories: ["StorybookDecorator"],
 };
 
-export function StorybookDecorator(StoryFn: Story): JSX.Element {
+export function StorybookDecorator(Wrapped: StoryFn): JSX.Element {
   return (
     <DndProvider backend={HTML5Backend}>
-      <PanelCatalogContext.Provider value={new MockPanelCatalog()}>
-        <MockCurrentLayoutProvider>
-          <MockMessagePipelineProvider>
-            <StoryFn />
-          </MockMessagePipelineProvider>
-        </MockCurrentLayoutProvider>
-      </PanelCatalogContext.Provider>
+      <WorkspaceContextProvider>
+        <PanelCatalogContext.Provider value={new MockPanelCatalog()}>
+          <MockCurrentLayoutProvider>
+            <MockMessagePipelineProvider>
+              <Wrapped />
+            </MockMessagePipelineProvider>
+          </MockCurrentLayoutProvider>
+        </PanelCatalogContext.Provider>
+      </WorkspaceContextProvider>
     </DndProvider>
   );
 }

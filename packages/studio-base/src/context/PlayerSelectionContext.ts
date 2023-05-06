@@ -48,7 +48,10 @@ export interface IDataSourceFactory {
   disabledReason?: string | JSX.Element;
   badgeText?: string;
   hidden?: boolean;
-  warning?: string;
+  warning?: string | JSX.Element;
+
+  /** Whether to wait for a user to be logged in before initializing this source. */
+  currentUserRequired?: boolean;
 
   sampleLayout?: LayoutData;
 

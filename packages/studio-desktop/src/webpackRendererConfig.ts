@@ -27,7 +27,10 @@ export const webpackRendererConfig =
       plugins.push(new ReactRefreshPlugin());
     }
 
-    const appWebpackConfig = makeConfig(env, argv, { allowUnusedVariables });
+    const appWebpackConfig = makeConfig(env, argv, {
+      allowUnusedVariables,
+      version: params.packageJson.version,
+    });
 
     const config: Configuration = {
       ...appWebpackConfig,
@@ -49,10 +52,8 @@ export const webpackRendererConfig =
         removeAvailableModules: true,
         minimizer: [
           new ESBuildMinifyPlugin({
-            target: "es2020",
-            minifyIdentifiers: false, // readable error stack traces are helpful for debugging
-            minifySyntax: true,
-            minifyWhitespace: true,
+            target: "es2022",
+            minify: true,
           }),
         ],
       },

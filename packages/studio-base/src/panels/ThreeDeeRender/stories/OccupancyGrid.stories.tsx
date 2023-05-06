@@ -2,6 +2,9 @@
 // License, v2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
+import { StoryObj } from "@storybook/react";
+import { screen, userEvent } from "@storybook/testing-library";
+
 import { MessageEvent } from "@foxglove/studio";
 import { LayerSettingsOccupancyGrid } from "@foxglove/studio-base/panels/ThreeDeeRender/renderables/OccupancyGrids";
 import { Topic } from "@foxglove/studio-base/players/types";
@@ -9,12 +12,12 @@ import PanelSetup from "@foxglove/studio-base/stories/PanelSetup";
 
 import { QUAT_IDENTITY, rad2deg } from "./common";
 import useDelayedFixture from "./useDelayedFixture";
-import ThreeDeeRender from "../index";
+import { ThreeDeePanel } from "../index";
 import { OccupancyGrid, TransformStamped } from "../ros";
 
 export default {
   title: "panels/ThreeDeeRender",
-  component: ThreeDeeRender,
+  component: ThreeDeePanel,
   parameters: { colorScheme: "light" },
 };
 
@@ -29,7 +32,7 @@ function makeGridData({ width, height }: { width: number; height: number }) {
   return grid;
 }
 
-export function Occupancy_Grid_Costmap(): JSX.Element {
+function BaseStory({ includeSettings = false }: { includeSettings?: boolean }): JSX.Element {
   const topics: Topic[] = [
     { name: "/grid", schemaName: "nav_msgs/OccupancyGrid" },
     { name: "/tf", schemaName: "geometry_msgs/TransformStamped" },
@@ -116,8 +119,8 @@ export function Occupancy_Grid_Costmap(): JSX.Element {
   });
 
   return (
-    <PanelSetup fixture={fixture}>
-      <ThreeDeeRender
+    <PanelSetup fixture={fixture} includeSettings={includeSettings}>
+      <ThreeDeePanel
         overrideConfig={{
           followTf: "base_link",
           topics: {
@@ -127,7 +130,6 @@ export function Occupancy_Grid_Costmap(): JSX.Element {
             } as LayerSettingsOccupancyGrid,
             "/custom": {
               visible: true,
-              colorMode: "custom",
             } as LayerSettingsOccupancyGrid,
           },
           layers: {
@@ -150,3 +152,25 @@ export function Occupancy_Grid_Costmap(): JSX.Element {
     </PanelSetup>
   );
 }
+
+export const Occupancy_Grid_Costmap: StoryObj = {
+  render: () => {
+    return <BaseStory />;
+  },
+};
+
+export const Occupancy_Grid_Costmap_With_Settings: StoryObj = {
+  render: function Story() {
+    return <BaseStory includeSettings />;
+  },
+
+  play: async () => {
+    const label = await screen.findByText("/custom");
+    userEvent.click(label);
+  },
+};
+
+export const OccupancyGridCostmapWithSettingsChinese: StoryObj = {
+  ...Occupancy_Grid_Costmap_With_Settings,
+  parameters: { forceLanguage: "zh" },
+};

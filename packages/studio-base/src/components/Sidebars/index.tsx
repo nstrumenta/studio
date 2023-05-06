@@ -27,6 +27,7 @@ import isDesktopApp from "@foxglove/studio-base/util/isDesktopApp";
 
 import { NewSidebar, NewSidebarItem } from "./NewSidebar";
 import { TabSpacer } from "./TabSpacer";
+import "react-mosaic-component/react-mosaic-component.css";
 
 function Noop(): ReactNull {
   return ReactNull;
@@ -130,10 +131,14 @@ type SidebarProps<OldLeftKey, LeftKey, RightKey> = PropsWithChildren<{
   leftItems: Map<LeftKey, NewSidebarItem>;
   selectedLeftKey: LeftKey | undefined;
   onSelectLeftKey: (key: LeftKey | undefined) => void;
+  leftSidebarSize: number | undefined;
+  setLeftSidebarSize: (size: number | undefined) => void;
 
   rightItems: Map<RightKey, NewSidebarItem>;
   selectedRightKey: RightKey | undefined;
   onSelectRightKey: (key: RightKey | undefined) => void;
+  rightSidebarSize: number | undefined;
+  setRightSidebarSize: (size: number | undefined) => void;
 }>;
 
 export default function Sidebars<
@@ -150,9 +155,13 @@ export default function Sidebars<
     leftItems,
     selectedLeftKey,
     onSelectLeftKey,
+    leftSidebarSize,
+    setLeftSidebarSize,
     rightItems,
     selectedRightKey,
     onSelectRightKey,
+    rightSidebarSize,
+    setRightSidebarSize,
   } = props;
   const [enableMemoryUseIndicator = false] = useAppConfigurationValue<boolean>(
     AppSetting.ENABLE_MEMORY_USE_INDICATOR,
@@ -192,7 +201,7 @@ export default function Sidebars<
     enableNewTopNav && selectedRightKey != undefined && rightItems.has(selectedRightKey);
 
   useEffect(() => {
-    const leftTargetWidth = enableNewTopNav ? 280 : 384;
+    const leftTargetWidth = enableNewTopNav ? 320 : 384;
     const rightTargetWidth = 320;
     const defaultLeftPercentage = 100 * (leftTargetWidth / window.innerWidth);
     const defaultRightPercentage = 100 * (1 - rightTargetWidth / window.innerWidth);
@@ -204,7 +213,10 @@ export default function Sidebars<
           direction: "row",
           first: node,
           second: "rightbar",
-          splitPercentage: mosiacRightSidebarSplitPercentage(oldValue) ?? defaultRightPercentage,
+          splitPercentage:
+            rightSidebarSize ??
+            mosiacRightSidebarSplitPercentage(oldValue) ??
+            defaultRightPercentage,
         };
       }
       if (oldLeftSidebarOpen || leftSidebarOpen) {
@@ -212,12 +224,20 @@ export default function Sidebars<
           direction: "row",
           first: "leftbar",
           second: node,
-          splitPercentage: mosiacLeftSidebarSplitPercentage(oldValue) ?? defaultLeftPercentage,
+          splitPercentage:
+            leftSidebarSize ?? mosiacLeftSidebarSplitPercentage(oldValue) ?? defaultLeftPercentage,
         };
       }
       return node;
     });
-  }, [enableNewTopNav, leftSidebarOpen, oldLeftSidebarOpen, rightSidebarOpen]);
+  }, [
+    enableNewTopNav,
+    leftSidebarSize,
+    oldLeftSidebarOpen,
+    rightSidebarSize,
+    leftSidebarOpen,
+    rightSidebarOpen,
+  ]);
 
   const SelectedLeftComponent =
     (selectedKey != undefined && allOldLeftItems.get(selectedKey)?.component) || Noop;
@@ -287,6 +307,17 @@ export default function Sidebars<
     ));
   }, [bottomItems, classes, onClickTabAction]);
 
+  const onChangeMosaicValue = useCallback(
+    (newValue: ReactNull | MosaicNode<LayoutNode>) => {
+      if (newValue != undefined) {
+        setMosaicValue(newValue);
+        setLeftSidebarSize(mosiacLeftSidebarSplitPercentage(newValue));
+        setRightSidebarSize(mosiacRightSidebarSplitPercentage(newValue));
+      }
+    },
+    [setLeftSidebarSize, setRightSidebarSize],
+  );
+
   return (
     <Stack direction="row" fullHeight overflow="hidden">
       {!enableNewTopNav && (
@@ -337,7 +368,7 @@ export default function Sidebars<
         <MosaicWithoutDragDropContext<LayoutNode>
           className=""
           value={mosaicValue}
-          onChange={(value) => value != undefined && setMosaicValue(value)}
+          onChange={onChangeMosaicValue}
           renderTile={(id) => {
             switch (id) {
               case "children":

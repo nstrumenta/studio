@@ -122,11 +122,27 @@ function useSyncTimeFromUrl(targetUrlState: AppURLState | undefined) {
 }
 
 /**
+ * Ensure only one copy of the hook is mounted so we don't trigger side effects like selectSource
+ * more than once.
+ */
+let useInitialDeepLinkStateMounted = false;
+/**
  * Restores our session state from any deep link we were passed on startup.
  */
 export function useInitialDeepLinkState(deepLinks: readonly string[]): {
   currentUserRequired: boolean;
 } {
+  useEffect(() => {
+    if (useInitialDeepLinkStateMounted) {
+      throw new Error("Invariant: only one copy of useInitialDeepLinkState may be mounted");
+    }
+    useInitialDeepLinkStateMounted = true;
+    return () => {
+      useInitialDeepLinkStateMounted = false;
+    };
+  }, []);
+
+  const { availableSources } = usePlayerSelection();
   const targetUrlState = useMemo(
     () => (deepLinks[0] ? parseAppURLState(new URL(deepLinks[0])) : undefined),
     [deepLinks],
@@ -134,10 +150,19 @@ export function useInitialDeepLinkState(deepLinks: readonly string[]): {
 
   // Maybe this should be abstracted somewhere but that would require a
   // more intimate interface with this hook and the player selection logic.
-  const currentUserRequiredParam = useMemo(
-    () => ({ currentUserRequired: targetUrlState?.ds === "foxglove-data-platform" }),
-    [targetUrlState?.ds],
-  );
+  const currentUserRequiredParam = useMemo(() => {
+    let currentUserRequired = false;
+    const ds = targetUrlState?.ds;
+    const foundSource =
+      ds == undefined
+        ? undefined
+        : availableSources.find((source) => source.id === ds || source.legacyIds?.includes(ds));
+    if (foundSource) {
+      currentUserRequired = foundSource.currentUserRequired ?? false;
+    }
+
+    return { currentUserRequired };
+  }, [targetUrlState?.ds, availableSources]);
   useSyncSourceFromUrl(targetUrlState, currentUserRequiredParam);
   useSyncLayoutFromUrl(targetUrlState, currentUserRequiredParam);
   useSyncTimeFromUrl(targetUrlState);

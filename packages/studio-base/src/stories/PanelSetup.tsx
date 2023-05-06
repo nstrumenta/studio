@@ -12,14 +12,16 @@
 //   You may not use this file except in compliance with the License.
 
 import { useTheme } from "@mui/material";
+import { TFunction } from "i18next";
 import { flatten } from "lodash";
-import { ComponentProps, ReactNode, useLayoutEffect, useRef, useState } from "react";
+import { ComponentProps, ReactNode, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
+import { useTranslation } from "react-i18next";
 import { Mosaic, MosaicNode, MosaicWindow } from "react-mosaic-component";
 
 import { useShallowMemo } from "@foxglove/hooks";
-import { MessageEvent } from "@foxglove/studio";
+import { MessageEvent, SettingsTree } from "@foxglove/studio";
 import MockMessagePipelineProvider from "@foxglove/studio-base/components/MessagePipeline/MockMessagePipelineProvider";
 import SettingsTreeEditor from "@foxglove/studio-base/components/SettingsTreeEditor";
 import AppConfigurationContext from "@foxglove/studio-base/context/AppConfigurationContext";
@@ -32,7 +34,6 @@ import {
 import { PanelsActions } from "@foxglove/studio-base/context/CurrentLayoutContext/actions";
 import PanelCatalogContext, {
   PanelCatalog,
-  PanelInfo,
 } from "@foxglove/studio-base/context/PanelCatalogContext";
 import { usePanelStateStore } from "@foxglove/studio-base/context/PanelStateContext";
 import {
@@ -40,21 +41,25 @@ import {
   useUserNodeState,
 } from "@foxglove/studio-base/context/UserNodeStateContext";
 import { GlobalVariables } from "@foxglove/studio-base/hooks/useGlobalVariables";
+import * as panels from "@foxglove/studio-base/panels";
 import { Diagnostic, UserNodeLog } from "@foxglove/studio-base/players/UserNodePlayer/types";
 import {
-  Topic,
+  AdvertiseOptions,
   PlayerStateActiveData,
   Progress,
   PublishPayload,
-  AdvertiseOptions,
+  Topic,
 } from "@foxglove/studio-base/players/types";
 import MockCurrentLayoutProvider from "@foxglove/studio-base/providers/CurrentLayoutProvider/MockCurrentLayoutProvider";
 import ExtensionCatalogProvider from "@foxglove/studio-base/providers/ExtensionCatalogProvider";
 import { PanelStateContextProvider } from "@foxglove/studio-base/providers/PanelStateContextProvider";
 import TimelineInteractionStateProvider from "@foxglove/studio-base/providers/TimelineInteractionStateProvider";
+import WorkspaceContextProvider from "@foxglove/studio-base/providers/WorkspaceContextProvider";
 import ThemeProvider from "@foxglove/studio-base/theme/ThemeProvider";
 import { RosDatatypes } from "@foxglove/studio-base/types/RosDatatypes";
 import { SavedProps, UserNodes } from "@foxglove/studio-base/types/panels";
+
+import "react-mosaic-component/react-mosaic-component.css";
 
 function noop() {}
 
@@ -112,6 +117,21 @@ function setNativeValue(element: unknown, value: unknown) {
   }
 }
 
+export function makeMockPanelCatalog(t: TFunction<"panels">): PanelCatalog {
+  const allPanels = [...panels.getBuiltin(t), ...panels.getDebug(t)];
+
+  const visiblePanels = [...panels.getBuiltin(t)];
+
+  return {
+    getPanels() {
+      return visiblePanels;
+    },
+    getPanelByType(type: string) {
+      return allPanels.find((panel) => panel.type === type);
+    },
+  };
+}
+
 export function triggerInputChange(
   node: HTMLInputElement | HTMLTextAreaElement,
   value: string = "",
@@ -153,15 +173,10 @@ export const MosaicWrapper = ({ children }: { children: React.ReactNode }): JSX.
   );
 };
 
-// empty catalog if one is not provided via props
-class MockPanelCatalog implements PanelCatalog {
-  public getPanels(): readonly PanelInfo[] {
-    return [];
-  }
-  public getPanelByType(_type: string): PanelInfo | undefined {
-    return undefined;
-  }
-}
+const EmptyTree: SettingsTree = {
+  actionHandler: () => undefined,
+  nodes: {},
+};
 
 function PanelWrapper({
   children,
@@ -170,18 +185,23 @@ function PanelWrapper({
   children?: ReactNode;
   includeSettings?: boolean;
 }): JSX.Element {
-  const settings = usePanelStateStore((store) => Object.values(store.settingsTrees)[0]);
+  const settings =
+    usePanelStateStore((store) => Object.values(store.settingsTrees)[0]) ?? EmptyTree;
 
   return (
     <>
-      {settings && includeSettings && <SettingsTreeEditor settings={settings} />}
+      {includeSettings && <SettingsTreeEditor settings={settings} />}
       {children}
     </>
   );
 }
 
 function UnconnectedPanelSetup(props: UnconnectedProps): JSX.Element | ReactNull {
-  const [mockPanelCatalog] = useState(() => props.panelCatalog ?? new MockPanelCatalog());
+  const { t } = useTranslation("panels");
+  const mockPanelCatalog = useMemo(
+    () => props.panelCatalog ?? makeMockPanelCatalog(t),
+    [props.panelCatalog, t],
+  );
   const [mockAppConfiguration] = useState(() => ({
     get() {
       return undefined;
@@ -327,18 +347,20 @@ type Props = UnconnectedProps & {
 export default function PanelSetup(props: Props): JSX.Element {
   const theme = useTheme();
   return (
-    <UserNodeStateProvider>
-      <TimelineInteractionStateProvider>
-        <MockCurrentLayoutProvider onAction={props.onLayoutAction}>
-          <PanelStateContextProvider>
-            <ExtensionCatalogProvider loaders={[]}>
-              <ThemeProvider isDark={theme.palette.mode === "dark"}>
-                <UnconnectedPanelSetup {...props} />
-              </ThemeProvider>
-            </ExtensionCatalogProvider>
-          </PanelStateContextProvider>
-        </MockCurrentLayoutProvider>
-      </TimelineInteractionStateProvider>
-    </UserNodeStateProvider>
+    <WorkspaceContextProvider>
+      <UserNodeStateProvider>
+        <TimelineInteractionStateProvider>
+          <MockCurrentLayoutProvider onAction={props.onLayoutAction}>
+            <PanelStateContextProvider>
+              <ExtensionCatalogProvider loaders={[]}>
+                <ThemeProvider isDark={theme.palette.mode === "dark"}>
+                  <UnconnectedPanelSetup {...props} />
+                </ThemeProvider>
+              </ExtensionCatalogProvider>
+            </PanelStateContextProvider>
+          </MockCurrentLayoutProvider>
+        </TimelineInteractionStateProvider>
+      </UserNodeStateProvider>
+    </WorkspaceContextProvider>
   );
 }

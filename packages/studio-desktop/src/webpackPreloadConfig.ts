@@ -53,10 +53,8 @@ export const webpackPreloadConfig =
         removeAvailableModules: true,
         minimizer: [
           new ESBuildMinifyPlugin({
-            target: "es2020",
-            minifyIdentifiers: false, // readable error stack traces are helpful for debugging
-            minifySyntax: true,
-            minifyWhitespace: true,
+            target: "es2022",
+            minify: true,
           }),
         ],
       },
