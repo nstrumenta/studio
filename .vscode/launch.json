@@ -17,7 +17,7 @@
       "request": "launch",
       "type": "chrome",
       "url": "http://localhost:9009",
-      "webRoot": "${workspaceFolder}"
+      "webRoot": "${workspaceFolder}/nstrumenta"
     }
   ]
 }
