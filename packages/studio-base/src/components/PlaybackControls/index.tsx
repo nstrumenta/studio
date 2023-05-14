@@ -182,7 +182,7 @@ export default function PlaybackControls(props: {
         <Scrubber onSeek={seek} />
         <Stack direction="row" alignItems="center" flex={1} gap={1} overflowX="auto">
           <Stack direction="row" flex={1} gap={0.5}>
-            {currentUser && eventsSupported && (
+            {eventsSupported && (
               <HoverableIconButton
                 size="small"
                 title="Create event"

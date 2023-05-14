@@ -16,6 +16,11 @@ import { StoryObj } from "@storybook/react";
 import NstrumentaPanel from "@foxglove/studio-base/panels/Nstrumenta/index";
 import PanelSetup from "@foxglove/studio-base/stories/PanelSetup";
 
+import { StoryFn } from "@storybook/react";
+
+import MockMessagePipelineProvider from "@foxglove/studio-base/components/MessagePipeline/MockMessagePipelineProvider";
+import EventsProvider from "@foxglove/studio-base/providers/EventsProvider";
+
 const fixture = {
   topics: [],
   datatypes: new Map(
@@ -31,6 +36,17 @@ const fixture = {
 export default {
   title: "panels/Nstrumenta",
   component: NstrumentaPanel,
+  decorators: [
+    (Wrapped: StoryFn): JSX.Element => {
+      return (
+        <EventsProvider>
+          <MockMessagePipelineProvider>
+            <Wrapped />
+          </MockMessagePipelineProvider>
+        </EventsProvider>
+      );
+    },
+  ],
 };
 
 export const Example: StoryObj = {

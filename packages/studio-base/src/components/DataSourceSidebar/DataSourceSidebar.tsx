@@ -76,7 +76,6 @@ const ProblemCount = muiStyled("div")(({ theme }) => ({
 const selectPlayerPresence = ({ playerState }: MessagePipelineContext) => playerState.presence;
 const selectPlayerProblems = ({ playerState }: MessagePipelineContext) => playerState.problems;
 const selectSelectedEventId = (store: EventsStore) => store.selectedEventId;
-const selectEventsSupported = (store: EventsStore) => store.eventsSupported;
 
 type DataSourceSidebarTab = "topics" | "events" | "problems";
 
@@ -84,7 +83,6 @@ export default function DataSourceSidebar(props: Props): JSX.Element {
   const { disableToolbar = false } = props;
   const playerPresence = useMessagePipeline(selectPlayerPresence);
   const playerProblems = useMessagePipeline(selectPlayerProblems) ?? [];
-  const { currentUser } = useCurrentUser();
   const selectedEventId = useEvents(selectSelectedEventId);
   const [activeTab, setActiveTab] = useState<DataSourceSidebarTab>("topics");
   const { classes } = useStyles();
@@ -93,8 +91,12 @@ export default function DataSourceSidebar(props: Props): JSX.Element {
 
   const [enableNewTopNav = false] = useAppConfigurationValue<boolean>(AppSetting.ENABLE_NEW_TOPNAV);
 
-  const eventsSupported = useEvents(selectEventsSupported);
-  const showEventsTab = !enableNewTopNav && currentUser != undefined && eventsSupported;
+  const setEventsSupported = useEvents((store) => store.setEventsSupported);
+  useEffect(() => {
+    setEventsSupported(true);
+  }, [setEventsSupported]);
+
+  const showEventsTab = !enableNewTopNav;
 
   const isLoading = useMemo(
     () =>
