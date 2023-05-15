@@ -4,14 +4,14 @@
 
 import AddIcon from "@mui/icons-material/Add";
 import {
+  CircularProgress,
+  Divider,
   IconButton,
   Tab,
   Tabs,
   styled as muiStyled,
-  Divider,
-  CircularProgress,
 } from "@mui/material";
-import { useState, useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { makeStyles } from "tss-react/mui";
 
@@ -24,15 +24,14 @@ import {
 import { SidebarContent } from "@foxglove/studio-base/components/SidebarContent";
 import Stack from "@foxglove/studio-base/components/Stack";
 import WssErrorModal from "@foxglove/studio-base/components/WssErrorModal";
-import { useCurrentUser } from "@foxglove/studio-base/context/CurrentUserContext";
 import { EventsStore, useEvents } from "@foxglove/studio-base/context/EventsContext";
 import { useWorkspaceActions } from "@foxglove/studio-base/context/WorkspaceContext";
 import { useAppConfigurationValue } from "@foxglove/studio-base/hooks/useAppConfigurationValue";
 import { PlayerPresence } from "@foxglove/studio-base/players/types";
 
+import { DataSourceInfoView } from "../DataSourceInfoView";
 import { ProblemsList } from "./ProblemsList";
 import { TopicList } from "./TopicList";
-import { DataSourceInfoView } from "../DataSourceInfoView";
 
 type Props = {
   disableToolbar?: boolean;

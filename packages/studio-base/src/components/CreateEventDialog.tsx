@@ -7,33 +7,36 @@ import RemoveIcon from "@mui/icons-material/Remove";
 import {
   Alert,
   Button,
+  ButtonGroup,
   CircularProgress,
   Dialog,
   DialogActions,
+  FormControl,
+  FormLabel,
+  IconButton,
   TextField,
   ToggleButton,
   ToggleButtonGroup,
   Typography,
-  FormLabel,
-  FormControl,
-  IconButton,
-  ButtonGroup,
 } from "@mui/material";
 import { countBy } from "lodash";
-import { KeyboardEvent, useCallback } from "react";
+import { KeyboardEvent, useCallback, useMemo } from "react";
 import { useAsyncFn } from "react-use";
 import { keyframes } from "tss-react";
 import { makeStyles } from "tss-react/mui";
 import { useImmer } from "use-immer";
 
+import { v4 as uuidv4 } from "uuid";
+
 import Log from "@foxglove/log";
-import { toDate, toNanoSec } from "@foxglove/rostime";
+
+import { add, fromNanoSec, fromSec, toNanoSec, toSec } from "@foxglove/rostime";
+import { Time } from "@foxglove/studio";
 import {
   MessagePipelineContext,
   useMessagePipeline,
 } from "@foxglove/studio-base/components/MessagePipeline";
 import Stack from "@foxglove/studio-base/components/Stack";
-import { useAppContext } from "@foxglove/studio-base/context/AppContext";
 import { EventsStore, useEvents } from "@foxglove/studio-base/context/EventsContext";
 import { useAppTimeFormat } from "@foxglove/studio-base/hooks";
 
@@ -87,16 +90,26 @@ export function CreateEventDialog(props: { onClose: () => void }): JSX.Element {
   const { onClose } = props;
 
   const { classes } = useStyles();
+  const events = useEvents((store: EventsStore) => store.events);
 
+  const { formatTime } = useAppTimeFormat();
+  const timestampedEvents = useMemo(
+    () =>
+      (events.value ?? []).map((event) => {
+        return event;
+      }),
+    [events, formatTime],
+  );
+  const setEvents = useEvents((store: EventsStore) => store.setEvents);
   const refreshEvents = useEvents(selectRefreshEvents);
   const currentTime = useMessagePipeline(selectCurrentTime);
   const [event, setEvent] = useImmer<{
-    startTime: undefined | Date;
+    startTime: undefined | Time;
     duration: undefined | number;
     durationUnit: "sec" | "nsec";
     metadataEntries: KeyValue[];
   }>({
-    startTime: currentTime ? toDate(currentTime) : undefined,
+    startTime: currentTime,
     duration: 0,
     durationUnit: "sec",
     metadataEntries: [{ key: "", value: "" }],
@@ -123,9 +136,6 @@ export function CreateEventDialog(props: { onClose: () => void }): JSX.Element {
     [setEvent],
   );
 
-  const { formatTime } = useAppTimeFormat();
-  const { createEvent: appModuleCreateEvent } = useAppContext();
-
   const countedMetadata = countBy(event.metadataEntries, (kv) => kv.key);
   const duplicateKey = Object.entries(countedMetadata).find(
     ([key, count]) => key.length > 0 && count > 1,
@@ -135,31 +145,41 @@ export function CreateEventDialog(props: { onClose: () => void }): JSX.Element {
   const deviceId = useEvents(selectDeviceId);
 
   const [createdEvent, createEvent] = useAsyncFn(async () => {
-    if (event.startTime == undefined || event.duration == undefined || deviceId == undefined) {
+    if (event.startTime == undefined || event.duration == undefined) {
       return;
     }
 
-    const filteredMeta = event.metadataEntries.filter(
-      (entry) => entry.key.length > 0 && entry.value.length > 0,
-    );
-    const keyedMetadata = Object.fromEntries(
-      filteredMeta.map((entry) => [entry.key.trim(), entry.value.trim()]),
-    );
-
-    await appModuleCreateEvent?.({
-      deviceId,
-      timestamp: event.startTime.toISOString(),
-      durationNanos: toNanoSec(
-        event.durationUnit === "sec"
-          ? { sec: event.duration, nsec: 0 }
-          : { sec: 0, nsec: event.duration },
-      ).toString(),
-      metadata: keyedMetadata,
+    const idx = 1;
+    const duration: Time =
+      event.durationUnit === "sec" ? fromSec(event.duration) : fromNanoSec(BigInt(event.duration));
+    const startTime = event.startTime;
+    const id = uuidv4();
+    await setEvents({
+      loading: false,
+      value: [
+        ...timestampedEvents,
+        {
+          id,
+          endTime: add(startTime, duration),
+          endTimeInSeconds: toSec(add(startTime, duration)),
+          startTime,
+          startTimeInSeconds: toSec(startTime),
+          timestampNanos: toNanoSec(startTime).toString(),
+          metadata: {
+            type: ["type A", "type B", "type C"][idx % 3]!,
+            state: ["🤖", "🚎", "🚜"][idx % 3]!,
+          },
+          createdAt: new Date(2020, 1, 1).toISOString(),
+          updatedAt: new Date(2020, 1, 1).toISOString(),
+          deviceId: `web`,
+          durationNanos: toNanoSec(duration).toString(),
+        },
+      ],
     });
 
     onClose();
     refreshEvents();
-  }, [appModuleCreateEvent, deviceId, event, onClose, refreshEvents]);
+  }, [deviceId, event, onClose, refreshEvents]);
 
   const onMetaDataKeyDown = useCallback(
     (keyboardEvent: KeyboardEvent) => {

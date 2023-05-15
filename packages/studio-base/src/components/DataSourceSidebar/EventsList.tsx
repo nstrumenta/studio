@@ -14,8 +14,8 @@ import {
 } from "@foxglove/studio-base/components/MessagePipeline";
 import Stack from "@foxglove/studio-base/components/Stack";
 import {
+  DataSourceEvent,
   EventsStore,
-  TimelinePositionedEvent,
   useEvents,
 } from "@foxglove/studio-base/context/EventsContext";
 import {
@@ -75,7 +75,7 @@ export function EventsList(): JSX.Element {
   const timestampedEvents = useMemo(
     () =>
       (events.value ?? []).map((event) => {
-        return { ...event, formattedTime: formatTime(event.event.startTime) };
+        return { ...event, formattedTime: formatTime(event.startTime) };
       }),
     [events, formatTime],
   );
@@ -85,15 +85,15 @@ export function EventsList(): JSX.Element {
   }, [setFilter]);
 
   const onClick = useCallback(
-    (event: TimelinePositionedEvent) => {
-      if (event.event.id === selectedEventId) {
+    (event: DataSourceEvent) => {
+      if (event.id === selectedEventId) {
         selectEvent(undefined);
       } else {
-        selectEvent(event.event.id);
+        selectEvent(event.id);
       }
 
       if (seek) {
-        seek(event.event.startTime);
+        seek(event.startTime);
       }
     },
     [seek, selectEvent, selectedEventId],
@@ -104,7 +104,7 @@ export function EventsList(): JSX.Element {
   }, [setHoveredEvent]);
 
   const onHoverStart = useCallback(
-    (event: TimelinePositionedEvent) => {
+    (event: DataSourceEvent) => {
       setHoveredEvent(event);
     },
     [setHoveredEvent],
@@ -154,7 +154,7 @@ export function EventsList(): JSX.Element {
         {timestampedEvents.map((event) => {
           return (
             <EventView
-              key={event.event.id}
+              key={event.id}
               event={event}
               filter={filter}
               formattedTime={event.formattedTime}
@@ -162,10 +162,10 @@ export function EventsList(): JSX.Element {
               // hovered event.
               isHovered={
                 hoveredEvent
-                  ? event.event.id === hoveredEvent.event.id
-                  : eventsAtHoverValue[event.event.id] != undefined
+                  ? event.id === hoveredEvent.id
+                  : eventsAtHoverValue[event.id] != undefined
               }
-              isSelected={event.event.id === selectedEventId}
+              isSelected={event.id === selectedEventId}
               onClick={onClick}
               onHoverStart={onHoverStart}
               onHoverEnd={onHoverEnd}

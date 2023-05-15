@@ -24,8 +24,8 @@ import {
 } from "@foxglove/studio-base/components/MessagePipeline";
 import Stack from "@foxglove/studio-base/components/Stack";
 import {
+  DataSourceEvent,
   EventsStore,
-  TimelinePositionedEvent,
   useEvents,
 } from "@foxglove/studio-base/context/EventsContext";
 import {
@@ -95,34 +95,24 @@ function NstrumentaPanel(props: Props): JSX.Element {
 
   useNstrumentaSettings(config, saveConfig);
 
-  const makeEvent = (
-    idx: number,
-    startSec: number = 100,
-    stepSec: number = 1,
-    count: number = 10,
-  ) => {
+  const makeEvent = (idx: number, startSec: number = 100, stepSec: number = 1) => {
     const startTime = { sec: idx * stepSec + startSec, nsec: 0 };
     const duration = { sec: (idx % 3) + 1, nsec: 0 };
     return {
-      event: {
-        id: `event_${idx + 1}`,
-        endTime: add(startTime, duration),
-        endTimeInSeconds: toSec(add(startTime, duration)),
-        startTime,
-        startTimeInSeconds: toSec(startTime),
-        timestampNanos: toNanoSec(startTime).toString(),
-        metadata: {
-          type: ["type A", "type B", "type C"][idx % 3]!,
-          state: ["🤖", "🚎", "🚜"][idx % 3]!,
-        },
-        createdAt: new Date(2020, 1, 1).toISOString(),
-        updatedAt: new Date(2020, 1, 1).toISOString(),
-        deviceId: `device_${idx + 1}`,
-        durationNanos: toNanoSec(duration).toString(),
+      id: `event_${idx + 1}`,
+      endTime: add(startTime, duration),
+      endTimeInSeconds: toSec(add(startTime, duration)),
+      startTime,
+      startTimeInSeconds: toSec(startTime),
+      timestampNanos: toNanoSec(startTime).toString(),
+      metadata: {
+        type: ["type A", "type B", "type C"][idx % 3]!,
+        state: ["🤖", "🚎", "🚜"][idx % 3]!,
       },
-      startPosition: idx / count,
-      endPosition: idx / count + 0.1,
-      secondsSinceStart: toSec(startTime),
+      createdAt: new Date(2020, 1, 1).toISOString(),
+      updatedAt: new Date(2020, 1, 1).toISOString(),
+      deviceId: `device_${idx + 1}`,
+      durationNanos: toNanoSec(duration).toString(),
     };
   };
 
@@ -132,7 +122,7 @@ function NstrumentaPanel(props: Props): JSX.Element {
         if (typeof value == "number") {
           setEvents({
             loading: false,
-            value: [makeEvent(value)],
+            value: [...timestampedEvents, makeEvent(value)],
           });
         }
         setGlobalVariables({ [globalVariableName]: value });
@@ -161,7 +151,7 @@ function NstrumentaPanel(props: Props): JSX.Element {
   const timestampedEvents = useMemo(
     () =>
       (events.value ?? []).map((event) => {
-        return { ...event, formattedTime: formatTime(event.event.startTime) };
+        return { ...event, formattedTime: formatTime(event.startTime) };
       }),
     [events, formatTime],
   );
@@ -171,15 +161,15 @@ function NstrumentaPanel(props: Props): JSX.Element {
   }, [setFilter]);
 
   const onClick = useCallback(
-    (event: TimelinePositionedEvent) => {
-      if (event.event.id === selectedEventId) {
+    (event: DataSourceEvent) => {
+      if (event.id === selectedEventId) {
         selectEvent(undefined);
       } else {
-        selectEvent(event.event.id);
+        selectEvent(event.id);
       }
 
       if (seek) {
-        seek(event.event.startTime);
+        seek(event.startTime);
       }
     },
     [seek, selectEvent, selectedEventId],
@@ -190,7 +180,7 @@ function NstrumentaPanel(props: Props): JSX.Element {
   }, [setHoveredEvent]);
 
   const onHoverStart = useCallback(
-    (event: TimelinePositionedEvent) => {
+    (event: DataSourceEvent) => {
       setHoveredEvent(event);
     },
     [setHoveredEvent],
@@ -239,7 +229,7 @@ function NstrumentaPanel(props: Props): JSX.Element {
         {timestampedEvents.map((event) => {
           return (
             <EventView
-              key={event.event.id}
+              key={event.id}
               event={event}
               filter={filter}
               formattedTime={event.formattedTime}
@@ -247,10 +237,10 @@ function NstrumentaPanel(props: Props): JSX.Element {
               // hovered event.
               isHovered={
                 hoveredEvent
-                  ? event.event.id === hoveredEvent.event.id
-                  : eventsAtHoverValue[event.event.id] != undefined
+                  ? event.id === hoveredEvent.id
+                  : eventsAtHoverValue[event.id] != undefined
               }
-              isSelected={event.event.id === selectedEventId}
+              isSelected={event.id === selectedEventId}
               onClick={onClick}
               onHoverStart={onHoverStart}
               onHoverEnd={onHoverEnd}

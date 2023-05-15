@@ -6,9 +6,14 @@ import { alpha } from "@mui/material";
 import { clamp } from "lodash";
 import { makeStyles } from "tss-react/mui";
 
+import { fromSec, toSec } from "@foxglove/rostime";
 import {
+  MessagePipelineContext,
+  useMessagePipeline,
+} from "@foxglove/studio-base/components/MessagePipeline";
+import {
+  DataSourceEvent,
   EventsStore,
-  TimelinePositionedEvent,
   useEvents,
 } from "@foxglove/studio-base/context/EventsContext";
 import {
@@ -51,22 +56,32 @@ const selectHoveredEvent = (store: TimelineInteractionStateStore) => store.hover
 const selectEventsAtHoverValue = (store: TimelineInteractionStateStore) => store.eventsAtHoverValue;
 const selectSelectedEventId = (store: EventsStore) => store.selectedEventId;
 
-function EventTick({ event }: { event: TimelinePositionedEvent }): JSX.Element {
+function EventTick({ event }: { event: DataSourceEvent }): JSX.Element {
   const eventsAtHoverValue = useTimelineInteractionState(selectEventsAtHoverValue);
   const hoveredEvent = useTimelineInteractionState(selectHoveredEvent);
   const selectedEventId = useEvents(selectSelectedEventId);
+
+  const selectStartTime = (ctx: MessagePipelineContext) => ctx.playerState.activeData?.startTime;
+  const selectEndTime = (ctx: MessagePipelineContext) => ctx.playerState.activeData?.endTime;
+  const playbackStartTime = useMessagePipeline(selectStartTime) || fromSec(0);
+  const playbackEndTime = useMessagePipeline(selectEndTime) || fromSec(0);
+  const playbackDurationSec = toSec(playbackEndTime) - toSec(playbackStartTime);
+
   const { classes, cx } = useStyles();
 
-  const left = `calc(${clamp(event.startPosition, 0, 1) * 100}% - 1px)`;
-  const right = `calc(100% - ${clamp(event.endPosition, 0, 1) * 100}% - 1px)`;
+  const startPosition = (event.startTimeInSeconds - toSec(playbackStartTime)) / playbackDurationSec;
+  const endPosition = (event.endTimeInSeconds - toSec(playbackStartTime)) / playbackDurationSec;
+
+  const left = `calc(${clamp(startPosition, 0, 1) * 100}% - 1px)`;
+  const right = `calc(100% - ${clamp(endPosition, 0, 1) * 100}% - 1px)`;
 
   return (
     <div
       className={cx(classes.tick, {
         [classes.tickHovered]: hoveredEvent
-          ? event.event.id === hoveredEvent.event.id
-          : eventsAtHoverValue[event.event.id] != undefined,
-        [classes.tickSelected]: selectedEventId === event.event.id,
+          ? event.id === hoveredEvent.id
+          : eventsAtHoverValue[event.id] != undefined,
+        [classes.tickSelected]: selectedEventId === event.id,
       })}
       style={{ left, right }}
     />
@@ -82,7 +97,7 @@ export function EventsOverlay(): JSX.Element {
   return (
     <div className={classes.root}>
       {(events.value ?? []).map((event) => (
-        <MemoEventTick key={event.event.id} event={event} />
+        <MemoEventTick key={event.id} event={event} />
       ))}
     </div>
   );

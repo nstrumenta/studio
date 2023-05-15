@@ -52,7 +52,7 @@ export type EventsStore = DeepReadonly<{
   eventsSupported: boolean;
 
   /** Fetched events for this session. */
-  events: AsyncState<TimelinePositionedEvent[]>;
+  events: AsyncState<DataSourceEvent[]>;
 
   /** The current event filter expression. */
   filter: string;
@@ -70,7 +70,7 @@ export type EventsStore = DeepReadonly<{
   selectEvent: (id: undefined | string) => void;
 
   /** Set the fetched events. */
-  setEvents: (events: AsyncState<TimelinePositionedEvent[]>) => void;
+  setEvents: (events: AsyncState<DataSourceEvent[]>) => void;
 
   /** Set the flag indicating support for events. */
   // eslint-disable-next-line @foxglove/no-boolean-parameters

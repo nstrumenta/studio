@@ -6,7 +6,7 @@ import { isEqual, keyBy } from "lodash";
 import { ReactNode, useState } from "react";
 import { createStore, StoreApi } from "zustand";
 
-import { TimelinePositionedEvent } from "@foxglove/studio-base/context/EventsContext";
+import { DataSourceEvent } from "@foxglove/studio-base/context/EventsContext";
 import {
   TimelineInteractionStateContext,
   TimelineInteractionStateStore,
@@ -27,8 +27,8 @@ function createTimelineInteractionStateStore(): StoreApi<TimelineInteractionStat
           hoverValue: store.hoverValue?.componentId === componentId ? undefined : store.hoverValue,
         })),
 
-      setEventsAtHoverValue: (eventsAtHoverValue: TimelinePositionedEvent[]) =>
-        set({ eventsAtHoverValue: keyBy(eventsAtHoverValue, (event) => event.event.id) }),
+      setEventsAtHoverValue: (eventsAtHoverValue: DataSourceEvent[]) =>
+        set({ eventsAtHoverValue: keyBy(eventsAtHoverValue, (event) => event.id) }),
 
       setGlobalBounds: (
         newBounds:
@@ -43,14 +43,15 @@ function createTimelineInteractionStateStore(): StoreApi<TimelineInteractionStat
         }
       },
 
-      setHoveredEvent: (hoveredEvent: undefined | TimelinePositionedEvent) => {
+      setHoveredEvent: (hoveredEvent: undefined | DataSourceEvent) => {
         if (hoveredEvent) {
+          const secondsSinceStart = hoveredEvent.startTimeInSeconds; // subtract global start
           set({
             hoveredEvent,
             hoverValue: {
-              componentId: `event_${hoveredEvent.event.id}`,
+              componentId: `event_${hoveredEvent.id}`,
               type: "PLAYBACK_SECONDS",
-              value: hoveredEvent.secondsSinceStart,
+              value: secondsSinceStart,
             },
           });
         } else {
