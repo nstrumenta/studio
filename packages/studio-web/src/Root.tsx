@@ -14,6 +14,7 @@ import {
   UlogLocalDataSourceFactory,
   McapLocalDataSourceFactory,
   SampleNuscenesDataSourceFactory,
+  NstrumentaDataSourceFactory,
   IdbExtensionLoader,
   App,
   AppSetting,
@@ -53,6 +54,7 @@ export function Root(props: {
       new SampleNuscenesDataSourceFactory(),
       new McapLocalDataSourceFactory(),
       new RemoteDataSourceFactory(),
+      new NstrumentaDataSourceFactory(),
     ];
 
     return props.dataSources ?? sources;

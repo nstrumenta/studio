@@ -3,11 +3,10 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
 import {
-  IDataSourceFactory,
   DataSourceFactoryInitializeArgs,
+  IDataSourceFactory,
 } from "@foxglove/studio-base/context/PlayerSelectionContext";
 import VelodynePlayer from "@foxglove/studio-base/players/VelodynePlayer";
-import { Player } from "@foxglove/studio-base/players/types";
 
 class VelodyneDataSourceFactory implements IDataSourceFactory {
   public id = "velodyne-device";
@@ -22,7 +21,9 @@ class VelodyneDataSourceFactory implements IDataSourceFactory {
     fields: [{ id: "port", label: "UDP Port", defaultValue: "2369" }],
   };
 
-  public initialize(args: DataSourceFactoryInitializeArgs): Player | undefined {
+  public async initialize(
+    args: DataSourceFactoryInitializeArgs,
+  ): ReturnType<IDataSourceFactory["initialize"]> {
     const portStr = args.params?.port;
     if (portStr == undefined) {
       return;

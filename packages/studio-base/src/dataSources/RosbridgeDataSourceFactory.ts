@@ -3,11 +3,10 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
 import {
-  IDataSourceFactory,
   DataSourceFactoryInitializeArgs,
+  IDataSourceFactory,
 } from "@foxglove/studio-base/context/PlayerSelectionContext";
 import RosbridgePlayer from "@foxglove/studio-base/players/RosbridgePlayer";
-import { Player } from "@foxglove/studio-base/players/types";
 
 class RosbridgeDataSourceFactory implements IDataSourceFactory {
   public id = "rosbridge-websocket";
@@ -38,7 +37,9 @@ class RosbridgeDataSourceFactory implements IDataSourceFactory {
     ],
   };
 
-  public initialize(args: DataSourceFactoryInitializeArgs): Player | undefined {
+  public async initialize(
+    args: DataSourceFactoryInitializeArgs,
+  ): ReturnType<IDataSourceFactory["initialize"]> {
     const url = args.params?.url;
     if (!url) {
       return;

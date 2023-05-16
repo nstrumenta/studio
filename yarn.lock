@@ -2677,6 +2677,7 @@ __metadata:
     nearley: 2.20.1
     nearley-loader: 2.0.0
     notistack: 3.0.1
+    nstrumenta: 3.0.43
     path-browserify: 1.0.1
     prettier: 2.8.8
     react: 17.0.2
@@ -2790,7 +2791,6 @@ __metadata:
     copy-webpack-plugin: 11.0.0
     html-webpack-plugin: 5.5.0
     idb: 7.1.1
-    nstrumenta: 3.0.43
     react: 17.0.2
     react-dom: 17.0.2
     react-i18next: 12.2.0

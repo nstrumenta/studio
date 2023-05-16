@@ -7,11 +7,10 @@ import { isString, isUndefined } from "lodash";
 import { RosNode } from "@foxglove/ros1";
 import OsContextSingleton from "@foxglove/studio-base/OsContextSingleton";
 import {
-  IDataSourceFactory,
   DataSourceFactoryInitializeArgs,
+  IDataSourceFactory,
 } from "@foxglove/studio-base/context/PlayerSelectionContext";
 import Ros1Player from "@foxglove/studio-base/players/Ros1Player";
-import { Player } from "@foxglove/studio-base/players/types";
 
 class Ros1SocketDataSourceFactory implements IDataSourceFactory {
   public id = "ros1-socket";
@@ -45,7 +44,9 @@ class Ros1SocketDataSourceFactory implements IDataSourceFactory {
     ],
   };
 
-  public initialize(args: DataSourceFactoryInitializeArgs): Player | undefined {
+  public async initialize(
+    args: DataSourceFactoryInitializeArgs,
+  ): ReturnType<IDataSourceFactory["initialize"]> {
     const url = args.params?.url;
     if (!url) {
       return;

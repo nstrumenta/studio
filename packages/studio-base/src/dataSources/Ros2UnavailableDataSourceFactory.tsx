@@ -26,7 +26,7 @@ export default class Ros2UnavailableDataSourceFactory implements IDataSourceFact
     </>
   );
 
-  public initialize(): ReturnType<IDataSourceFactory["initialize"]> {
+  public async initialize(): ReturnType<IDataSourceFactory["initialize"]> {
     return;
   }
 }

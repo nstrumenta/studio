@@ -6,22 +6,47 @@ import {
   IDataSourceFactory,
   DataSourceFactoryInitializeArgs,
 } from "@foxglove/studio-base/context/PlayerSelectionContext";
+import { NstrumentaBrowserClient } from "nstrumenta/dist/browser/client";
 import { IterablePlayer, WorkerIterableSource } from "@foxglove/studio-base/players/IterablePlayer";
 
-import SampleNuscenesLayout from "./SampleNuscenesLayout.json";
+import NstrumentaLayout from "./NstrumentaLayout.json";
 
-class SampleNuscenesDataSourceFactory implements IDataSourceFactory {
-  public id = "sample-nuscenes";
-  public type: IDataSourceFactory["type"] = "sample";
-  public displayName = "Sample: Nuscenes";
+class NstrumentaDataSourceFactory implements IDataSourceFactory {
+  public id = "nstrumenta";
+  public type: IDataSourceFactory["type"] = "nstrumenta";
+  public displayName = "nstrumenta";
   public iconName: IDataSourceFactory["iconName"] = "FileASPX";
   public hidden = true;
-  public sampleLayout = SampleNuscenesLayout as IDataSourceFactory["sampleLayout"];
+  public sampleLayout = NstrumentaLayout as IDataSourceFactory["sampleLayout"];
+  public nstClient: NstrumentaBrowserClient | undefined;
 
   public async initialize(
     args: DataSourceFactoryInitializeArgs,
   ): ReturnType<IDataSourceFactory["initialize"]> {
-    const bagUrl = "https://assets.foxglove.dev/NuScenes-v1.0-mini-scene-0061-8c50124.mcap";
+    const { search } = window.location;
+    const apiKeyParam = new URLSearchParams(search).get("apiKey");
+    const apiLocalStore = localStorage.getItem("apiKey");
+    const apiKey = apiKeyParam
+      ? apiKeyParam
+      : apiLocalStore
+      ? apiLocalStore
+      : prompt("Enter your nstrumenta apiKey");
+    if (apiKey) {
+      localStorage.setItem("apiKey", apiKey);
+    }
+
+    const dataIdParam = new URLSearchParams(search).get("dataId");
+
+    this.nstClient = new NstrumentaBrowserClient(apiKey);
+
+    const query = await this.nstClient.storage.query({
+      field: "dataId",
+      comparison: "==",
+      compareValue: dataIdParam,
+    });
+    console.log(query);
+
+    const bagUrl = await this.nstClient.storage.getDownloadUrl(query[0].filePath);
 
     const source = new WorkerIterableSource({
       initWorker: () => {
@@ -39,7 +64,7 @@ class SampleNuscenesDataSourceFactory implements IDataSourceFactory {
     return new IterablePlayer({
       source,
       isSampleDataSource: true,
-      name: "Adapted from nuScenes dataset. Copyright © 2020 nuScenes. https://www.nuscenes.org/terms-of-use",
+      name: "nstrumenta",
       metricsCollector: args.metricsCollector,
       // Use blank url params so the data source is set in the url
       urlParams: {},
@@ -48,4 +73,4 @@ class SampleNuscenesDataSourceFactory implements IDataSourceFactory {
   }
 }
 
-export default SampleNuscenesDataSourceFactory;
+export default NstrumentaDataSourceFactory;

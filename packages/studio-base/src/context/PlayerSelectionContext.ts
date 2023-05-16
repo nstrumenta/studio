@@ -15,7 +15,7 @@ export type DataSourceFactoryInitializeArgs = {
   params?: Record<string, string | undefined>;
 };
 
-export type DataSourceFactoryType = "file" | "connection" | "sample";
+export type DataSourceFactoryType = "file" | "connection" | "sample" | "nstrumenta";
 
 export type Field = {
   id: string;
@@ -67,7 +67,7 @@ export interface IDataSourceFactory {
   supportsMultiFile?: boolean;
 
   // Initialize a player.
-  initialize: (args: DataSourceFactoryInitializeArgs) => Player | undefined;
+  initialize: (args: DataSourceFactoryInitializeArgs) => Promise<Player | undefined>;
 }
 
 /**

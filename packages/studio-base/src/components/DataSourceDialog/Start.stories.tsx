@@ -106,7 +106,7 @@ const playerSelection: PlayerSelection = {
         fields: [{ id: "key", label: "Some Label" }],
       },
 
-      initialize: () => {
+      initialize: async () => {
         return undefined;
       },
     },

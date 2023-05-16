@@ -125,8 +125,8 @@ export default function PlayerManager(props: PropsWithChildren<PlayerManagerProp
       metricsCollector.setProperty("player", sourceId);
 
       // Sample sources don't need args or prompts to initialize
-      if (foundSource.type === "sample") {
-        const newPlayer = foundSource.initialize({
+      if (foundSource.type === "sample" || foundSource.type === "nstrumenta") {
+        const newPlayer = await foundSource.initialize({
           metricsCollector,
         });
 
@@ -163,7 +163,7 @@ export default function PlayerManager(props: PropsWithChildren<PlayerManagerProp
       try {
         switch (args.type) {
           case "connection": {
-            const newPlayer = foundSource.initialize({
+            const newPlayer = await foundSource.initialize({
               metricsCollector,
               params: args.params,
             });
@@ -198,7 +198,7 @@ export default function PlayerManager(props: PropsWithChildren<PlayerManagerProp
               }
               const multiFile = foundSource.supportsMultiFile === true && fileList.length > 1;
 
-              const newPlayer = foundSource.initialize({
+              const newPlayer = await foundSource.initialize({
                 file: multiFile ? undefined : file,
                 files: multiFile ? fileList : undefined,
                 metricsCollector,
@@ -234,7 +234,7 @@ export default function PlayerManager(props: PropsWithChildren<PlayerManagerProp
               // show the user which file they've selected (i.e. macOS proxy icon)
               void nativeWindow?.setRepresentedFilename((file as { path?: string }).path); // File.path is added by Electron
 
-              const newPlayer = foundSource.initialize({
+              const newPlayer = await foundSource.initialize({
                 file,
                 metricsCollector,
               });

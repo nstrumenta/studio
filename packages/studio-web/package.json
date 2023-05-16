@@ -4,8 +4,7 @@
   "private": true,
   "main": "./src/index.tsx",
   "dependencies": {
-    "@foxglove/studio-base": "workspace:*",
-    "nstrumenta": "3.0.43"
+    "@foxglove/studio-base": "workspace:*"
   },
   "devDependencies": {
     "@foxglove/log": "workspace:*",
