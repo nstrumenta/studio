@@ -1,7 +1,6 @@
 {
     "$schema": "https://raw.githubusercontent.com/nstrumenta/nstrumenta/main/module.schema.json",
     "type": "sandbox",
-    "prePublishCommand": "yarn web:build:prod",
     "include": [
         "web/.webpack"
     ]
