@@ -1,366 +1,200 @@
 {
   "configById": {
-    "ImageViewPanel!1r5tdvh": {
-      "cameraTopic": "/CAM_FRONT_LEFT/image_rect_compressed",
-      "enabledMarkerTopics": ["/CAM_FRONT_LEFT/annotations", "/CAM_FRONT_LEFT/lidar"],
-      "transformMarkers": false,
-      "synchronize": false,
-      "mode": "fit",
-      "pan": {
-        "x": 0,
-        "y": 0
-      },
-      "rotation": 0,
-      "zoom": 1
-    },
-    "ImageViewPanel!15kmj7r": {
-      "cameraTopic": "/CAM_FRONT/image_rect_compressed",
-      "enabledMarkerTopics": ["/CAM_FRONT/lidar", "/CAM_FRONT/annotations"],
-      "transformMarkers": false,
-      "synchronize": false,
-      "mode": "fit",
-      "pan": {
-        "x": 0,
-        "y": 0
-      },
-      "rotation": 0,
-      "zoom": 1
-    },
-    "ImageViewPanel!1jn49st": {
-      "cameraTopic": "/CAM_FRONT_RIGHT/image_rect_compressed",
-      "enabledMarkerTopics": ["/CAM_FRONT_RIGHT/annotations", "/CAM_FRONT_RIGHT/lidar"],
-      "transformMarkers": false,
-      "synchronize": false,
-      "mode": "fit",
-      "pan": {
-        "x": 0,
-        "y": 0
-      },
-      "rotation": 0,
-      "zoom": 1
-    },
-    "3D!12ucir": {
-      "cameraState": {
-        "distance": 35,
-        "perspective": true,
-        "phi": 60,
-        "target": [0, 0, 0],
-        "targetOffset": [0, 0, 0],
-        "targetOrientation": [0, 0, 0, 1],
-        "thetaOffset": 45,
-        "fovy": 45,
-        "near": 1.0,
-        "far": 5000
-      },
-      "scene": {},
-      "transforms": {},
-      "topics": {
-        "/semantic_map": {
-          "visible": true
-        },
-        "/markers/annotations": {
-          "visible": true
-        },
-        "/map": {
-          "visible": true,
-          "colorField": "color",
-          "colorMode": "rgba-fields",
-          "colorMap": "turbo",
-          "gradient": ["#ffffff", "#000000"]
-        },
-        "/drivable_area": {
-          "visible": false,
-          "minColor": "#ffffff",
-          "colorField": "drivable_area",
-          "colorMode": "gradient",
-          "colorMap": "turbo",
-          "gradient": ["#ffffff", "#ffffff00"],
-          "maxValue": 1,
-          "minValue": 0
-        },
-        "/RADAR_FRONT": {
-          "visible": true,
-          "colorField": "x",
-          "colorMode": "colormap",
-          "colorMap": "turbo"
-        },
-        "/RADAR_FRONT_LEFT": {
-          "visible": true,
-          "colorField": "x",
-          "colorMode": "colormap",
-          "colorMap": "turbo"
-        },
-        "/RADAR_FRONT_RIGHT": {
-          "visible": true,
-          "colorField": "x",
-          "colorMode": "colormap",
-          "colorMap": "turbo"
-        },
-        "/RADAR_BACK_LEFT": {
-          "visible": true,
-          "colorField": "x",
-          "colorMode": "colormap",
-          "colorMap": "turbo"
-        },
-        "/RADAR_BACK_RIGHT": {
-          "visible": true,
-          "colorField": "x",
-          "colorMode": "colormap",
-          "colorMap": "turbo"
-        },
-        "/LIDAR_TOP": {
-          "visible": true,
-          "colorField": "intensity",
-          "colorMode": "colormap",
-          "colorMap": "turbo"
-        },
-        "/markers/car": {
-          "visible": true
-        }
-      },
-      "layers": {},
-      "publish": {
-        "type": "point",
-        "poseTopic": "/move_base_simple/goal",
-        "pointTopic": "/clicked_point",
-        "poseEstimateTopic": "/initialpose",
-        "poseEstimateXDeviation": 0.5,
-        "poseEstimateYDeviation": 0.5,
-        "poseEstimateThetaDeviation": 0.26179939
-      },
-      "followMode": "follow-pose",
-      "followTf": "base_link"
-    },
-    "map!2vkib4e": {
-      "disabledTopics": [],
-      "zoomLevel": 17,
-      "layer": "map",
-      "customTileUrl": "",
-      "followTopic": "",
-      "center": {
-        "lat": 1.2988182017789598,
-        "lon": 103.78844261169435
-      },
-      "topicColors": {}
-    },
-    "3D!3edtgyg": {
-      "cameraState": {
-        "perspective": false,
-        "distance": 100,
-        "phi": 45,
-        "thetaOffset": 90,
-        "targetOffset": [0, 0, 0],
-        "target": [0, 0, 0],
-        "targetOrientation": [0, 0, 0, 1],
-        "fovy": 45,
-        "near": 0.01,
-        "far": 5000
-      },
-      "scene": {},
-      "transforms": {},
-      "topics": {
-        "/semantic_map": {
-          "visible": true
-        },
-        "/markers/annotations": {
-          "visible": true
-        },
-        "/map": {
-          "visible": true,
-          "colorField": "value",
-          "colorMode": "gradient",
-          "colorMap": "turbo",
-          "gradient": ["#ffffff", "#000000"]
-        },
-        "/drivable_area": {
-          "visible": true,
-          "minColor": "#ffffff",
-          "colorField": "drivable_area",
-          "colorMode": "gradient",
-          "colorMap": "turbo",
-          "gradient": ["#ffffff", "#ffffff00"],
-          "maxValue": 1,
-          "minValue": 0
-        },
-        "/markers/car": {
-          "visible": true
-        }
-      },
-      "layers": {},
-      "publish": {
-        "type": "point",
-        "poseTopic": "/move_base_simple/goal",
-        "pointTopic": "/clicked_point",
-        "poseEstimateTopic": "/initialpose",
-        "poseEstimateXDeviation": 0.5,
-        "poseEstimateYDeviation": 0.5,
-        "poseEstimateThetaDeviation": 0.26179939
-      },
-      "followMode": "follow-pose",
-      "followTf": "base_link"
-    },
-    "Plot!2pb7zl7": {
+    "Plot!20ufvrz": {
       "paths": [
         {
-          "value": "/imu.linear_accel.x",
+          "value": "AR.values[1]",
           "enabled": true,
-          "timestampMethod": "headerStamp"
-        },
-        {
-          "value": "/diagnostics.status[:].values[:]{key==\"throttle_sensor\"}.value",
-          "enabled": true,
-          "timestampMethod": "headerStamp"
+          "timestampMethod": "receiveTime",
+          "label": "AR position"
         }
       ],
-      "minYValue": "",
-      "maxYValue": "",
-      "showLegend": true,
-      "isSynced": true,
-      "xAxisVal": "timestamp",
-      "title": "Plot",
       "showXAxisLabels": true,
       "showYAxisLabels": true,
+      "showLegend": true,
       "legendDisplay": "floating",
       "showPlotValuesInLegend": false,
-      "sidebarDimension": 240
+      "isSynced": true,
+      "xAxisVal": "custom",
+      "sidebarDimension": 240,
+      "foxglovePanelTitle": "Plot",
+      "xAxisPath": {
+        "value": "AR.values[0]"
+      },
+      "followingViewWidth": 1
     },
-    "Plot!4792hqu": {
+    "Plot!1nfc08k": {
       "paths": [
         {
-          "value": "/diagnostics.status[:].values[:]{key==\"FL_wheel_speed\"}.value",
+          "value": "PEEK_RAW.values[0]",
           "enabled": true,
-          "timestampMethod": "headerStamp"
+          "timestampMethod": "receiveTime"
         },
         {
-          "value": "/diagnostics.status[:].values[:]{key==\"FR_wheel_speed\"}.value",
-          "enabled": true,
-          "timestampMethod": "headerStamp"
+          "timestampMethod": "receiveTime",
+          "value": "PEEK_RAW.values[1]",
+          "enabled": true
         },
         {
-          "value": "/diagnostics.status[:].values[:]{key==\"RL_wheel_speed\"}.value",
-          "enabled": true,
-          "timestampMethod": "headerStamp"
-        },
-        {
-          "value": "/diagnostics.status[:].values[:]{key==\"RR_wheel_speed\"}.value",
-          "enabled": true,
-          "timestampMethod": "headerStamp"
+          "timestampMethod": "receiveTime",
+          "value": "PEEK_RAW.values[2]",
+          "enabled": true
         }
       ],
-      "minYValue": "",
-      "maxYValue": "",
-      "showLegend": true,
-      "isSynced": true,
-      "xAxisVal": "timestamp",
-      "title": "Plot",
       "showXAxisLabels": true,
       "showYAxisLabels": true,
+      "showLegend": true,
       "legendDisplay": "floating",
       "showPlotValuesInLegend": false,
-      "sidebarDimension": 240
+      "isSynced": true,
+      "xAxisVal": "timestamp",
+      "sidebarDimension": 240,
+      "foxglovePanelTitle": "Plot"
     },
-    "StateTransitions!3i4dk1l": {
+    "Plot!3dy8unk": {
       "paths": [
         {
-          "value": "/diagnostics.status[:].values[:]{key==\"brake_switch\"}.value",
-          "timestampMethod": "headerStamp"
+          "value": "GYRO_RAW.values[0]",
+          "enabled": true,
+          "timestampMethod": "receiveTime"
+        },
+        {
+          "timestampMethod": "receiveTime",
+          "value": "GYRO_RAW.values[1]",
+          "enabled": true
+        },
+        {
+          "timestampMethod": "receiveTime",
+          "value": "GYRO_RAW.values[2]",
+          "enabled": true
         }
       ],
-      "isSynced": true
+      "showXAxisLabels": true,
+      "showYAxisLabels": true,
+      "showLegend": true,
+      "legendDisplay": "floating",
+      "showPlotValuesInLegend": false,
+      "isSynced": true,
+      "xAxisVal": "timestamp",
+      "sidebarDimension": 240,
+      "foxglovePanelTitle": "Plot"
     },
-    "DiagnosticSummary!3equ26v": {
-      "minLevel": 0,
-      "pinnedIds": [],
-      "hardwareIdFilter": "",
-      "topicToRender": "/diagnostics",
-      "sortByLevel": true
+    "ImageViewPanel!4jj17jw": {
+      "cameraTopic": "gopro",
+      "enabledMarkerTopics": [],
+      "mode": "fit",
+      "pan": {
+        "x": 84.60707202480192,
+        "y": -150.14865467278977
+      },
+      "rotation": 0,
+      "synchronize": false,
+      "transformMarkers": false,
+      "zoom": 1.8637687352949457
     },
-    "DiagnosticStatusPanel!4bdyip2": {
-      "topicToRender": "/diagnostics",
-      "collapsedSections": [],
-      "selectedHardwareId": "",
-      "splitFraction": 0.49345370528837923
+    "nstrumenta!2k1f12i": {
+      "sliderProps": {
+        "min": 0,
+        "max": 10,
+        "step": 1
+      },
+      "globalVariableName": "globalVariable"
     },
-    "SourceInfo!7dc2bd": {},
-    "RawMessages!21ab95j": {
-      "topicPath": "/markers/annotations.entities[:]{id==\"6dd2\"}",
-      "diffTopicPath": "",
-      "diffMethod": "custom",
-      "diffEnabled": false,
-      "showFullMessageForDiff": false,
-      "autoExpandMode": "auto"
-    },
-    "Tab!1xyw5ix": {
-      "activeTabIdx": 0,
-      "tabs": [
+    "Plot!d2293l": {
+      "paths": [
         {
-          "title": "Perception",
-          "layout": {
-            "first": {
-              "first": "ImageViewPanel!1r5tdvh",
-              "second": {
-                "first": "ImageViewPanel!15kmj7r",
-                "second": "ImageViewPanel!1jn49st",
-                "direction": "row",
-                "splitPercentage": 50
-              },
-              "direction": "row",
-              "splitPercentage": 33.333
-            },
-            "second": "3D!12ucir",
-            "direction": "column",
-            "splitPercentage": 30
-          }
+          "value": "ACCEL_RAW.values[0]",
+          "enabled": true,
+          "timestampMethod": "receiveTime"
         },
         {
-          "title": "Planning",
-          "layout": {
-            "first": "map!2vkib4e",
-            "second": "3D!3edtgyg",
-            "direction": "row",
-            "splitPercentage": 30
-          }
+          "timestampMethod": "receiveTime",
+          "value": "ACCEL_RAW.values[1]",
+          "enabled": true
         },
         {
-          "title": "Controls",
-          "layout": {
-            "first": "Plot!2pb7zl7",
-            "second": "Plot!4792hqu",
-            "direction": "column",
-            "splitPercentage": 50
-          }
-        },
-        {
-          "title": "Diagnostics",
-          "layout": {
-            "first": {
-              "first": "StateTransitions!3i4dk1l",
-              "second": {
-                "first": "DiagnosticSummary!3equ26v",
-                "second": "DiagnosticStatusPanel!4bdyip2",
-                "direction": "column",
-                "splitPercentage": 27
-              },
-              "direction": "column",
-              "splitPercentage": 18
-            },
-            "second": {
-              "first": "SourceInfo!7dc2bd",
-              "second": "RawMessages!21ab95j",
-              "direction": "column",
-              "splitPercentage": 60
-            },
-            "direction": "row",
-            "splitPercentage": 50
-          }
+          "timestampMethod": "receiveTime",
+          "value": "ACCEL_RAW.values[2]",
+          "enabled": true
         }
-      ]
+      ],
+      "showXAxisLabels": true,
+      "showYAxisLabels": true,
+      "showLegend": true,
+      "legendDisplay": "floating",
+      "showPlotValuesInLegend": false,
+      "isSynced": true,
+      "xAxisVal": "timestamp",
+      "sidebarDimension": 240,
+      "foxglovePanelTitle": "Plot"
+    },
+    "Plot!27wwqdp": {
+      "paths": [
+        {
+          "value": "PEEK_PRESSURE.values[0]",
+          "enabled": true,
+          "timestampMethod": "receiveTime"
+        }
+      ],
+      "showXAxisLabels": true,
+      "showYAxisLabels": true,
+      "showLegend": true,
+      "legendDisplay": "floating",
+      "showPlotValuesInLegend": false,
+      "isSynced": true,
+      "xAxisVal": "timestamp",
+      "sidebarDimension": 240,
+      "foxglovePanelTitle": "Plot"
+    },
+    "ImageViewPanel!2gru17m": {
+      "cameraTopic": "lpom",
+      "enabledMarkerTopics": [],
+      "mode": "fit",
+      "pan": {
+        "x": -9.206197977311355,
+        "y": 37.56388143179663
+      },
+      "rotation": 0,
+      "synchronize": false,
+      "transformMarkers": false,
+      "zoom": 0.8947419980000808
     }
   },
-  "globalVariables": {},
+  "globalVariables": {
+    "globalVariable": 2
+  },
   "userNodes": {},
   "playbackConfig": {
     "speed": 1
   },
-  "layout": "Tab!1xyw5ix"
+  "layout": {
+    "first": {
+      "direction": "row",
+      "first": {
+        "first": "Plot!1nfc08k",
+        "second": "Plot!3dy8unk",
+        "direction": "column"
+      },
+      "second": {
+        "first": "ImageViewPanel!4jj17jw",
+        "second": "nstrumenta!2k1f12i",
+        "direction": "column",
+        "splitPercentage": 67.43447180301827
+      }
+    },
+    "second": {
+      "first": {
+        "first": "Plot!d2293l",
+        "second": "Plot!27wwqdp",
+        "direction": "column"
+      },
+      "second": {
+        "first": "Plot!20ufvrz",
+        "second": "ImageViewPanel!2gru17m",
+        "direction": "row"
+      },
+      "direction": "row"
+    },
+    "direction": "column"
+  }
 }
