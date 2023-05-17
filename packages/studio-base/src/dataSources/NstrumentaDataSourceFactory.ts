@@ -35,9 +35,9 @@ class NstrumentaDataSourceFactory implements IDataSourceFactory {
       localStorage.setItem("apiKey", apiKey);
     }
 
-    const dataIdParam = new URLSearchParams(search).get("dataId");
+    const dataIdParam = new URLSearchParams(search).get("dataId") || "";
 
-    this.nstClient = new NstrumentaBrowserClient(apiKey);
+    this.nstClient = new NstrumentaBrowserClient(apiKey!);
 
     const query = await this.nstClient.storage.query({
       field: "dataId",
@@ -45,7 +45,7 @@ class NstrumentaDataSourceFactory implements IDataSourceFactory {
       compareValue: dataIdParam,
     });
     console.log(query);
-
+    if (query[0] === undefined) return;
     const bagUrl = await this.nstClient.storage.getDownloadUrl(query[0].filePath);
 
     const source = new WorkerIterableSource({

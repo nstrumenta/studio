@@ -2677,7 +2677,7 @@ __metadata:
     nearley: 2.20.1
     nearley-loader: 2.0.0
     notistack: 3.0.1
-    nstrumenta: 3.0.43
+    nstrumenta: 3.0.44
     path-browserify: 1.0.1
     prettier: 2.8.8
     react: 17.0.2
@@ -16956,9 +16956,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nstrumenta@npm:3.0.43":
-  version: 3.0.43
-  resolution: "nstrumenta@npm:3.0.43"
+"nstrumenta@npm:3.0.44":
+  version: 3.0.44
+  resolution: "nstrumenta@npm:3.0.44"
   dependencies:
     "@ffmpeg/core": ^0.11.0
     "@ffmpeg/ffmpeg": ^0.11.6
@@ -16984,7 +16984,7 @@ __metadata:
   bin:
     nst: dist/cli/index.js
     nstrumenta: dist/cli/index.js
-  checksum: 7db9432388fe6a9feb068d72de555a6f385858e64dd607023b79e89d72a63d501f580bdc10bcdaa911f43cb14d5c8c1f7b593c889b4a88d01679d73c9d219ad5
+  checksum: 0c2272b4f9c392211fbd37dcbfcb46aebf4515f04d97daac6b84d93b404c548f7031f4af72be650c510266bdcb64b3d2b2cb943995029791ad36b020dee55956
   languageName: node
   linkType: hard
 
