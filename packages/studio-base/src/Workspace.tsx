@@ -545,7 +545,14 @@ function WorkspaceContent(props: WorkspaceContentProps): JSX.Element {
   ]);
 
   const eventsSupported = useEvents(selectEventsSupported);
-  const showEventsTab = currentUser != undefined && eventsSupported;
+
+  const setEventsSupported = useEvents((store) => store.setEventsSupported);
+
+  useEffect(() => {
+    setEventsSupported(true);
+  }, [setEventsSupported]);
+
+  const showEventsTab = eventsSupported;
 
   const leftSidebarItems = useMemo(() => {
     const items = new Map<LeftSidebarItemKey, NewSidebarItem>([

@@ -149,10 +149,12 @@ export function CreateEventDialog(props: { onClose: () => void }): JSX.Element {
       return;
     }
 
-    const idx = 1;
     const duration: Time =
       event.durationUnit === "sec" ? fromSec(event.duration) : fromNanoSec(BigInt(event.duration));
-    const startTime = event.startTime;
+    const { startTime, metadataEntries } = event;
+    const nowIsoString = new Date(Date.now()).toISOString();
+    const metadata: Record<string, string> = {};
+    metadataEntries.forEach((entry) => (metadata[entry.key] = entry.value));
     const id = uuidv4();
     await setEvents({
       loading: false,
@@ -165,12 +167,9 @@ export function CreateEventDialog(props: { onClose: () => void }): JSX.Element {
           startTime,
           startTimeInSeconds: toSec(startTime),
           timestampNanos: toNanoSec(startTime).toString(),
-          metadata: {
-            type: ["type A", "type B", "type C"][idx % 3]!,
-            state: ["🤖", "🚎", "🚜"][idx % 3]!,
-          },
-          createdAt: new Date(2020, 1, 1).toISOString(),
-          updatedAt: new Date(2020, 1, 1).toISOString(),
+          metadata,
+          createdAt: nowIsoString,
+          updatedAt: nowIsoString,
           deviceId: `web`,
           durationNanos: toNanoSec(duration).toString(),
         },

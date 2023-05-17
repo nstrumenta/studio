@@ -90,11 +90,6 @@ export default function DataSourceSidebar(props: Props): JSX.Element {
 
   const [enableNewTopNav = false] = useAppConfigurationValue<boolean>(AppSetting.ENABLE_NEW_TOPNAV);
 
-  const setEventsSupported = useEvents((store) => store.setEventsSupported);
-  useEffect(() => {
-    setEventsSupported(true);
-  }, [setEventsSupported]);
-
   const showEventsTab = !enableNewTopNav;
 
   const isLoading = useMemo(

@@ -15,30 +15,12 @@ import { NstrumentaConfig } from "./types";
 function buildSettingsTree(config: NstrumentaConfig): SettingsTreeNodes {
   return {
     general: {
-      label: "General",
+      label: "Labels",
       fields: {
-        min: {
-          label: "Min",
-          input: "number",
-          placeholder: "min",
-          value: config.sliderProps.min,
-        },
-        max: {
-          label: "Max",
-          input: "number",
-          placeholder: "max",
-          value: config.sliderProps.max,
-        },
-        step: {
-          label: "Step",
-          input: "number",
-          placeholder: "step",
-          value: config.sliderProps.step,
-        },
-        globalVariableName: {
-          label: "Variable name",
+        labelsDataId: {
+          label: "labels dataId",
           input: "string",
-          value: config.globalVariableName,
+          value: config.labelsDataId,
         },
       },
     },
@@ -60,13 +42,7 @@ export function useNstrumentaSettings(
       saveConfig(
         produce<NstrumentaConfig>((draft) => {
           const path = action.payload.path.slice(1);
-          if (["min", "max"].includes(path[0] ?? "")) {
-            set(draft, ["sliderProps", ...path], action.payload.value);
-          } else if (path[0] === "step" && action.payload.input === "number") {
-            draft.sliderProps.step = action.payload.value;
-          } else {
-            set(draft, path, action.payload.value);
-          }
+          set(draft, path, action.payload.value);
         }),
       );
     },

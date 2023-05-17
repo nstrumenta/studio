@@ -11,11 +11,10 @@
 //   found at http://www.apache.org/licenses/LICENSE-2.0
 //   You may not use this file except in compliance with the License.
 
-import { add, toNanoSec, toSec } from "@foxglove/rostime";
 import ClearIcon from "@mui/icons-material/Clear";
 import SearchIcon from "@mui/icons-material/Search";
-import { CircularProgress, IconButton, TextField, Typography } from "@mui/material";
-import { useCallback, useMemo } from "react";
+import { Button, CircularProgress, IconButton, TextField, Typography } from "@mui/material";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { makeStyles } from "tss-react/mui";
 
 import {
@@ -35,7 +34,6 @@ import {
 import { useAppTimeFormat } from "@foxglove/studio-base/hooks";
 
 import { EventView } from "@foxglove/studio-base/components/DataSourceSidebar/EventView";
-import { Slider, useTheme } from "@mui/material";
 
 const useStyles = makeStyles()((theme) => ({
   appBar: {
@@ -74,9 +72,9 @@ const selectSelectEvent = (store: EventsStore) => store.selectEvent;
 
 import Panel from "@foxglove/studio-base/components/Panel";
 import PanelToolbar from "@foxglove/studio-base/components/PanelToolbar";
-import useGlobalVariables from "@foxglove/studio-base/hooks/useGlobalVariables";
 import { SaveConfig } from "@foxglove/studio-base/types/panels";
 
+import { NstrumentaBrowserClient } from "nstrumenta/dist/browser/client";
 import { useNstrumentaSettings } from "./settings";
 import { NstrumentaConfig } from "./types";
 
@@ -87,54 +85,30 @@ type Props = {
 
 function NstrumentaPanel(props: Props): JSX.Element {
   const { config, saveConfig } = props;
-  const { sliderProps, globalVariableName } = config;
-  const { globalVariables, setGlobalVariables } = useGlobalVariables();
-  const { min = 0, max = 10, step = 1 } = sliderProps;
-  const globalVariableValue = globalVariables[globalVariableName];
-  const theme = useTheme();
+  const { labelsDataId } = config;
+
+  const { search } = window.location;
+  const apiKeyParam = new URLSearchParams(search).get("apiKey");
+  const apiLocalStore = localStorage.getItem("apiKey");
+  const apiKey = apiKeyParam
+    ? apiKeyParam
+    : apiLocalStore
+    ? apiLocalStore
+    : prompt("Enter your nstrumenta apiKey");
+  if (apiKey) {
+    localStorage.setItem("apiKey", apiKey);
+  }
+  const nstClient = useRef(new NstrumentaBrowserClient(apiKey!));
+
+  const labelDataIdParam = new URLSearchParams(search).get("labelsDataId");
+  if (labelDataIdParam) {
+    saveConfig((draft) => {
+      draft.labelsDataId = labelDataIdParam;
+      return draft;
+    });
+  }
 
   useNstrumentaSettings(config, saveConfig);
-
-  const makeEvent = (idx: number, startSec: number = 100, stepSec: number = 1) => {
-    const startTime = { sec: idx * stepSec + startSec, nsec: 0 };
-    const duration = { sec: (idx % 3) + 1, nsec: 0 };
-    return {
-      id: `event_${idx + 1}`,
-      endTime: add(startTime, duration),
-      endTimeInSeconds: toSec(add(startTime, duration)),
-      startTime,
-      startTimeInSeconds: toSec(startTime),
-      timestampNanos: toNanoSec(startTime).toString(),
-      metadata: {
-        type: ["type A", "type B", "type C"][idx % 3]!,
-        state: ["🤖", "🚎", "🚜"][idx % 3]!,
-      },
-      createdAt: new Date(2020, 1, 1).toISOString(),
-      updatedAt: new Date(2020, 1, 1).toISOString(),
-      deviceId: `device_${idx + 1}`,
-      durationNanos: toNanoSec(duration).toString(),
-    };
-  };
-
-  const sliderOnChange = useCallback(
-    (_event: Event, value: number | number[]) => {
-      if (value !== globalVariableValue) {
-        if (typeof value == "number") {
-          setEvents({
-            loading: false,
-            value: [...timestampedEvents, makeEvent(value)],
-          });
-        }
-        setGlobalVariables({ [globalVariableName]: value });
-      }
-    },
-    [globalVariableName, globalVariableValue, setGlobalVariables],
-  );
-
-  const marks = [
-    { value: min, label: String(min) },
-    { value: max, label: String(max) },
-  ];
 
   const events = useEvents(selectEvents);
   const selectedEventId = useEvents(selectSelectedEventId);
@@ -155,6 +129,45 @@ function NstrumentaPanel(props: Props): JSX.Element {
       }),
     [events, formatTime],
   );
+
+  const loadLabels = async (dataId: string) => {
+    console.log("loading events from", labelsDataId);
+    const query = await nstClient.current.storage.query({
+      field: "dataId",
+      comparison: "==",
+      compareValue: dataId,
+    });
+    console.log(query);
+    if (query[0] === undefined) return;
+    const url = await nstClient.current.storage.getDownloadUrl(query[0].filePath);
+    fetch(url).then(async (res) => {
+      setEvents({ loading: false, value: await res.json() });
+    });
+  };
+
+  const saveLabels = async () => {
+    const serializedEvents = JSON.stringify(events.value);
+    console.log(serializedEvents);
+
+    if (serializedEvents) {
+      const data = new Blob([serializedEvents], {
+        type: "application/json",
+      });
+      nstClient.current.storage.upload({
+        dataId: labelsDataId ? labelsDataId : undefined,
+        data,
+        filename: "labels.json",
+        meta: {},
+        overwrite: true,
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (labelsDataId) {
+      loadLabels(labelsDataId);
+    }
+  }, [labelsDataId]);
 
   const clearFilter = useCallback(() => {
     setFilter("");
@@ -248,38 +261,13 @@ function NstrumentaPanel(props: Props): JSX.Element {
           );
         })}
       </div>
-      <Stack
-        flex="auto"
-        alignItems="center"
-        justifyContent="center"
-        fullHeight
-        gap={2}
-        paddingY={2}
-        paddingX={3}
-      >
-        <Slider
-          min={min}
-          max={max}
-          step={step}
-          marks={marks}
-          value={typeof globalVariableValue === "number" ? globalVariableValue : 0}
-          onChange={sliderOnChange}
-        />
-        <Typography variant="h5" style={{ marginTop: theme.spacing(-2.5) }}>
-          {typeof globalVariableValue === "number" ? globalVariableValue : 0}
-        </Typography>
-      </Stack>
+      <Button onClick={saveLabels}>Save Events</Button>
     </Stack>
   );
 }
 
 const defaultConfig: NstrumentaConfig = {
-  sliderProps: {
-    min: 0,
-    max: 10,
-    step: 1,
-  },
-  globalVariableName: "globalVariable",
+  labelsDataId: "",
 };
 
 export default Panel(
