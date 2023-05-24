@@ -194,6 +194,12 @@ function buildSettingsTree(config: PlotConfig, t: TFunction<"plot">): SettingsTr
           placeholder: "auto",
           value: config.followingViewWidth,
         },
+        followingViewOffset: {
+          label: "Range Offset (seconds)",
+          input: "number",
+          placeholder: "auto",
+          value: config.followingViewOffset,
+        },
       },
     },
     paths: makeRootSeriesNode(config.paths, t),
