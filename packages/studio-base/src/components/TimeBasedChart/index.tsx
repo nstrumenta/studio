@@ -91,7 +91,7 @@ const selectSetGlobalBounds = (store: TimelineInteractionStateStore) => store.se
 // Calculation mode for the "reset view" view.
 export type ChartDefaultView =
   | { type: "fixed"; minXValue: number; maxXValue: number }
-  | { type: "following"; width: number };
+  | { type: "following"; width: number; offset: number };
 
 export type Props = {
   type: "scatter";
@@ -437,7 +437,7 @@ export default function TimeBasedChart(props: Props): JSX.Element {
       min = defaultView.minXValue;
       max = defaultView.maxXValue;
     } else if (defaultView?.type === "following") {
-      max = currentTime ?? 0;
+      max = currentTime ? currentTime + defaultView.offset : defaultView.offset;
       min = max - defaultView.width;
     } else {
       min = datasetBounds.x.min;

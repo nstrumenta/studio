@@ -1,28 +1,5 @@
 {
   "configById": {
-    "Plot!20ufvrz": {
-      "paths": [
-        {
-          "value": "AR.values[1]",
-          "enabled": true,
-          "timestampMethod": "receiveTime",
-          "label": "AR position"
-        }
-      ],
-      "showXAxisLabels": true,
-      "showYAxisLabels": true,
-      "showLegend": true,
-      "legendDisplay": "floating",
-      "showPlotValuesInLegend": false,
-      "isSynced": true,
-      "xAxisVal": "custom",
-      "sidebarDimension": 240,
-      "foxglovePanelTitle": "Plot",
-      "xAxisPath": {
-        "value": "AR.values[0]"
-      },
-      "followingViewWidth": 1
-    },
     "Plot!1nfc08k": {
       "paths": [
         {
@@ -50,7 +27,8 @@
       "xAxisVal": "timestamp",
       "sidebarDimension": 240,
       "foxglovePanelTitle": "Plot",
-      "followingViewWidth": 30
+      "followingViewWidth": 30,
+      "followingViewOffset": 25
     },
     "Plot!3dy8unk": {
       "paths": [
@@ -79,20 +57,31 @@
       "xAxisVal": "timestamp",
       "sidebarDimension": 240,
       "foxglovePanelTitle": "Plot",
-      "followingViewWidth": 30
+      "followingViewWidth": 30,
+      "followingViewOffset": 25
+    },
+    "nstrumenta!2k1f12i": {
+      "sliderProps": {
+        "min": 0,
+        "max": 10,
+        "step": 1
+      },
+      "globalVariableName": "globalVariable",
+      "labelsDataId": "707f6eac-8731-4aee-87e5-870dc66e2600",
+      "dataId": ";"
     },
     "ImageViewPanel!4jj17jw": {
       "cameraTopic": "gopro",
       "enabledMarkerTopics": [],
       "mode": "fit",
       "pan": {
-        "x": 84.60707202480192,
-        "y": -150.14865467278977
+        "x": 138.43826746698494,
+        "y": -133.62528105958236
       },
       "rotation": 0,
       "synchronize": false,
       "transformMarkers": false,
-      "zoom": 1.8637687352949457
+      "zoom": 0.7825331654111356
     },
     "Plot!d2293l": {
       "paths": [
@@ -121,7 +110,8 @@
       "xAxisVal": "timestamp",
       "sidebarDimension": 240,
       "foxglovePanelTitle": "Plot",
-      "followingViewWidth": 30
+      "followingViewWidth": 30,
+      "followingViewOffset": 25
     },
     "Plot!27wwqdp": {
       "paths": [
@@ -140,7 +130,31 @@
       "xAxisVal": "timestamp",
       "sidebarDimension": 240,
       "foxglovePanelTitle": "Plot",
-      "followingViewWidth": 0
+      "followingViewWidth": 30,
+      "followingViewOffset": 25
+    },
+    "Plot!20ufvrz": {
+      "paths": [
+        {
+          "value": "AR.values[1]",
+          "enabled": true,
+          "timestampMethod": "receiveTime",
+          "label": "AR position"
+        }
+      ],
+      "showXAxisLabels": true,
+      "showYAxisLabels": true,
+      "showLegend": true,
+      "legendDisplay": "floating",
+      "showPlotValuesInLegend": false,
+      "isSynced": true,
+      "xAxisVal": "custom",
+      "sidebarDimension": 240,
+      "foxglovePanelTitle": "Plot",
+      "xAxisPath": {
+        "value": "AR.values[0]"
+      },
+      "followingViewWidth": 1
     },
     "ImageViewPanel!2gru17m": {
       "cameraTopic": "lpom",
@@ -157,11 +171,11 @@
     }
   },
   "globalVariables": {
-    "globalVariable": 2
+    "globalVariable": 9
   },
   "userNodes": {},
   "playbackConfig": {
-    "speed": 1
+    "speed": 5
   },
   "layout": {
     "first": {
@@ -172,10 +186,10 @@
         "direction": "column"
       },
       "second": {
-        "first": "ImageViewPanel!4jj17jw",
-        "second": "nstrumenta!2k1f12i",
-        "direction": "column",
-        "splitPercentage": 67.43447180301827
+        "first": "nstrumenta!2k1f12i",
+        "second": "ImageViewPanel!4jj17jw",
+        "direction": "row",
+        "splitPercentage": 41.106308154443525
       }
     },
     "second": {

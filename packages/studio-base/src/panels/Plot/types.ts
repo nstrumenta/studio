@@ -43,6 +43,7 @@ export type PlotConfig = DeprecatedPlotConfig & {
   xAxisVal: PlotXAxisVal;
   xAxisPath?: BasePlotPath;
   followingViewWidth?: number;
+  followingViewOffset?: number;
   sidebarDimension: number;
   [PANEL_TITLE_CONFIG_KEY]?: string;
 };
