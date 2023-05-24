@@ -14,7 +14,7 @@
 import ClearIcon from "@mui/icons-material/Clear";
 import SearchIcon from "@mui/icons-material/Search";
 import { Button, CircularProgress, IconButton, TextField, Typography } from "@mui/material";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useMemo } from "react";
 import { makeStyles } from "tss-react/mui";
 
 import {
@@ -74,6 +74,7 @@ import Panel from "@foxglove/studio-base/components/Panel";
 import PanelToolbar from "@foxglove/studio-base/components/PanelToolbar";
 import { SaveConfig } from "@foxglove/studio-base/types/panels";
 
+import { useNstrumentaContext } from "@foxglove/studio-base/context/NstrumentaContext";
 import { NstrumentaBrowserClient } from "nstrumenta/dist/browser/client";
 import { useNstrumentaSettings } from "./settings";
 import { NstrumentaConfig } from "./types";
@@ -87,19 +88,9 @@ function NstrumentaPanel(props: Props): JSX.Element {
   const { config, saveConfig } = props;
   const { labelsDataId } = config;
 
-  const { search } = window.location;
-  const apiKeyParam = new URLSearchParams(search).get("apiKey");
-  const apiLocalStore = localStorage.getItem("apiKey");
-  const apiKey = apiKeyParam
-    ? apiKeyParam
-    : apiLocalStore
-    ? apiLocalStore
-    : prompt("Enter your nstrumenta apiKey");
-  if (apiKey) {
-    localStorage.setItem("apiKey", apiKey);
-  }
-  const nstClient = useRef(new NstrumentaBrowserClient(apiKey!));
+  const nstClient = useNstrumentaContext() as NstrumentaBrowserClient;
 
+  const { search } = window.location;
   const labelDataIdParam = new URLSearchParams(search).get("labelsDataId");
   if (labelDataIdParam) {
     saveConfig((draft) => {
@@ -132,14 +123,14 @@ function NstrumentaPanel(props: Props): JSX.Element {
 
   const loadLabels = async (dataId: string) => {
     console.log("loading events from", labelsDataId);
-    const query = await nstClient.current.storage.query({
+    const query = await nstClient.storage.query({
       field: "dataId",
       comparison: "==",
       compareValue: dataId,
     });
     console.log(query);
     if (query[0] === undefined) return;
-    const url = await nstClient.current.storage.getDownloadUrl(query[0].filePath);
+    const url = await nstClient.storage.getDownloadUrl(query[0].filePath);
     fetch(url).then(async (res) => {
       setEvents({ loading: false, value: await res.json() });
     });
@@ -153,7 +144,7 @@ function NstrumentaPanel(props: Props): JSX.Element {
       const data = new Blob([serializedEvents], {
         type: "application/json",
       });
-      nstClient.current.storage.upload({
+      nstClient.storage.upload({
         dataId: labelsDataId ? labelsDataId : undefined,
         data,
         filename: "labels.json",

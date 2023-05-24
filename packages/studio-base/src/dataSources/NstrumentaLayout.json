@@ -49,7 +49,8 @@
       "isSynced": true,
       "xAxisVal": "timestamp",
       "sidebarDimension": 240,
-      "foxglovePanelTitle": "Plot"
+      "foxglovePanelTitle": "Plot",
+      "followingViewWidth": 30
     },
     "Plot!3dy8unk": {
       "paths": [
@@ -77,7 +78,8 @@
       "isSynced": true,
       "xAxisVal": "timestamp",
       "sidebarDimension": 240,
-      "foxglovePanelTitle": "Plot"
+      "foxglovePanelTitle": "Plot",
+      "followingViewWidth": 30
     },
     "ImageViewPanel!4jj17jw": {
       "cameraTopic": "gopro",
@@ -91,14 +93,6 @@
       "synchronize": false,
       "transformMarkers": false,
       "zoom": 1.8637687352949457
-    },
-    "nstrumenta!2k1f12i": {
-      "sliderProps": {
-        "min": 0,
-        "max": 10,
-        "step": 1
-      },
-      "globalVariableName": "globalVariable"
     },
     "Plot!d2293l": {
       "paths": [
@@ -126,7 +120,8 @@
       "isSynced": true,
       "xAxisVal": "timestamp",
       "sidebarDimension": 240,
-      "foxglovePanelTitle": "Plot"
+      "foxglovePanelTitle": "Plot",
+      "followingViewWidth": 30
     },
     "Plot!27wwqdp": {
       "paths": [
@@ -144,7 +139,8 @@
       "isSynced": true,
       "xAxisVal": "timestamp",
       "sidebarDimension": 240,
-      "foxglovePanelTitle": "Plot"
+      "foxglovePanelTitle": "Plot",
+      "followingViewWidth": 0
     },
     "ImageViewPanel!2gru17m": {
       "cameraTopic": "lpom",

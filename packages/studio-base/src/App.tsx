@@ -36,6 +36,7 @@ import UserProfileLocalStorageProvider from "./providers/UserProfileLocalStorage
 import { LaunchPreference } from "./screens/LaunchPreference";
 import { ExtensionLoader } from "./services/ExtensionLoader";
 import { ILayoutStorage } from "./services/ILayoutStorage";
+import NstrumentaProvider from "@foxglove/studio-base/providers/NstrumentaProvider";
 
 type AppProps = CustomWindowControlsProps & {
   deepLinks: string[];
@@ -90,6 +91,7 @@ export function App(props: AppProps): JSX.Element {
     <ExtensionCatalogProvider loaders={extensionLoaders} />,
     <PlayerManager playerSources={dataSources} />,
     <EventsProvider />,
+    <NstrumentaProvider />,
     /* eslint-enable react/jsx-key */
   ];
 
