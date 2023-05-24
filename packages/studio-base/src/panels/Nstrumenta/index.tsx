@@ -1,11 +1,20 @@
 // This Source Code Form is subject to the terms of the Mozilla Public
 // License, v2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
+//
+// This file incorporates work covered by the following copyright and
+// permission notice:
+//
+//   Copyright 2019-2021 Cruise LLC
+//
+//   This source code is licensed under the Apache License, Version 2.0,
+//   found at http://www.apache.org/licenses/LICENSE-2.0
+//   You may not use this file except in compliance with the License.
 
 import ClearIcon from "@mui/icons-material/Clear";
 import SearchIcon from "@mui/icons-material/Search";
-import { AppBar, CircularProgress, IconButton, TextField, Typography } from "@mui/material";
-import { useCallback, useMemo } from "react";
+import { Button, CircularProgress, IconButton, TextField, Typography } from "@mui/material";
+import { useCallback, useEffect, useMemo } from "react";
 import { makeStyles } from "tss-react/mui";
 
 import {
@@ -24,7 +33,7 @@ import {
 } from "@foxglove/studio-base/context/TimelineInteractionStateContext";
 import { useAppTimeFormat } from "@foxglove/studio-base/hooks";
 
-import { EventView } from "./EventView";
+import { EventView } from "@foxglove/studio-base/components/DataSourceSidebar/EventView";
 
 const useStyles = makeStyles()((theme) => ({
   appBar: {
@@ -51,6 +60,7 @@ const useStyles = makeStyles()((theme) => ({
 }));
 
 const selectSeek = (ctx: MessagePipelineContext) => ctx.seekPlayback;
+const selectSetEvents = (store: EventsStore) => store.setEvents;
 const selectEventFilter = (store: EventsStore) => store.filter;
 const selectSetEventFilter = (store: EventsStore) => store.setFilter;
 const selectEvents = (store: EventsStore) => store.events;
@@ -60,10 +70,41 @@ const selectEventsAtHoverValue = (store: TimelineInteractionStateStore) => store
 const selectSelectedEventId = (store: EventsStore) => store.selectedEventId;
 const selectSelectEvent = (store: EventsStore) => store.selectEvent;
 
-export function EventsList(): JSX.Element {
+import Panel from "@foxglove/studio-base/components/Panel";
+import PanelToolbar from "@foxglove/studio-base/components/PanelToolbar";
+import { SaveConfig } from "@foxglove/studio-base/types/panels";
+
+import { useNstrumentaContext } from "@foxglove/studio-base/context/NstrumentaContext";
+import { NstrumentaBrowserClient } from "nstrumenta/dist/browser/client";
+import { useNstrumentaSettings } from "./settings";
+import { NstrumentaConfig } from "./types";
+
+type Props = {
+  config: NstrumentaConfig;
+  saveConfig: SaveConfig<NstrumentaConfig>;
+};
+
+function NstrumentaPanel(props: Props): JSX.Element {
+  const { config, saveConfig } = props;
+  const { labelsDataId } = config;
+
+  const nstClient = useNstrumentaContext() as NstrumentaBrowserClient;
+
+  const { search } = window.location;
+  const labelDataIdParam = new URLSearchParams(search).get("labelsDataId");
+  if (labelDataIdParam) {
+    saveConfig((draft) => {
+      draft.labelsDataId = labelDataIdParam;
+      return draft;
+    });
+  }
+
+  useNstrumentaSettings(config, saveConfig);
+
   const events = useEvents(selectEvents);
   const selectedEventId = useEvents(selectSelectedEventId);
   const selectEvent = useEvents(selectSelectEvent);
+  const setEvents = useEvents(selectSetEvents);
   const { formatTime } = useAppTimeFormat();
   const seek = useMessagePipeline(selectSeek);
   const eventsAtHoverValue = useTimelineInteractionState(selectEventsAtHoverValue);
@@ -79,6 +120,45 @@ export function EventsList(): JSX.Element {
       }),
     [events, formatTime],
   );
+
+  const loadLabels = async (dataId: string) => {
+    console.log("loading events from", labelsDataId);
+    const query = await nstClient.storage.query({
+      field: "dataId",
+      comparison: "==",
+      compareValue: dataId,
+    });
+    console.log(query);
+    if (query[0] === undefined) return;
+    const url = await nstClient.storage.getDownloadUrl(query[0].filePath);
+    fetch(url).then(async (res) => {
+      setEvents({ loading: false, value: await res.json() });
+    });
+  };
+
+  const saveLabels = async () => {
+    const serializedEvents = JSON.stringify(events.value);
+    console.log(serializedEvents);
+
+    if (serializedEvents) {
+      const data = new Blob([serializedEvents], {
+        type: "application/json",
+      });
+      nstClient.storage.upload({
+        dataId: labelsDataId ? labelsDataId : undefined,
+        data,
+        filename: "labels.json",
+        meta: {},
+        overwrite: true,
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (labelsDataId) {
+      loadLabels(labelsDataId);
+    }
+  }, [labelsDataId]);
 
   const clearFilter = useCallback(() => {
     setFilter("");
@@ -113,24 +193,23 @@ export function EventsList(): JSX.Element {
   const { classes } = useStyles();
 
   return (
-    <Stack className={classes.root} fullHeight>
-      <AppBar className={classes.appBar} position="sticky" color="inherit" elevation={0}>
-        <TextField
-          variant="filled"
-          fullWidth
-          value={filter}
-          onChange={(event) => setFilter(event.currentTarget.value)}
-          placeholder="Search by key, value, or key:value"
-          InputProps={{
-            startAdornment: <SearchIcon fontSize="small" />,
-            endAdornment: filter !== "" && (
-              <IconButton edge="end" onClick={clearFilter} size="small">
-                <ClearIcon fontSize="small" />
-              </IconButton>
-            ),
-          }}
-        />
-      </AppBar>
+    <Stack fullHeight>
+      <PanelToolbar />
+      <TextField
+        variant="filled"
+        fullWidth
+        value={filter}
+        onChange={(event) => setFilter(event.currentTarget.value)}
+        placeholder="Search by key, value, or key:value"
+        InputProps={{
+          startAdornment: <SearchIcon fontSize="small" />,
+          endAdornment: filter !== "" && (
+            <IconButton edge="end" onClick={clearFilter} size="small">
+              <ClearIcon fontSize="small" />
+            </IconButton>
+          ),
+        }}
+      />
       {events.loading && (
         <Stack flex="auto" padding={2} fullHeight alignItems="center" justifyContent="center">
           <CircularProgress />
@@ -173,6 +252,18 @@ export function EventsList(): JSX.Element {
           );
         })}
       </div>
+      <Button onClick={saveLabels}>Save Events</Button>
     </Stack>
   );
 }
+
+const defaultConfig: NstrumentaConfig = {
+  labelsDataId: "",
+};
+
+export default Panel(
+  Object.assign(NstrumentaPanel, {
+    panelType: "nstrumenta",
+    defaultConfig,
+  }),
+);

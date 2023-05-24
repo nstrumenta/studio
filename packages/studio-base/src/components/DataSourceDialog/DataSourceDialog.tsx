@@ -20,7 +20,7 @@ import {
 import { AppEvent } from "@foxglove/studio-base/services/IAnalytics";
 
 import Connection from "./Connection";
-import Start from "./Start";
+import StartNstrumenta from "./StartNstrumenta";
 import { useOpenFile } from "./useOpenFile";
 
 const DataSourceDialogItems = ["start", "file", "demo", "remote", "connection"] as const;
@@ -56,7 +56,7 @@ export function DataSourceDialog(props: DataSourceDialogProps): JSX.Element {
   const openFile = useOpenFile(availableSources);
 
   const firstSampleSource = useMemo(() => {
-    return availableSources.find((source) => source.type === "sample");
+    return availableSources.find((source) => source.type === "nstrumenta");
   }, [availableSources]);
 
   const analytics = useAnalytics();
@@ -111,7 +111,7 @@ export function DataSourceDialog(props: DataSourceDialogProps): JSX.Element {
       default:
         return {
           title: "Get started",
-          component: <Start />,
+          component: <StartNstrumenta />,
         };
     }
   }, [activeView]);

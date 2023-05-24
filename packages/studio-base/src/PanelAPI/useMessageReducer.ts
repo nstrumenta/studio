@@ -74,13 +74,13 @@ export function useMessageReducer<T>(props: Params<T>): T {
         "shouldn't be created on each render. (If you're using Hooks, try useCallback.)",
     ),
   );
-  useShouldNotChangeOften(props.addMessages, () =>
-    log.warn(
-      "useMessageReducer addMessages() is changing frequently. " +
-        "addMessages() will be called each time it changes, so a new function " +
-        "shouldn't be created on each render. (If you're using Hooks, try useCallback.)",
-    ),
-  );
+  // useShouldNotChangeOften(props.addMessages, () =>
+  //   log.warn(
+  //     "useMessageReducer addMessages() is changing frequently. " +
+  //       "addMessages() will be called each time it changes, so a new function " +
+  //       "shouldn't be created on each render. (If you're using Hooks, try useCallback.)",
+  //   ),
+  // );
 
   const requestedTopics = useShallowMemo(props.topics);
 

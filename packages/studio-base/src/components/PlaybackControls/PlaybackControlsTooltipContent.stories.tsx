@@ -49,27 +49,22 @@ export const WithEvents: StoryObj = {
     useEffect(() => {
       setEvents([
         {
-          event: {
-            createdAt: "1",
-            id: "1",
-            deviceId: "dev1",
-            durationNanos: "1",
-            endTime: { sec: 1, nsec: 1 },
-            endTimeInSeconds: 1,
-            metadata: {
-              "meta 1": "value 1",
-              "meta 2": "value 2",
-              "long event metadata key that might overflow":
-                "long event metadata value that might also overflow",
-            },
-            startTime: { sec: 0, nsec: 0 },
-            startTimeInSeconds: 1,
-            timestampNanos: "1",
-            updatedAt: "1",
+          createdAt: "1",
+          id: "1",
+          deviceId: "dev1",
+          durationNanos: "1",
+          endTime: { sec: 1, nsec: 1 },
+          endTimeInSeconds: 1,
+          metadata: {
+            "meta 1": "value 1",
+            "meta 2": "value 2",
+            "long event metadata key that might overflow":
+              "long event metadata value that might also overflow",
           },
-          startPosition: 0,
-          endPosition: 0.1,
-          secondsSinceStart: 0,
+          startTime: { sec: 0, nsec: 0 },
+          startTimeInSeconds: 1,
+          timestampNanos: "1",
+          updatedAt: "1",
         },
       ]);
     }, [setEvents]);

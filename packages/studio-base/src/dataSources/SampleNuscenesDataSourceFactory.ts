@@ -18,7 +18,7 @@ class SampleNuscenesDataSourceFactory implements IDataSourceFactory {
   public hidden = true;
   public sampleLayout = SampleNuscenesLayout as IDataSourceFactory["sampleLayout"];
 
-  public initialize(
+  public async initialize(
     args: DataSourceFactoryInitializeArgs,
   ): ReturnType<IDataSourceFactory["initialize"]> {
     const bagUrl = "https://assets.foxglove.dev/NuScenes-v1.0-mini-scene-0061-8c50124.mcap";

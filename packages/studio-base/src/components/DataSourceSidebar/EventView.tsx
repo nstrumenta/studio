@@ -8,10 +8,7 @@ import { Fragment } from "react";
 import { makeStyles } from "tss-react/mui";
 
 import { HighlightedText } from "@foxglove/studio-base/components/HighlightedText";
-import {
-  TimelinePositionedEvent,
-  DataSourceEvent,
-} from "@foxglove/studio-base/context/EventsContext";
+import { DataSourceEvent } from "@foxglove/studio-base/context/EventsContext";
 
 const useStyles = makeStyles<void, "eventMetadata" | "eventSelected">()(
   (theme, _params, classes) => ({
@@ -98,14 +95,14 @@ function formatEventDuration(event: DataSourceEvent) {
 }
 
 function EventViewComponent(params: {
-  event: TimelinePositionedEvent;
+  event: DataSourceEvent;
   filter: string;
   formattedTime: string;
   isHovered: boolean;
   isSelected: boolean;
-  onClick: (event: TimelinePositionedEvent) => void;
-  onHoverStart: (event: TimelinePositionedEvent) => void;
-  onHoverEnd: (event: TimelinePositionedEvent) => void;
+  onClick: (event: DataSourceEvent) => void;
+  onHoverStart: (event: DataSourceEvent) => void;
+  onHoverEnd: (event: DataSourceEvent) => void;
 }): JSX.Element {
   const { event, filter, formattedTime, isHovered, isSelected, onClick, onHoverStart, onHoverEnd } =
     params;
@@ -113,8 +110,8 @@ function EventViewComponent(params: {
 
   const fields = compact([
     ["timestamp", formattedTime],
-    Number(event.event.durationNanos) > 0 && ["duration", formatEventDuration(event.event)],
-    ...Object.entries(event.event.metadata),
+    Number(event.durationNanos) > 0 && ["duration", formatEventDuration(event)],
+    ...Object.entries(event.metadata),
   ]);
 
   return (

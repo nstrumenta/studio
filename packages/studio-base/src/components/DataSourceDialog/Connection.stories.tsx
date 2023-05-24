@@ -53,7 +53,7 @@ const playerSelection: PlayerSelection = {
         fields: [{ id: "key", label: "Some Label" }],
       },
 
-      initialize: () => {
+      initialize: async () => {
         return undefined;
       },
     },
@@ -63,7 +63,7 @@ const playerSelection: PlayerSelection = {
       displayName: "Another data source",
       description: "Another description (with default icon)",
 
-      initialize: () => {
+      initialize: async () => {
         return undefined;
       },
     },
@@ -74,7 +74,7 @@ const playerSelection: PlayerSelection = {
       description: "Another description (with default icon)",
       iconName: "GenericScan",
 
-      initialize: () => {
+      initialize: async () => {
         return undefined;
       },
     },

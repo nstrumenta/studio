@@ -12,15 +12,15 @@
 //   You may not use this file except in compliance with the License.
 
 import {
+  Info24Regular,
+  Next20Filled,
+  Next20Regular,
   Pause20Filled,
   Pause20Regular,
   Play20Filled,
   Play20Regular,
-  Next20Filled,
-  Next20Regular,
   Previous20Filled,
   Previous20Regular,
-  Info24Regular,
 } from "@fluentui/react-icons";
 import { Tooltip } from "@mui/material";
 import { useCallback, useMemo, useState } from "react";
@@ -41,7 +41,6 @@ import {
 } from "@foxglove/studio-base/components/MessagePipeline";
 import PlaybackSpeedControls from "@foxglove/studio-base/components/PlaybackSpeedControls";
 import Stack from "@foxglove/studio-base/components/Stack";
-import { useCurrentUser } from "@foxglove/studio-base/context/CurrentUserContext";
 import { EventsStore, useEvents } from "@foxglove/studio-base/context/EventsContext";
 import {
   useWorkspaceActions,
@@ -54,7 +53,7 @@ import { Player, PlayerPresence } from "@foxglove/studio-base/players/types";
 import PlaybackTimeDisplay from "./PlaybackTimeDisplay";
 import { RepeatAdapter } from "./RepeatAdapter";
 import Scrubber from "./Scrubber";
-import { jumpSeek, DIRECTION } from "./sharedHelpers";
+import { DIRECTION, jumpSeek } from "./sharedHelpers";
 
 const useStyles = makeStyles()((theme) => ({
   root: {
@@ -92,7 +91,6 @@ export default function PlaybackControls(props: {
   const { classes } = useStyles();
   const repeat = useWorkspaceStore(selectPlaybackRepeat);
   const [createEventDialogOpen, setCreateEventDialogOpen] = useState(false);
-  const { currentUser } = useCurrentUser();
   const eventsSupported = useEvents(selectEventsSupported);
 
   const {
@@ -182,7 +180,7 @@ export default function PlaybackControls(props: {
         <Scrubber onSeek={seek} />
         <Stack direction="row" alignItems="center" flex={1} gap={1} overflowX="auto">
           <Stack direction="row" flex={1} gap={0.5}>
-            {currentUser && eventsSupported && (
+            {eventsSupported && (
               <HoverableIconButton
                 size="small"
                 title="Create event"

@@ -67,7 +67,7 @@ export function PlaybackControlsTooltipContent(params: { stamp: Time }): ReactNu
   const tooltipItems: PlaybackControlsTooltipItem[] = [];
 
   if (!isEmpty(hoveredEvents)) {
-    Object.values(hoveredEvents).forEach(({ event }) => {
+    Object.values(hoveredEvents).forEach((event) => {
       tooltipItems.push({
         type: "item",
         title: "Start",

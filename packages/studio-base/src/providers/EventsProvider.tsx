@@ -9,10 +9,10 @@ import { createStore } from "zustand";
 import {
   EventsContext,
   EventsStore,
-  TimelinePositionedEvent,
+  DataSourceEvent,
 } from "@foxglove/studio-base/context/EventsContext";
 
-const NO_EVENTS: TimelinePositionedEvent[] = [];
+const NO_EVENTS: DataSourceEvent[] = [];
 
 function createEventsStore() {
   return createStore<EventsStore>((set) => ({
@@ -25,7 +25,7 @@ function createEventsStore() {
 
     refreshEvents: () => set((old) => ({ eventFetchCount: old.eventFetchCount + 1 })),
     selectEvent: (id: undefined | string) => set({ selectedEventId: id }),
-    setEvents: (events: AsyncState<TimelinePositionedEvent[]>) =>
+    setEvents: (events: AsyncState<DataSourceEvent[]>) =>
       set({ events, selectedEventId: undefined }),
     setFilter: (filter: string) => set({ filter }),
     // eslint-disable-next-line @foxglove/no-boolean-parameters

@@ -3,11 +3,10 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
 import {
-  IDataSourceFactory,
   DataSourceFactoryInitializeArgs,
+  IDataSourceFactory,
 } from "@foxglove/studio-base/context/PlayerSelectionContext";
 import FoxgloveWebSocketPlayer from "@foxglove/studio-base/players/FoxgloveWebSocketPlayer";
-import { Player } from "@foxglove/studio-base/players/types";
 
 export default class FoxgloveWebSocketDataSourceFactory implements IDataSourceFactory {
   public id = "foxglove-websocket";
@@ -52,7 +51,9 @@ export default class FoxgloveWebSocketDataSourceFactory implements IDataSourceFa
     ],
   };
 
-  public initialize(args: DataSourceFactoryInitializeArgs): Player | undefined {
+  public async initialize(
+    args: DataSourceFactoryInitializeArgs,
+  ): ReturnType<IDataSourceFactory["initialize"]> {
     const url = args.params?.url;
     if (!url) {
       return;

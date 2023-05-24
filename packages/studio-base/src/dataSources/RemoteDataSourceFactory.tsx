@@ -6,11 +6,10 @@ import { Link } from "@mui/material";
 import path from "path";
 
 import {
-  IDataSourceFactory,
   DataSourceFactoryInitializeArgs,
+  IDataSourceFactory,
 } from "@foxglove/studio-base/context/PlayerSelectionContext";
 import { IterablePlayer, WorkerIterableSource } from "@foxglove/studio-base/players/IterablePlayer";
-import { Player } from "@foxglove/studio-base/players/types";
 
 const initWorkers: Record<string, () => Worker> = {
   ".bag": () => {
@@ -75,7 +74,9 @@ class RemoteDataSourceFactory implements IDataSourceFactory {
     </>
   );
 
-  public initialize(args: DataSourceFactoryInitializeArgs): Player | undefined {
+  public async initialize(
+    args: DataSourceFactoryInitializeArgs,
+  ): ReturnType<IDataSourceFactory["initialize"]> {
     const url = args.params?.url;
     if (!url) {
       throw new Error("Missing url argument");

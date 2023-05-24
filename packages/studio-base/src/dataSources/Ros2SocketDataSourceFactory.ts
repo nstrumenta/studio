@@ -3,11 +3,10 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
 import {
-  IDataSourceFactory,
   DataSourceFactoryInitializeArgs,
+  IDataSourceFactory,
 } from "@foxglove/studio-base/context/PlayerSelectionContext";
 import Ros2Player from "@foxglove/studio-base/players/Ros2Player";
-import { Player } from "@foxglove/studio-base/players/types";
 
 class Ros2SocketDataSourceFactory implements IDataSourceFactory {
   public id = "ros2-socket";
@@ -32,7 +31,9 @@ class Ros2SocketDataSourceFactory implements IDataSourceFactory {
     ],
   };
 
-  public initialize(args: DataSourceFactoryInitializeArgs): Player | undefined {
+  public async initialize(
+    args: DataSourceFactoryInitializeArgs,
+  ): ReturnType<IDataSourceFactory["initialize"]> {
     const domainIdStr = args.params?.domainId;
     if (!domainIdStr) {
       return;

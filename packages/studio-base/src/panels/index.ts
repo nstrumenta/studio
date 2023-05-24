@@ -26,8 +26,16 @@ import topicGraphThumbnail from "./TopicGraph/thumbnail.png";
 import variableSliderThumbnail from "./VariableSlider/thumbnail.png";
 import diagnosticStatusThumbnail from "./diagnostics/thumbnails/diagnostic-status.png";
 import diagnosticSummaryThumbnail from "./diagnostics/thumbnails/diagnostic-summary.png";
+import nstrumentaLogo from "./Nstrumenta/thumbnail.png";
 
 export const getBuiltin: (t: TFunction<"panels">) => PanelInfo[] = (t) => [
+  {
+    title: t("nstrumenta"),
+    type: "nstrumenta",
+    description: "nstrumenta data labeling",
+    thumbnail: nstrumentaLogo,
+    module: async () => await import("./Nstrumenta"),
+  },
   {
     title: t("3D"),
     type: "3D",

@@ -3,11 +3,10 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
 import {
-  IDataSourceFactory,
   DataSourceFactoryInitializeArgs,
+  IDataSourceFactory,
 } from "@foxglove/studio-base/context/PlayerSelectionContext";
 import { IterablePlayer, WorkerIterableSource } from "@foxglove/studio-base/players/IterablePlayer";
-import { Player } from "@foxglove/studio-base/players/types";
 
 class Ros2LocalBagDataSourceFactory implements IDataSourceFactory {
   public id = "ros2-local-bagfile";
@@ -17,7 +16,9 @@ class Ros2LocalBagDataSourceFactory implements IDataSourceFactory {
   public supportedFileTypes = [".db3"];
   public supportsMultiFile = true;
 
-  public initialize(args: DataSourceFactoryInitializeArgs): Player | undefined {
+  public async initialize(
+    args: DataSourceFactoryInitializeArgs,
+  ): ReturnType<IDataSourceFactory["initialize"]> {
     const files = args.file ? [args.file] : args.files;
     const name = args.file ? args.file.name : args.files?.map((file) => file.name).join(", ");
 

@@ -17,3 +17,8 @@ storybook-static/
 
 # Extensions
 *.foxe
+
+.idea/
+.vscode/
+
+packages/studio-base/src/panels/FORT/app
