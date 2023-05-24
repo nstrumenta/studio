@@ -3,7 +3,8 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
 export const panels = {
-  nstrumenta: "Nstrumenta",
+  nstrumentaLabels: "Nstrumenta Labels",
+  nstrumentaVideo: "Nstrumenta Video",
   "3D": "3D",
   newImage: "🚧 Image",
   "3DPanelDescription": "Display markers, camera images, meshes, URDFs, and more in a 3D scene.",
