@@ -12,6 +12,7 @@ import { SaveConfig } from "@foxglove/studio-base/types/panels";
 
 export type NstrumentaVideoConfig = {
   videoFilePath?: string;
+  offset?: number;
 };
 
 function buildSettingsTree(config: NstrumentaVideoConfig): SettingsTreeNodes {
@@ -23,6 +24,11 @@ function buildSettingsTree(config: NstrumentaVideoConfig): SettingsTreeNodes {
           label: "videoFilePath",
           input: "string",
           value: config.videoFilePath,
+        },
+        offset: {
+          label: "time offset(s)",
+          input: "number",
+          value: config.offset,
         },
       },
     },

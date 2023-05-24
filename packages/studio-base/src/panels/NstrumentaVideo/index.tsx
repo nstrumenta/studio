@@ -37,7 +37,7 @@ type Props = {
 
 function NstrumentaVideoPanel(props: Props): JSX.Element {
   const { config, saveConfig } = props;
-  const { videoFilePath } = config;
+  const { videoFilePath, offset } = config;
 
   const [videoUrl, setVideoUrl] = useState<string | undefined>(undefined);
   const videoRef = useRef<HTMLVideoElement>(null);
@@ -74,10 +74,10 @@ function NstrumentaVideoPanel(props: Props): JSX.Element {
         videoRef.current.play();
       } else {
         videoRef.current.pause();
-        videoRef.current.currentTime = toSec(subtractTimes(currentTime, startTime));
+        videoRef.current.currentTime = toSec(subtractTimes(currentTime, startTime)) - (offset || 0);
       }
     }
-  }, [activeData, videoRef.current]);
+  }, [activeData, videoRef.current, offset]);
 
   useEffect(() => {
     if (videoFilePath && nstClient) {
