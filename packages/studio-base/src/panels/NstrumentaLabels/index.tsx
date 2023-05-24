@@ -263,7 +263,7 @@ const defaultConfig: NstrumentaConfig = {
 
 export default Panel(
   Object.assign(NstrumentaPanel, {
-    panelType: "nstrumenta",
+    panelType: "nstrumentaLabels",
     defaultConfig,
   }),
 );

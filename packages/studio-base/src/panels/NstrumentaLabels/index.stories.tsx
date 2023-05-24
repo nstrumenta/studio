@@ -13,7 +13,7 @@
 
 import { StoryObj } from "@storybook/react";
 
-import NstrumentaPanel from "@foxglove/studio-base/panels/Nstrumenta/index";
+import NstrumentaPanel from "@foxglove/studio-base/panels/NstrumentaLabels/index";
 import PanelSetup from "@foxglove/studio-base/stories/PanelSetup";
 
 import { StoryFn } from "@storybook/react";
