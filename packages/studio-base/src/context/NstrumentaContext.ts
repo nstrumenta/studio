@@ -22,7 +22,7 @@ const NstrumentaContext = createContext<NstrumentaBrowserClient>(
 );
 NstrumentaContext.displayName = "NstrumentaContext";
 
-export function useNstrumentaContext(): NstrumentaBrowserClient {
+export function useNstrumentClient(): NstrumentaBrowserClient {
   return useContext(NstrumentaContext);
 }
 

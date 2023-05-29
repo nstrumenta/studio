@@ -9,36 +9,24 @@ import {
 import { NstrumentaBrowserClient } from "nstrumenta/dist/browser/client";
 import { IterablePlayer, WorkerIterableSource } from "@foxglove/studio-base/players/IterablePlayer";
 
-import NstrumentaLayout from "./NstrumentaLayout.json";
-
 class NstrumentaDataSourceFactory implements IDataSourceFactory {
   public id = "nstrumenta";
   public type: IDataSourceFactory["type"] = "nstrumenta";
   public displayName = "nstrumenta";
   public iconName: IDataSourceFactory["iconName"] = "FileASPX";
   public hidden = true;
-  public sampleLayout = NstrumentaLayout as IDataSourceFactory["sampleLayout"];
-  public nstClient: NstrumentaBrowserClient | undefined;
+  public sampleLayout: IDataSourceFactory["sampleLayout"];
+  public nstClient: NstrumentaBrowserClient;
+
+  constructor(nstClient: NstrumentaBrowserClient) {
+    this.nstClient = nstClient;
+  }
 
   public async initialize(
     args: DataSourceFactoryInitializeArgs,
   ): ReturnType<IDataSourceFactory["initialize"]> {
     const { search } = window.location;
-    const apiKeyParam = new URLSearchParams(search).get("apiKey");
-    const apiLocalStore = localStorage.getItem("apiKey");
-    const apiKey = apiKeyParam
-      ? apiKeyParam
-      : apiLocalStore
-      ? apiLocalStore
-      : prompt("Enter your nstrumenta apiKey");
-    if (apiKey) {
-      localStorage.setItem("apiKey", apiKey);
-    }
-
     const dataIdParam = new URLSearchParams(search).get("dataId") || "";
-
-    this.nstClient = new NstrumentaBrowserClient(apiKey!);
-
     const query = await this.nstClient.storage.query({
       field: "dataId",
       comparison: "==",
@@ -46,7 +34,21 @@ class NstrumentaDataSourceFactory implements IDataSourceFactory {
     });
     console.log(query);
     if (query[0] === undefined) return;
-    const bagUrl = await this.nstClient.storage.getDownloadUrl(query[0].filePath);
+    const nstExperimentUrl = await this.nstClient.storage.getDownloadUrl(query[0].filePath);
+    const nstExperiment = await (await fetch(nstExperimentUrl)).json();
+
+    console.log({ nstExperiment });
+    if (nstExperiment.layoutFilePath) {
+      const nstLayoutUrl = await this.nstClient.storage.getDownloadUrl(
+        nstExperiment.layoutFilePath,
+      );
+      const nstLayout = await (await fetch(nstLayoutUrl)).json();
+      if (nstLayout) {
+        this.sampleLayout = nstLayout;
+      }
+    }
+
+    const dataUrl = await this.nstClient.storage.getDownloadUrl(nstExperiment.dataFilePath);
 
     const source = new WorkerIterableSource({
       initWorker: () => {
@@ -58,7 +60,7 @@ class NstrumentaDataSourceFactory implements IDataSourceFactory {
           ),
         );
       },
-      initArgs: { url: bagUrl },
+      initArgs: { url: dataUrl },
     });
 
     return new IterablePlayer({

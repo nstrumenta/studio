@@ -24,11 +24,10 @@ import {
   MessagePipelineContext,
   useMessagePipeline,
 } from "@foxglove/studio-base/components/MessagePipeline";
-import { useNstrumentaContext } from "@foxglove/studio-base/context/NstrumentaContext";
-import { subtractTimes } from "@foxglove/studio-base/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils/time";
-import { NstrumentaBrowserClient } from "nstrumenta/dist/browser/client";
-import { NstrumentaVideoConfig, useNstrumentaVideoSettings } from "./settings";
 import { usePanelContext } from "@foxglove/studio-base/components/PanelContext";
+import { useNstrumentClient } from "@foxglove/studio-base/context/NstrumentaContext";
+import { subtractTimes } from "@foxglove/studio-base/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils/time";
+import { NstrumentaVideoConfig, useNstrumentaVideoSettings } from "./settings";
 
 type Props = {
   config: NstrumentaVideoConfig;
@@ -50,7 +49,7 @@ function NstrumentaVideoPanel(props: Props): JSX.Element {
   const name = videoFilePath?.split("/").slice(4).join("/");
   panelContext.title = name || "Nstrumenta Video";
 
-  const nstClient = useNstrumentaContext() as NstrumentaBrowserClient;
+  const nstClient = useNstrumentClient();
 
   useNstrumentaVideoSettings(config, saveConfig);
 

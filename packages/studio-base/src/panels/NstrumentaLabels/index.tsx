@@ -74,8 +74,7 @@ import Panel from "@foxglove/studio-base/components/Panel";
 import PanelToolbar from "@foxglove/studio-base/components/PanelToolbar";
 import { SaveConfig } from "@foxglove/studio-base/types/panels";
 
-import { useNstrumentaContext } from "@foxglove/studio-base/context/NstrumentaContext";
-import { NstrumentaBrowserClient } from "nstrumenta/dist/browser/client";
+import { useNstrumentClient } from "@foxglove/studio-base/context/NstrumentaContext";
 import { useNstrumentaSettings } from "./settings";
 import { NstrumentaConfig } from "./types";
 
@@ -88,7 +87,7 @@ function NstrumentaPanel(props: Props): JSX.Element {
   const { config, saveConfig } = props;
   const { labelsDataId } = config;
 
-  const nstClient = useNstrumentaContext() as NstrumentaBrowserClient;
+  const nstClient = useNstrumentClient();
 
   const { search } = window.location;
   const labelDataIdParam = new URLSearchParams(search).get("labelsDataId");
@@ -132,12 +131,17 @@ function NstrumentaPanel(props: Props): JSX.Element {
     if (query[0] === undefined) return;
     const url = await nstClient.storage.getDownloadUrl(query[0].filePath);
     fetch(url).then(async (res) => {
-      setEvents({ loading: false, value: await res.json() });
+      const { events } = await res.json();
+      setEvents({ loading: false, value: events });
     });
   };
 
   const saveLabels = async () => {
-    const serializedEvents = JSON.stringify(events.value);
+    const serializedEvents = JSON.stringify({
+      dataFilePath:
+        "projects/nst-t-peek/data/93a8b8b5-f889-4bf0-b4b5-6bd711ced399/Sensor_Log_2023-04-11_11_56_33.mcap",
+      events: events.value,
+    });
     console.log(serializedEvents);
 
     if (serializedEvents) {
