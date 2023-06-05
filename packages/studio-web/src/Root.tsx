@@ -5,21 +5,22 @@
 import { useMemo, useState } from "react";
 
 import {
+  App,
+  AppSetting,
+  FoxgloveWebSocketDataSourceFactory,
   IDataSourceFactory,
+  IdbExtensionLoader,
+  McapLocalDataSourceFactory,
+  NstrumentaDataSourceFactory,
+  RemoteDataSourceFactory,
   Ros1LocalBagDataSourceFactory,
   Ros2LocalBagDataSourceFactory,
   RosbridgeDataSourceFactory,
-  RemoteDataSourceFactory,
-  FoxgloveWebSocketDataSourceFactory,
-  UlogLocalDataSourceFactory,
-  McapLocalDataSourceFactory,
   SampleNuscenesDataSourceFactory,
-  NstrumentaDataSourceFactory,
-  IdbExtensionLoader,
-  App,
-  AppSetting,
+  UlogLocalDataSourceFactory,
 } from "@foxglove/studio-base";
 
+import { useNstrumentClient } from "@foxglove/studio-base/context/NstrumentaContext";
 import { IdbLayoutStorage } from "./services/IdbLayoutStorage";
 import LocalStorageAppConfiguration from "./services/LocalStorageAppConfiguration";
 
@@ -44,6 +45,8 @@ export function Root(props: {
     new IdbExtensionLoader("local"),
   ]);
 
+  const nstClient = useNstrumentClient();
+
   const dataSources = useMemo(() => {
     const sources = [
       new Ros1LocalBagDataSourceFactory(),
@@ -54,7 +57,7 @@ export function Root(props: {
       new SampleNuscenesDataSourceFactory(),
       new McapLocalDataSourceFactory(),
       new RemoteDataSourceFactory(),
-      new NstrumentaDataSourceFactory(),
+      new NstrumentaDataSourceFactory(nstClient),
     ];
 
     return props.dataSources ?? sources;

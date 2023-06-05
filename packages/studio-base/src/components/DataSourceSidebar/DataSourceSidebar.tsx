@@ -17,6 +17,7 @@ import { makeStyles } from "tss-react/mui";
 
 import { AppSetting } from "@foxglove/studio-base/AppSetting";
 import { EventsList } from "@foxglove/studio-base/components/DataSourceSidebar/EventsList";
+import { ExperimentTab } from "@foxglove/studio-base/components/DataSourceSidebar/ExperimentTab";
 import {
   MessagePipelineContext,
   useMessagePipeline,
@@ -76,7 +77,7 @@ const selectPlayerPresence = ({ playerState }: MessagePipelineContext) => player
 const selectPlayerProblems = ({ playerState }: MessagePipelineContext) => playerState.problems;
 const selectSelectedEventId = (store: EventsStore) => store.selectedEventId;
 
-type DataSourceSidebarTab = "topics" | "events" | "problems";
+type DataSourceSidebarTab = "topics" | "events" | "experiment" | "problems";
 
 export default function DataSourceSidebar(props: Props): JSX.Element {
   const { disableToolbar = false } = props;
@@ -146,6 +147,7 @@ export default function DataSourceSidebar(props: Props): JSX.Element {
                     textColor="inherit"
                   >
                     <StyledTab disableRipple label="Topics" value="topics" />
+                    <StyledTab disableRipple label="Nstrumenta Experiment" value="experiment" />
                     {showEventsTab && <StyledTab disableRipple label="Events" value="events" />}
                     <StyledTab
                       disableRipple
@@ -171,6 +173,11 @@ export default function DataSourceSidebar(props: Props): JSX.Element {
               {activeTab === "events" && (
                 <div className={classes.tabContent}>
                   <EventsList />
+                </div>
+              )}
+              {activeTab === "experiment" && (
+                <div className={classes.tabContent}>
+                  <ExperimentTab />
                 </div>
               )}
               {activeTab === "problems" && (

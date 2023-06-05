@@ -74,8 +74,10 @@ import Panel from "@foxglove/studio-base/components/Panel";
 import PanelToolbar from "@foxglove/studio-base/components/PanelToolbar";
 import { SaveConfig } from "@foxglove/studio-base/types/panels";
 
-import { useNstrumentaContext } from "@foxglove/studio-base/context/NstrumentaContext";
-import { NstrumentaBrowserClient } from "nstrumenta/dist/browser/client";
+import {
+  useNstrumentClient,
+  useNstrumentaContext,
+} from "@foxglove/studio-base/context/NstrumentaContext";
 import { useNstrumentaSettings } from "./settings";
 import { NstrumentaConfig } from "./types";
 
@@ -86,20 +88,21 @@ type Props = {
 
 function NstrumentaPanel(props: Props): JSX.Element {
   const { config, saveConfig } = props;
-  const { labelsDataId } = config;
 
-  const nstClient = useNstrumentaContext() as NstrumentaBrowserClient;
-
-  const { search } = window.location;
-  const labelDataIdParam = new URLSearchParams(search).get("labelsDataId");
-  if (labelDataIdParam) {
-    saveConfig((draft) => {
-      draft.labelsDataId = labelDataIdParam;
-      return draft;
-    });
-  }
+  const nstClient = useNstrumentClient();
 
   useNstrumentaSettings(config, saveConfig);
+
+  const nstContext = useNstrumentaContext();
+  console.log(nstContext);
+
+  const { experiment } = useNstrumentaContext() as unknown as {
+    experiment?: {
+      labelsDataId?: string;
+    };
+  };
+
+  const labelsDataId = experiment?.labelsDataId;
 
   const events = useEvents(selectEvents);
   const selectedEventId = useEvents(selectSelectedEventId);
@@ -129,15 +132,19 @@ function NstrumentaPanel(props: Props): JSX.Element {
       compareValue: dataId,
     });
     console.log(query);
-    if (query[0] === undefined) return;
-    const url = await nstClient.storage.getDownloadUrl(query[0].filePath);
+    const labels = query.filter((item) => item.name == "labels.json");
+    if (!labels[0]) return;
+    const url = await nstClient.storage.getDownloadUrl(labels[0].filePath);
     fetch(url).then(async (res) => {
-      setEvents({ loading: false, value: await res.json() });
+      const { events } = await res.json();
+      setEvents({ loading: false, value: events });
     });
   };
 
   const saveLabels = async () => {
-    const serializedEvents = JSON.stringify(events.value);
+    const serializedEvents = JSON.stringify({
+      events: events.value,
+    });
     console.log(serializedEvents);
 
     if (serializedEvents) {
@@ -145,9 +152,9 @@ function NstrumentaPanel(props: Props): JSX.Element {
         type: "application/json",
       });
       nstClient.storage.upload({
-        dataId: labelsDataId ? labelsDataId : undefined,
-        data,
+        dataId: labelsDataId,
         filename: "labels.json",
+        data,
         meta: {},
         overwrite: true,
       });
@@ -257,9 +264,7 @@ function NstrumentaPanel(props: Props): JSX.Element {
   );
 }
 
-const defaultConfig: NstrumentaConfig = {
-  labelsDataId: "",
-};
+const defaultConfig: NstrumentaConfig = {};
 
 export default Panel(
   Object.assign(NstrumentaPanel, {

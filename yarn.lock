@@ -2665,6 +2665,7 @@ __metadata:
     just-diff: 6.0.2
     leaflet: 1.9.3
     lodash: 4.17.21
+    material-jsoneditor: 2.0.0
     mathjs: 11.8.0
     memoize-weak: 1.0.2
     meshoptimizer: 0.18.1
@@ -15727,6 +15728,21 @@ __metadata:
   dependencies:
     escape-string-regexp: ^4.0.0
   checksum: 8bee1a7ab7609c2c21d9c9254b6785fa708eadf289032b556d57a34e98fcd4c537659a004dafee6ce80ab157099e645c199dc52678dff1e7fb0a6684e0da4dbe
+  languageName: node
+  linkType: hard
+
+"material-jsoneditor@npm:2.0.0":
+  version: 2.0.0
+  resolution: "material-jsoneditor@npm:2.0.0"
+  peerDependencies:
+    "@emotion/react": ^11.4.1
+    "@emotion/styled": ^11.3.0
+    "@mui/icons-material": ^5.4.4
+    "@mui/material": ^5.4.4
+    csstype: 3.0.10
+    react: ^17.0.2
+    react-dom: ^17.0.2
+  checksum: e3e71d6d96becd4cad1d418d5df3821ff173a8bb89d621e70b72ca6748ade99717fbb9e394375c3b7508a17fe723a1451b3f499073ce6ed112a1dd8eecdc87a5
   languageName: node
   linkType: hard
 
