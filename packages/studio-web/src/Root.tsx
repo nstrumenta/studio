@@ -21,8 +21,8 @@ import {
 } from "@foxglove/studio-base";
 
 import { useNstrumentClient } from "@foxglove/studio-base/context/NstrumentaContext";
-import { IdbLayoutStorage } from "./services/IdbLayoutStorage";
 import LocalStorageAppConfiguration from "./services/LocalStorageAppConfiguration";
+import { NstLayoutStorage } from "./services/NstLayoutStorage";
 
 const isDevelopment = process.env.NODE_ENV === "development";
 
@@ -39,7 +39,7 @@ export function Root(props: {
       }),
     [],
   );
-  const layoutStorage = useMemo(() => new IdbLayoutStorage(), []);
+  const layoutStorage = useMemo(() => new NstLayoutStorage(), []);
   const [extensionLoaders] = useState(() => [
     new IdbExtensionLoader("org"),
     new IdbExtensionLoader("local"),
