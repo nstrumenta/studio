@@ -12,17 +12,11 @@ import { SaveConfig } from "@foxglove/studio-base/types/panels";
 
 import { NstrumentaConfig } from "./types";
 
-function buildSettingsTree(config: NstrumentaConfig): SettingsTreeNodes {
+function buildSettingsTree(): SettingsTreeNodes {
   return {
     general: {
       label: "Labels",
-      fields: {
-        labelsDataId: {
-          label: "labels dataId",
-          input: "string",
-          value: config.labelsDataId,
-        },
-      },
+      fields: {},
     },
   };
 }
@@ -52,7 +46,7 @@ export function useNstrumentaSettings(
   useEffect(() => {
     updatePanelSettingsTree({
       actionHandler,
-      nodes: buildSettingsTree(config),
+      nodes: buildSettingsTree(),
     });
   }, [actionHandler, config, updatePanelSettingsTree]);
 }
