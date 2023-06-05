@@ -5,8 +5,9 @@
 import * as IDB from "idb/with-async-ittr";
 
 import Log from "@foxglove/log";
-import { Layout, LayoutID, ILayoutStorage, migrateLayout } from "@foxglove/studio-base";
-import { useNstrumentaContext } from "@foxglove/studio-base/context/NstrumentaContext";
+import { ILayoutStorage, Layout, LayoutID, migrateLayout } from "@foxglove/studio-base";
+import { clearDatabase, exportToJson, importFromJson } from "./IdbBackupAndRestore";
+import { NstrumentaBrowserClient } from "nstrumenta/dist/browser/client";
 
 const log = Log.getLogger(__filename);
 
@@ -31,35 +32,115 @@ interface LayoutsDB extends IDB.DBSchema {
  * being the tuple of [namespace, id].
  */
 export class NstLayoutStorage implements ILayoutStorage {
+  private _db = IDB.openDB<LayoutsDB>(DATABASE_NAME, 1, {
+    upgrade(db) {
+      const store = db.createObjectStore(OBJECT_STORE_NAME, {
+        keyPath: ["namespace", "layout.id"],
+      });
+      store.createIndex("namespace", "namespace");
+    },
+  });
+
+  private nstClient: NstrumentaBrowserClient | undefined;
+  private layoutFileId: string | undefined;
+
   public async list(namespace: string): Promise<readonly Layout[]> {
     const results: Layout[] = [];
     const { search } = window.location;
-    const { nstClient } = useNstrumentaContext();
+    const apiKeyParam = new URLSearchParams(search).get("apiKey");
+    const apiLocalStore = localStorage.getItem("apiKey");
+    const apiKey = apiKeyParam
+      ? apiKeyParam
+      : apiLocalStore
+      ? apiLocalStore
+      : (prompt("Enter your nstrumenta apiKey") as string);
+    if (apiKey) {
+      localStorage.setItem("apiKey", apiKey);
+    }
+    this.nstClient = new NstrumentaBrowserClient(apiKey);
 
     const dataIdParam = new URLSearchParams(search).get("dataId") || "";
 
     console.log("getting layout from experiment from", dataIdParam);
-    const query = await nstClient.storage.query({
+    const query = await this.nstClient.storage.query({
       field: "dataId",
       comparison: "==",
       compareValue: dataIdParam,
     });
     console.log(query);
     if (query[0] === undefined) return results;
-    const url = await nstClient.storage.getDownloadUrl(query[0].filePath);
-    const experiment: JSONType = await (await fetch(url)).json();
+    const url = await this.nstClient.storage.getDownloadUrl(query[0].filePath);
+    const experiment = await (await fetch(url)).json();
 
     // fetch layouts into results
     console.log(experiment);
+    if (experiment.layoutFilePath !== undefined) {
+      //query to get explicitDataId (currently needed for uploading)
+      const query = await this.nstClient.storage.query({
+        field: "filePath",
+        comparison: "==",
+        compareValue: experiment.layoutFilePath,
+      });
+      console.log(query);
+      if (query[0] === undefined) return results;
+      this.layoutFileId = query[0].dataId;
 
+      const nstLayoutUrl = await this.nstClient.storage.getDownloadUrl(experiment.layoutFilePath);
+      const layoutFileContents = await (await fetch(nstLayoutUrl)).json();
+      const db = IDB.unwrap(this._db).result;
+      await clearDatabase(db);
+      await importFromJson(db, layoutFileContents);
+
+      console.log(layoutFileContents);
+    }
+
+    const records = await (
+      await this._db
+    ).getAllFromIndex(OBJECT_STORE_NAME, "namespace", namespace);
+    for (const record of records) {
+      try {
+        results.push(migrateLayout(record.layout));
+      } catch (err) {
+        log.error(err);
+      }
+    }
     return results;
   }
 
-  public async get(namespace: string, id: LayoutID): Promise<Layout | undefined> {}
+  public async uploadDbToNstrumenta() {
+    if (this.nstClient) {
+      const db = IDB.unwrap(this._db).result;
+      const stringified = (await exportToJson(db)) as string;
+      console.log("layoutDb: ", stringified, "has been saved");
 
-  public async put(namespace: string, layout: Layout): Promise<Layout> {}
+      const data = new Blob([stringified], {
+        type: "application/json",
+      });
+      await this.nstClient.storage.upload({
+        dataId: this.layoutFileId,
+        data,
+        filename: "layoutDB.json",
+        meta: {},
+        overwrite: true,
+      });
+    }
+  }
 
-  public async delete(namespace: string, id: LayoutID): Promise<void> {}
+  public async get(namespace: string, id: LayoutID): Promise<Layout | undefined> {
+    const record = await (await this._db).get(OBJECT_STORE_NAME, [namespace, id]);
+    return record == undefined ? undefined : migrateLayout(record.layout);
+  }
+
+  public async put(namespace: string, layout: Layout): Promise<Layout> {
+    await (await this._db).put(OBJECT_STORE_NAME, { namespace, layout });
+    await this.uploadDbToNstrumenta();
+    return layout;
+  }
+
+  public async delete(namespace: string, id: LayoutID): Promise<void> {
+    await (await this._db).delete(OBJECT_STORE_NAME, [namespace, id]);
+    await this.uploadDbToNstrumenta();
+  }
 
   public async importLayouts({
     fromNamespace,
@@ -79,6 +160,50 @@ export class NstLayoutStorage implements ILayoutStorage {
       await tx.done;
     } catch (error) {
       log.error(error);
+    }
+  }
+
+  public async migrateUnnamespacedLayouts(namespace: string): Promise<void> {
+    await this._migrateFromLocalStorage();
+
+    // At the time IdbLayoutStorage was created, all layouts were already namespaced, so there are
+    // no un-namespaced layouts to migrate.
+    void namespace;
+  }
+
+  /**
+   * Prior implementation (LocalStorageLayoutStorage) stored layouts in localStorage under a key
+   * prefix. This approach was abandoned due to small capacity constraints on localStorage.
+   * https://github.com/foxglove/studio/issues/3100
+   */
+  private async _migrateFromLocalStorage() {
+    const legacyLocalStorageKeyPrefix = "studio.layouts";
+    const keysToMigrate: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key?.startsWith(`${legacyLocalStorageKeyPrefix}.`) === true) {
+        keysToMigrate.push(key);
+      }
+    }
+
+    for (const key of keysToMigrate) {
+      const layoutJson = localStorage.getItem(key);
+      if (layoutJson == undefined) {
+        continue;
+      }
+      try {
+        const layout = migrateLayout(JSON.parse(layoutJson));
+        const [_prefix1, _prefix2, namespace, id] = key.split(".");
+        if (namespace == undefined || id == undefined || id !== layout.id) {
+          log.error(`Failed to migrate ${key} from localStorage`);
+          continue;
+        }
+        // use a separate transaction per item so we can be sure it is safe to delete from localStorage
+        await (await this._db).put("layouts", { namespace, layout });
+        localStorage.removeItem(key);
+      } catch (err) {
+        log.error(err);
+      }
     }
   }
 }
