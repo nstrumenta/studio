@@ -3,11 +3,11 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
 import {
-  IDataSourceFactory,
   DataSourceFactoryInitializeArgs,
+  IDataSourceFactory,
 } from "@foxglove/studio-base/context/PlayerSelectionContext";
-import { NstrumentaBrowserClient } from "nstrumenta/dist/browser/client";
 import { IterablePlayer, WorkerIterableSource } from "@foxglove/studio-base/players/IterablePlayer";
+import { NstrumentaBrowserClient } from "nstrumenta/dist/browser/client";
 
 class NstrumentaDataSourceFactory implements IDataSourceFactory {
   public id = "nstrumenta";
@@ -48,7 +48,9 @@ class NstrumentaDataSourceFactory implements IDataSourceFactory {
       }
     }
 
-    const dataUrl = await this.nstClient.storage.getDownloadUrl(nstExperiment.dataFilePath);
+    const dataFilePath = nstExperiment.dataFilePath;
+
+    const dataUrl = await this.nstClient.storage.getDownloadUrl(dataFilePath);
 
     const source = new WorkerIterableSource({
       initWorker: () => {
