@@ -3,13 +3,13 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
 import {
-  IDataSourceFactory,
   DataSourceFactoryInitializeArgs,
+  IDataSourceFactory,
 } from "@foxglove/studio-base/context/PlayerSelectionContext";
 import { Player } from "@foxglove/studio-base/players/types";
 
 interface PlayerConstructor {
-  new (): Player;
+  new(): Player;
 }
 
 class SyntheticDataSourceFactory implements IDataSourceFactory {
@@ -25,7 +25,7 @@ class SyntheticDataSourceFactory implements IDataSourceFactory {
     this.newFn = newFn;
   }
 
-  public initialize(_args: DataSourceFactoryInitializeArgs): Player | undefined {
+  public async initialize(_args: DataSourceFactoryInitializeArgs): ReturnType<IDataSourceFactory["initialize"]> {
     return new this.newFn();
   }
 }

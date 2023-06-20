@@ -3,11 +3,10 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
 import {
-  IDataSourceFactory,
   DataSourceFactoryInitializeArgs,
+  IDataSourceFactory,
 } from "@foxglove/studio-base/context/PlayerSelectionContext";
 import { McapIterableSource } from "@foxglove/studio-base/players/IterablePlayer/Mcap/McapIterableSource";
-import { Player } from "@foxglove/studio-base/players/types";
 
 import { BenchmarkPlayer } from "../players";
 
@@ -18,7 +17,7 @@ class McapLocalBenchmarkDataSourceFactory implements IDataSourceFactory {
   public iconName: IDataSourceFactory["iconName"] = "OpenFile";
   public supportedFileTypes = [".mcap"];
 
-  public initialize(args: DataSourceFactoryInitializeArgs): Player | undefined {
+  public async initialize(args: DataSourceFactoryInitializeArgs): ReturnType<IDataSourceFactory["initialize"]> {
     const file = args.file;
     if (!file) {
       return;
