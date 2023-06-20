@@ -8,7 +8,7 @@
  * @param {IDBDatabase} idbDatabase The database to export from
  * @return {Promise<string>}
  */
-export async function exportToJson(idbDatabase: IDBDatabase) {
+export async function exportToJson(idbDatabase: IDBDatabase): Promise<string | undefined> {
   return await new Promise((resolve, reject) => {
     const exportObject: Record<string, unknown> = {};
     if (idbDatabase.objectStoreNames.length === 0) {
@@ -24,7 +24,7 @@ export async function exportToJson(idbDatabase: IDBDatabase) {
           .objectStore(storeName)
           .openCursor()
           .addEventListener("success", (event) => {
-            const cursor = (event.target as unknown as { result: IDBCursorWithValue }).result;
+            const cursor: IDBCursorWithValue | undefined = (event as unknown as { target: { result?: IDBCursorWithValue } }).target.result;
             if (cursor) {
               // Cursor holds value, put it into store data
               allObjects.push(cursor.value);
@@ -52,7 +52,8 @@ export async function exportToJson(idbDatabase: IDBDatabase) {
  * @param {Object}      json        Data to import, one key per object store
  * @return {Promise<void>}
  */
-export async function importFromJson(idbDatabase: IDBDatabase, importObject: any) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function importFromJson(idbDatabase: IDBDatabase, importObject: Record<string, any>): Promise<void> {
   return await new Promise<void>((resolve, reject) => {
     const transaction = idbDatabase.transaction(idbDatabase.objectStoreNames, "readwrite");
     transaction.addEventListener("error", reject);
@@ -83,7 +84,7 @@ export async function importFromJson(idbDatabase: IDBDatabase, importObject: any
  * @param {IDBDatabase} idbDatabase The database to delete all data from
  * @return {Promise<void>}
  */
-export async function clearDatabase(idbDatabase: IDBDatabase) {
+export async function clearDatabase(idbDatabase: IDBDatabase): Promise<void> {
   return await new Promise<void>((resolve, reject) => {
     const transaction = idbDatabase.transaction(idbDatabase.objectStoreNames, "readwrite");
     transaction.addEventListener("error", reject);

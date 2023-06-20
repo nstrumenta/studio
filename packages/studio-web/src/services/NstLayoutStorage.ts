@@ -53,46 +53,40 @@ export class NstLayoutStorage implements ILayoutStorage {
     const apiKey = apiKeyParam
       ? apiKeyParam
       : apiLocalStore
-      ? apiLocalStore
-      : (prompt("Enter your nstrumenta apiKey") as string);
+        ? apiLocalStore
+        : (prompt("Enter your nstrumenta apiKey") as string);
     if (apiKey) {
       localStorage.setItem("apiKey", apiKey);
     }
     this.nstClient = new NstrumentaBrowserClient(apiKey);
 
-    const dataIdParam = new URLSearchParams(search).get("dataId") || "";
+    const dataIdParam = new URLSearchParams(search).get("dataId") ?? "";
 
-    console.log("getting layout from experiment from", dataIdParam);
     const query = await this.nstClient.storage.query({
       field: "dataId",
       comparison: "==",
       compareValue: dataIdParam,
     });
-    console.log(query);
-    if (query[0] === undefined) {return results;}
+    if (query[0] == undefined) { return results; }
     const url = await this.nstClient.storage.getDownloadUrl(query[0].filePath);
-    const experiment = await (await fetch(url)).json();
+    const nstExperiment = await (await fetch(url)).json() as { layoutFilePath?: string, dataFilePath?: string };
 
     // fetch layouts into results
-    console.log(experiment);
-    if (experiment.layoutFilePath !== undefined) {
+    if (nstExperiment.layoutFilePath != undefined) {
       //query to get explicitDataId (currently needed for uploading)
-      const query = await this.nstClient.storage.query({
+      const layoutQuery = await this.nstClient.storage.query({
         field: "filePath",
         comparison: "==",
-        compareValue: experiment.layoutFilePath,
+        compareValue: nstExperiment.layoutFilePath,
       });
-      console.log(query);
-      if (query[0] === undefined) {return results;}
-      this.layoutFileId = query[0].dataId;
+      if (layoutQuery[0] == undefined) { return results; }
+      this.layoutFileId = layoutQuery[0].dataId;
 
-      const nstLayoutUrl = await this.nstClient.storage.getDownloadUrl(experiment.layoutFilePath);
-      const layoutFileContents = await (await fetch(nstLayoutUrl)).json();
+      const nstLayoutUrl = await this.nstClient.storage.getDownloadUrl(nstExperiment.layoutFilePath);
+      const layoutFileContents = await (await fetch(nstLayoutUrl)).json() as Record<string, unknown>;
       const db = IDB.unwrap(this._db).result;
       await clearDatabase(db);
       await importFromJson(db, layoutFileContents);
-
-      console.log(layoutFileContents);
     }
 
     const records = await (
@@ -108,11 +102,10 @@ export class NstLayoutStorage implements ILayoutStorage {
     return results;
   }
 
-  public async uploadDbToNstrumenta() {
+  public async uploadDbToNstrumenta(): Promise<void> {
     if (this.nstClient) {
       const db = IDB.unwrap(this._db).result;
       const stringified = (await exportToJson(db)) as string;
-      console.log("layoutDb: ", stringified, "has been saved");
 
       const data = new Blob([stringified], {
         type: "application/json",

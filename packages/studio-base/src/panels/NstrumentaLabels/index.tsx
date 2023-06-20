@@ -45,26 +45,12 @@ import { useNstrumentaSettings } from "./settings";
 import { NstrumentaConfig } from "./types";
 
 const useStyles = makeStyles()((theme) => ({
-  appBar: {
-    top: -1,
-    zIndex: theme.zIndex.appBar - 1,
-    display: "flex",
-    flexDirection: "row",
-    padding: theme.spacing(1),
-    gap: theme.spacing(1),
-    alignItems: "center",
-    borderBottom: `1px solid ${theme.palette.divider}`,
-  },
   grid: {
     display: "grid",
     flexShrink: 1,
     gridTemplateColumns: "auto 1fr",
     overflowY: "auto",
     padding: theme.spacing(1),
-  },
-  root: {
-    backgroundColor: theme.palette.background.paper,
-    maxHeight: "100%",
   },
 }));
 
@@ -90,9 +76,6 @@ function NstrumentaPanel(props: Props): JSX.Element {
   const nstClient = useNstrumentClient();
 
   useNstrumentaSettings(config, saveConfig);
-
-  const nstContext = useNstrumentaContext();
-  console.log(nstContext);
 
   const { experiment } = useNstrumentaContext() as unknown as {
     experiment?: {
@@ -122,34 +105,36 @@ function NstrumentaPanel(props: Props): JSX.Element {
     [events, formatTime],
   );
 
-  const loadLabels = async (dataId: string) => {
-    console.log("loading events from", labelsDataId);
-    const query = await nstClient.storage.query({
-      field: "dataId",
-      comparison: "==",
-      compareValue: dataId,
-    });
-    console.log(query);
-    const labels = query.filter((item) => item.name == "labels.json");
-    if (!labels[0]) {return;}
-    const url = await nstClient.storage.getDownloadUrl(labels[0].filePath);
-    fetch(url).then(async (res) => {
-      const { events } = await res.json();
-      setEvents({ loading: false, value: events });
-    });
-  };
+  const loadLabels = useCallback(
+    async (dataId: string) => {
+      const query = await nstClient.storage.query({
+        field: "dataId",
+        comparison: "==",
+        compareValue: dataId,
+      });
+      const labels = query.filter((item) => item.name === "labels.json");
+      if (!labels[0]) {
+        return;
+      }
+      const url = await nstClient.storage.getDownloadUrl(labels[0].filePath);
+      await fetch(url).then(async (res) => {
+        const { events: fetchedEvents } = await res.json();
+        setEvents({ loading: false, value: fetchedEvents });
+      });
+    },
+    [nstClient.storage, setEvents],
+  );
 
   const saveLabels = async () => {
     const serializedEvents = JSON.stringify({
       events: events.value,
     });
-    console.log(serializedEvents);
 
     if (serializedEvents) {
       const data = new Blob([serializedEvents], {
         type: "application/json",
       });
-      nstClient.storage.upload({
+      await nstClient.storage.upload({
         dataId: labelsDataId,
         filename: "labels.json",
         data,
@@ -161,9 +146,9 @@ function NstrumentaPanel(props: Props): JSX.Element {
 
   useEffect(() => {
     if (labelsDataId) {
-      loadLabels(labelsDataId);
+      void loadLabels(labelsDataId);
     }
-  }, [labelsDataId]);
+  }, [labelsDataId, loadLabels]);
 
   const clearFilter = useCallback(() => {
     setFilter("");

@@ -96,7 +96,7 @@ export function CreateEventDialog(props: { onClose: () => void }): JSX.Element {
       (events.value ?? []).map((event) => {
         return event;
       }),
-    [events, formatTime],
+    [events],
   );
   const setEvents = useEvents((store: EventsStore) => store.setEvents);
   const refreshEvents = useEvents(selectRefreshEvents);
@@ -140,7 +140,7 @@ export function CreateEventDialog(props: { onClose: () => void }): JSX.Element {
   );
   const canSubmit = event.startTime != undefined && event.duration != undefined && !duplicateKey;
 
-  const deviceId = useEvents(selectDeviceId);
+  const deviceId = useEvents(selectDeviceId) ?? "web";
 
   const [createdEvent, createEvent] = useAsyncFn(async () => {
     if (event.startTime == undefined || event.duration == undefined) {
@@ -154,7 +154,7 @@ export function CreateEventDialog(props: { onClose: () => void }): JSX.Element {
     const metadata: Record<string, string> = {};
     metadataEntries.forEach((entry) => (metadata[entry.key] = entry.value));
     const id = uuidv4();
-    await setEvents({
+    setEvents({
       loading: false,
       value: [
         ...timestampedEvents,
@@ -168,7 +168,7 @@ export function CreateEventDialog(props: { onClose: () => void }): JSX.Element {
           metadata,
           createdAt: nowIsoString,
           updatedAt: nowIsoString,
-          deviceId: `web`,
+          deviceId,
           durationNanos: toNanoSec(duration).toString(),
         },
       ],
@@ -176,7 +176,7 @@ export function CreateEventDialog(props: { onClose: () => void }): JSX.Element {
 
     onClose();
     refreshEvents();
-  }, [deviceId, event, onClose, refreshEvents]);
+  }, [deviceId, event, onClose, refreshEvents, setEvents, timestampedEvents]);
 
   const onMetaDataKeyDown = useCallback(
     (keyboardEvent: KeyboardEvent) => {

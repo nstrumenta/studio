@@ -19,7 +19,7 @@ class NstrumentaDataSourceFactory implements IDataSourceFactory {
   public sampleLayout: IDataSourceFactory["sampleLayout"];
   public nstClient: NstrumentaBrowserClient;
 
-  constructor(nstClient: NstrumentaBrowserClient) {
+  public constructor(nstClient: NstrumentaBrowserClient) {
     this.nstClient = nstClient;
   }
 
@@ -27,31 +27,32 @@ class NstrumentaDataSourceFactory implements IDataSourceFactory {
     args: DataSourceFactoryInitializeArgs,
   ): ReturnType<IDataSourceFactory["initialize"]> {
     const { search } = window.location;
-    const dataIdParam = new URLSearchParams(search).get("dataId") || "";
+    const dataIdParam = new URLSearchParams(search).get("dataId") ?? "";
     const query = await this.nstClient.storage.query({
       field: "dataId",
       comparison: "==",
       compareValue: dataIdParam,
     });
-    console.log(query);
-    if (query[0] === undefined) {return;}
+    if (query[0] == undefined) { return; }
     const nstExperimentUrl = await this.nstClient.storage.getDownloadUrl(query[0].filePath);
-    const nstExperiment = await (await fetch(nstExperimentUrl)).json();
+    const nstExperiment = await (await fetch(nstExperimentUrl)).json() as { layoutFilePath?: string, dataFilePath?: string };
 
-    console.log({ nstExperiment });
-    if (nstExperiment.layoutFilePath) {
+    if (nstExperiment.layoutFilePath != undefined) {
       const nstLayoutUrl = await this.nstClient.storage.getDownloadUrl(
         nstExperiment.layoutFilePath,
       );
       const nstLayout = await (await fetch(nstLayoutUrl)).json();
-      if (nstLayout) {
+      if (nstLayout != undefined) {
         this.sampleLayout = nstLayout;
       }
     }
 
     const dataFilePath = nstExperiment.dataFilePath;
 
-    const dataUrl = await this.nstClient.storage.getDownloadUrl(dataFilePath);
+    let dataUrl: string = '';
+    if (dataFilePath != undefined) {
+      dataUrl = await this.nstClient.storage.getDownloadUrl(dataFilePath);
+    }
 
     const source = new WorkerIterableSource({
       initWorker: () => {

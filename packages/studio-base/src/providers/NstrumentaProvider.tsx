@@ -11,27 +11,26 @@ export default function NstrumentaProvider({ children }: { children?: ReactNode 
   const { nstClient } = useContext(NstrumentaContext);
 
   const { search } = window.location;
-  const dataIdParam = new URLSearchParams(search).get("dataId") || "";
+  const dataIdParam = new URLSearchParams(search).get("dataId") ?? "";
 
   const [experiment, setExperiment] = useState<JSONType>();
 
   const fetchExperiment = async () => {
-    console.log("loading experiment from", dataIdParam);
     const query = await nstClient.storage.query({
       field: "dataId",
       comparison: "==",
       compareValue: dataIdParam,
     });
-    console.log(query);
-    if (query[0] === undefined) {return;}
+    if (query[0] == undefined) {
+      return;
+    }
     const url = await nstClient.storage.getDownloadUrl(query[0].filePath);
-    const experiment: JSONType = await (await fetch(url)).json();
-    setExperiment(experiment);
+    const fetchedExperiment: JSONType = await (await fetch(url)).json();
+    setExperiment(fetchedExperiment);
   };
 
-  const saveExperiment = async (experiment: JSONType) => {
-    const stringified = JSON.stringify(experiment)!;
-    console.log("experiment: ", stringified, "has been saved");
+  const saveExperiment = async (exp: JSONType) => {
+    const stringified = JSON.stringify(exp)!;
 
     const data = new Blob([stringified], {
       type: "application/json",
@@ -43,7 +42,7 @@ export default function NstrumentaProvider({ children }: { children?: ReactNode 
       meta: {},
       overwrite: true,
     });
-    setExperiment(experiment);
+    setExperiment(exp);
   };
 
   const init = async () => {
@@ -51,7 +50,8 @@ export default function NstrumentaProvider({ children }: { children?: ReactNode 
   };
 
   useEffect(() => {
-    init();
+    void init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (

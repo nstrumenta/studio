@@ -5,7 +5,6 @@
 import { Button, Link, List, ListItem, ListItemButton, SvgIcon, Typography } from "@mui/material";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import tinycolor from "tinycolor2";
 import { makeStyles } from "tss-react/mui";
 
 import FoxgloveLogoText from "@foxglove/studio-base/components/FoxgloveLogoText";
@@ -56,31 +55,6 @@ const useStyles = makeStyles()((theme) => ({
       paddingTop: theme.spacing(6),
     },
   },
-  spacer: {
-    gridArea: "spacer",
-    backgroundColor: tinycolor(theme.palette.text.primary).setAlpha(0.04).toRgbString(),
-
-    [`@media (max-height: ${theme.breakpoints.values.sm})`]: {
-      display: "none",
-    },
-  },
-  sidebar: {
-    gridArea: "sidebar",
-    backgroundColor: tinycolor(theme.palette.text.primary).setAlpha(0.04).toRgbString(),
-    padding: theme.spacing(0, 5, 5),
-
-    [theme.breakpoints.down("md")]: {
-      padding: theme.spacing(4),
-    },
-    [`@media (max-height: ${theme.breakpoints.values.sm})`]: {
-      paddingTop: theme.spacing(6),
-    },
-  },
-  button: {
-    whiteSpace: "nowrap",
-    textOverflow: "ellipsis",
-    overflow: "hidden",
-  },
   connectionButton: {
     textAlign: "left",
     justifyContent: "flex-start",
@@ -103,13 +77,6 @@ const useStyles = makeStyles()((theme) => ({
   },
   recentSourceSecondary: {
     color: "inherit",
-  },
-  featureList: {
-    paddingLeft: theme.spacing(1.5),
-
-    "li:not(:last-of-type)": {
-      marginBottom: theme.spacing(0.5),
-    },
   },
 }));
 

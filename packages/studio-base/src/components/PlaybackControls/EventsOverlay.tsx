@@ -63,8 +63,8 @@ function EventTick({ event }: { event: DataSourceEvent }): JSX.Element {
 
   const selectStartTime = (ctx: MessagePipelineContext) => ctx.playerState.activeData?.startTime;
   const selectEndTime = (ctx: MessagePipelineContext) => ctx.playerState.activeData?.endTime;
-  const playbackStartTime = useMessagePipeline(selectStartTime) || fromSec(0);
-  const playbackEndTime = useMessagePipeline(selectEndTime) || fromSec(0);
+  const playbackStartTime = useMessagePipeline(selectStartTime) ?? fromSec(0);
+  const playbackEndTime = useMessagePipeline(selectEndTime) ?? fromSec(0);
   const playbackDurationSec = toSec(playbackEndTime) - toSec(playbackStartTime);
 
   const { classes, cx } = useStyles();

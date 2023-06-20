@@ -437,7 +437,7 @@ export default function TimeBasedChart(props: Props): JSX.Element {
       min = defaultView.minXValue;
       max = defaultView.maxXValue;
     } else if (defaultView?.type === "following") {
-      max = currentTime ? currentTime + defaultView.offset : defaultView.offset;
+      max = currentTime != undefined ? currentTime + defaultView.offset : defaultView.offset;
       min = max - defaultView.width;
     } else {
       min = datasetBounds.x.min;

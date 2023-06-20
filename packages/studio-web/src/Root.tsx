@@ -61,7 +61,7 @@ export function Root(props: {
     ];
 
     return props.dataSources ?? sources;
-  }, [props.dataSources]);
+  }, [nstClient, props.dataSources]);
 
   return (
     <>

@@ -165,7 +165,7 @@ function Plot(props: Props) {
   const currentTimeSinceStart = timeSincePreloadedStart(currentTime);
 
   const followingView = useMemo<ChartDefaultView | undefined>(() => {
-    const offset = followingViewOffset || 0;
+    const offset = followingViewOffset ?? 0;
     if (followingViewWidth != undefined && followingViewWidth > 0) {
       return { type: "following", width: followingViewWidth, offset };
     }

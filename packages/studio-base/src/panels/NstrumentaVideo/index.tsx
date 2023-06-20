@@ -11,9 +11,7 @@
 //   found at http://www.apache.org/licenses/LICENSE-2.0
 //   You may not use this file except in compliance with the License.
 
-import { useEffect, useRef, useState } from "react";
-
-
+import { LegacyRef, useCallback, useEffect, useRef, useState } from "react";
 
 import { toSec } from "@foxglove/rostime";
 import {
@@ -40,7 +38,7 @@ function NstrumentaVideoPanel(props: Props): JSX.Element {
   const { videoFilePath, offset } = config;
 
   const [videoUrl, setVideoUrl] = useState<string | undefined>(undefined);
-  const videoRef = useRef<HTMLVideoElement>(null);
+  const videoRef = useRef<HTMLVideoElement>();
 
   const activeData = useMessagePipeline((ctx: MessagePipelineContext) => {
     return ctx.playerState.activeData;
@@ -48,47 +46,51 @@ function NstrumentaVideoPanel(props: Props): JSX.Element {
 
   const panelContext = usePanelContext();
   const name = videoFilePath?.split("/").slice(4).join("/");
-  panelContext.title = name || "Nstrumenta Video";
+  panelContext.title = name ?? "Nstrumenta Video";
 
   const nstClient = useNstrumentClient();
 
   useNstrumentaVideoSettings(config, saveConfig);
 
-  const getVideoUrl = async (dataId: string) => {
-    const query = await nstClient.storage.query({
-      field: "filePath",
-      comparison: "==",
-      compareValue: dataId,
-    });
-    console.log(query);
-    if (query[0] === undefined) {return;}
-    const videoUrl = await nstClient.storage.getDownloadUrl(query[0].filePath);
-    setVideoUrl(videoUrl);
-  };
+  const getVideoUrl = useCallback(
+    async (dataId: string) => {
+      const query = await nstClient.storage.query({
+        field: "filePath",
+        comparison: "==",
+        compareValue: dataId,
+      });
+      if (query[0] == undefined) {
+        return;
+      }
+      const url = await nstClient.storage.getDownloadUrl(query[0].filePath);
+      setVideoUrl(url);
+    },
+    [nstClient.storage],
+  );
 
   useEffect(() => {
     if (videoRef.current && activeData) {
       const { startTime, currentTime, isPlaying, speed } = activeData;
       if (isPlaying) {
         videoRef.current.playbackRate = speed;
-        videoRef.current.play();
+        void videoRef.current.play();
       } else {
         videoRef.current.pause();
-        videoRef.current.currentTime = toSec(subtractTimes(currentTime, startTime)) - (offset || 0);
+        videoRef.current.currentTime = toSec(subtractTimes(currentTime, startTime)) - (offset ?? 0);
       }
     }
-  }, [activeData, videoRef.current, offset]);
+  }, [activeData, offset]);
 
   useEffect(() => {
-    if (videoFilePath && nstClient) {
-      getVideoUrl(videoFilePath);
+    if (videoFilePath) {
+      void getVideoUrl(videoFilePath);
     }
-  }, [videoFilePath, nstClient]);
+  }, [videoFilePath, nstClient, getVideoUrl]);
 
   return (
     <Stack fullHeight>
       <PanelToolbar />
-      <video width="100%" src={videoUrl} ref={videoRef}></video>
+      <video width="100%" src={videoUrl} ref={videoRef as LegacyRef<HTMLVideoElement>}></video>
     </Stack>
   );
 }
