@@ -26,7 +26,7 @@ const ALLOWED_LICENSES = [
   "BlueOak-1.0.0",
 ];
 
-const EXCLUDED_PACKAGES = ["gl-vec3@1.1.3"];
+const EXCLUDED_PACKAGES = ["gl-vec3@1.1.3", "rx.mini@1.3.1"];
 
 async function main() {
   const output = await initChecker({
