@@ -15,7 +15,6 @@ import PlayerSelectionContext, {
 } from "@foxglove/studio-base/context/PlayerSelectionContext";
 import { useInitialDeepLinkState } from "@foxglove/studio-base/hooks/useInitialDeepLinkState";
 import { useSessionStorageValue } from "@foxglove/studio-base/hooks/useSessionStorageValue";
-import { Player } from "@foxglove/studio-base/players/types";
 import EventsProvider from "@foxglove/studio-base/providers/EventsProvider";
 import { LaunchPreferenceValue } from "@foxglove/studio-base/types/LaunchPreferenceValue";
 
@@ -123,7 +122,7 @@ describe("Initial deep link state", () => {
       public type = "connection" as const;
       public displayName = "Foo";
       public currentUserRequired = true;
-      public initialize(): Player | undefined {
+      public async initialize(): ReturnType<IDataSourceFactory["initialize"]> {
         throw new Error("not implemented");
       }
     }
