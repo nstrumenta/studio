@@ -1,11 +1,15 @@
+// This Source Code Form is subject to the terms of the Mozilla Public
+// License, v2.0. If a copy of the MPL was not distributed with this
+// file, You can obtain one at http://mozilla.org/MPL/2.0/
+
 /**
  * Export all data from an IndexedDB database
  *
  * @param {IDBDatabase} idbDatabase The database to export from
  * @return {Promise<string>}
  */
-export function exportToJson(idbDatabase: IDBDatabase) {
-  return new Promise((resolve, reject) => {
+export async function exportToJson(idbDatabase: IDBDatabase) {
+  return await new Promise((resolve, reject) => {
     const exportObject: Record<string, unknown> = {};
     if (idbDatabase.objectStoreNames.length === 0) {
       resolve(JSON.stringify(exportObject));
@@ -20,7 +24,7 @@ export function exportToJson(idbDatabase: IDBDatabase) {
           .objectStore(storeName)
           .openCursor()
           .addEventListener("success", (event) => {
-            const cursor = (event?.target as unknown as { result: IDBCursorWithValue }).result;
+            const cursor = (event.target as unknown as { result: IDBCursorWithValue }).result;
             if (cursor) {
               // Cursor holds value, put it into store data
               allObjects.push(cursor.value);
@@ -48,8 +52,8 @@ export function exportToJson(idbDatabase: IDBDatabase) {
  * @param {Object}      json        Data to import, one key per object store
  * @return {Promise<void>}
  */
-export function importFromJson(idbDatabase: IDBDatabase, importObject: any) {
-  return new Promise<void>((resolve, reject) => {
+export async function importFromJson(idbDatabase: IDBDatabase, importObject: any) {
+  return await new Promise<void>((resolve, reject) => {
     const transaction = idbDatabase.transaction(idbDatabase.objectStoreNames, "readwrite");
     transaction.addEventListener("error", reject);
 
@@ -79,8 +83,8 @@ export function importFromJson(idbDatabase: IDBDatabase, importObject: any) {
  * @param {IDBDatabase} idbDatabase The database to delete all data from
  * @return {Promise<void>}
  */
-export function clearDatabase(idbDatabase: IDBDatabase) {
-  return new Promise<void>((resolve, reject) => {
+export async function clearDatabase(idbDatabase: IDBDatabase) {
+  return await new Promise<void>((resolve, reject) => {
     const transaction = idbDatabase.transaction(idbDatabase.objectStoreNames, "readwrite");
     transaction.addEventListener("error", reject);
 

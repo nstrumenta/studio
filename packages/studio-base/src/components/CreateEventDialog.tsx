@@ -25,11 +25,9 @@ import { useAsyncFn } from "react-use";
 import { keyframes } from "tss-react";
 import { makeStyles } from "tss-react/mui";
 import { useImmer } from "use-immer";
-
 import { v4 as uuidv4 } from "uuid";
 
 import Log from "@foxglove/log";
-
 import { add, fromNanoSec, fromSec, toNanoSec, toSec } from "@foxglove/rostime";
 import { Time } from "@foxglove/studio";
 import {

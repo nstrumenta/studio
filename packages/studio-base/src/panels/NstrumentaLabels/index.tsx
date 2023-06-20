@@ -17,10 +17,13 @@ import { Button, CircularProgress, IconButton, TextField, Typography } from "@mu
 import { useCallback, useEffect, useMemo } from "react";
 import { makeStyles } from "tss-react/mui";
 
+import { EventView } from "@foxglove/studio-base/components/DataSourceSidebar/EventView";
 import {
   MessagePipelineContext,
   useMessagePipeline,
 } from "@foxglove/studio-base/components/MessagePipeline";
+import Panel from "@foxglove/studio-base/components/Panel";
+import PanelToolbar from "@foxglove/studio-base/components/PanelToolbar";
 import Stack from "@foxglove/studio-base/components/Stack";
 import {
   DataSourceEvent,
@@ -28,12 +31,18 @@ import {
   useEvents,
 } from "@foxglove/studio-base/context/EventsContext";
 import {
+  useNstrumentClient,
+  useNstrumentaContext,
+} from "@foxglove/studio-base/context/NstrumentaContext";
+import {
   TimelineInteractionStateStore,
   useTimelineInteractionState,
 } from "@foxglove/studio-base/context/TimelineInteractionStateContext";
 import { useAppTimeFormat } from "@foxglove/studio-base/hooks";
+import { SaveConfig } from "@foxglove/studio-base/types/panels";
 
-import { EventView } from "@foxglove/studio-base/components/DataSourceSidebar/EventView";
+import { useNstrumentaSettings } from "./settings";
+import { NstrumentaConfig } from "./types";
 
 const useStyles = makeStyles()((theme) => ({
   appBar: {
@@ -69,17 +78,6 @@ const selectSetHoveredEvent = (store: TimelineInteractionStateStore) => store.se
 const selectEventsAtHoverValue = (store: TimelineInteractionStateStore) => store.eventsAtHoverValue;
 const selectSelectedEventId = (store: EventsStore) => store.selectedEventId;
 const selectSelectEvent = (store: EventsStore) => store.selectEvent;
-
-import Panel from "@foxglove/studio-base/components/Panel";
-import PanelToolbar from "@foxglove/studio-base/components/PanelToolbar";
-import { SaveConfig } from "@foxglove/studio-base/types/panels";
-
-import {
-  useNstrumentClient,
-  useNstrumentaContext,
-} from "@foxglove/studio-base/context/NstrumentaContext";
-import { useNstrumentaSettings } from "./settings";
-import { NstrumentaConfig } from "./types";
 
 type Props = {
   config: NstrumentaConfig;
@@ -133,7 +131,7 @@ function NstrumentaPanel(props: Props): JSX.Element {
     });
     console.log(query);
     const labels = query.filter((item) => item.name == "labels.json");
-    if (!labels[0]) return;
+    if (!labels[0]) {return;}
     const url = await nstClient.storage.getDownloadUrl(labels[0].filePath);
     fetch(url).then(async (res) => {
       const { events } = await res.json();

@@ -19,8 +19,8 @@ import {
   SampleNuscenesDataSourceFactory,
   UlogLocalDataSourceFactory,
 } from "@foxglove/studio-base";
-
 import { useNstrumentClient } from "@foxglove/studio-base/context/NstrumentaContext";
+
 import LocalStorageAppConfiguration from "./services/LocalStorageAppConfiguration";
 import { NstLayoutStorage } from "./services/NstLayoutStorage";
 

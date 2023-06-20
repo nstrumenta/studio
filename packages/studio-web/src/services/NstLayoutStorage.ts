@@ -3,11 +3,12 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
 import * as IDB from "idb/with-async-ittr";
+import { NstrumentaBrowserClient } from "nstrumenta/dist/browser/client";
 
 import Log from "@foxglove/log";
 import { ILayoutStorage, Layout, LayoutID, migrateLayout } from "@foxglove/studio-base";
+
 import { clearDatabase, exportToJson, importFromJson } from "./IdbBackupAndRestore";
-import { NstrumentaBrowserClient } from "nstrumenta/dist/browser/client";
 
 const log = Log.getLogger(__filename);
 
@@ -68,7 +69,7 @@ export class NstLayoutStorage implements ILayoutStorage {
       compareValue: dataIdParam,
     });
     console.log(query);
-    if (query[0] === undefined) return results;
+    if (query[0] === undefined) {return results;}
     const url = await this.nstClient.storage.getDownloadUrl(query[0].filePath);
     const experiment = await (await fetch(url)).json();
 
@@ -82,7 +83,7 @@ export class NstLayoutStorage implements ILayoutStorage {
         compareValue: experiment.layoutFilePath,
       });
       console.log(query);
-      if (query[0] === undefined) return results;
+      if (query[0] === undefined) {return results;}
       this.layoutFileId = query[0].dataId;
 
       const nstLayoutUrl = await this.nstClient.storage.getDownloadUrl(experiment.layoutFilePath);

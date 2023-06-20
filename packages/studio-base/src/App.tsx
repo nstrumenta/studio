@@ -8,6 +8,7 @@ import { HTML5Backend } from "react-dnd-html5-backend";
 
 import GlobalCss from "@foxglove/studio-base/components/GlobalCss";
 import EventsProvider from "@foxglove/studio-base/providers/EventsProvider";
+import NstrumentaProvider from "@foxglove/studio-base/providers/NstrumentaProvider";
 import { StudioLogsSettingsProvider } from "@foxglove/studio-base/providers/StudioLogsSettingsProvider";
 import TimelineInteractionStateProvider from "@foxglove/studio-base/providers/TimelineInteractionStateProvider";
 
@@ -36,7 +37,6 @@ import UserProfileLocalStorageProvider from "./providers/UserProfileLocalStorage
 import { LaunchPreference } from "./screens/LaunchPreference";
 import { ExtensionLoader } from "./services/ExtensionLoader";
 import { ILayoutStorage } from "./services/ILayoutStorage";
-import NstrumentaProvider from "@foxglove/studio-base/providers/NstrumentaProvider";
 
 type AppProps = CustomWindowControlsProps & {
   deepLinks: string[];

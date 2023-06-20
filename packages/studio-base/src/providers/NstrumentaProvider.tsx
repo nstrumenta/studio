@@ -2,10 +2,10 @@
 // License, v2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
+import { JSONType } from "material-jsoneditor";
 import { ReactNode, useContext, useEffect, useState } from "react";
 
 import { NstrumentaContext } from "@foxglove/studio-base/context/NstrumentaContext";
-import { JSONType } from "material-jsoneditor";
 
 export default function NstrumentaProvider({ children }: { children?: ReactNode }): JSX.Element {
   const { nstClient } = useContext(NstrumentaContext);
@@ -23,7 +23,7 @@ export default function NstrumentaProvider({ children }: { children?: ReactNode 
       compareValue: dataIdParam,
     });
     console.log(query);
-    if (query[0] === undefined) return;
+    if (query[0] === undefined) {return;}
     const url = await nstClient.storage.getDownloadUrl(query[0].filePath);
     const experiment: JSONType = await (await fetch(url)).json();
     setExperiment(experiment);

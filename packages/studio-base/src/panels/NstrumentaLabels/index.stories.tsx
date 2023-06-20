@@ -12,14 +12,12 @@
 //   You may not use this file except in compliance with the License.
 
 import { StoryObj } from "@storybook/react";
-
-import NstrumentaPanel from "@foxglove/studio-base/panels/NstrumentaLabels/index";
-import PanelSetup from "@foxglove/studio-base/stories/PanelSetup";
-
 import { StoryFn } from "@storybook/react";
 
 import MockMessagePipelineProvider from "@foxglove/studio-base/components/MessagePipeline/MockMessagePipelineProvider";
+import NstrumentaPanel from "@foxglove/studio-base/panels/NstrumentaLabels/index";
 import EventsProvider from "@foxglove/studio-base/providers/EventsProvider";
+import PanelSetup from "@foxglove/studio-base/stories/PanelSetup";
 
 const fixture = {
   topics: [],

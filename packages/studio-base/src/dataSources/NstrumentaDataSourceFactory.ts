@@ -2,12 +2,13 @@
 // License, v2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
+import { NstrumentaBrowserClient } from "nstrumenta/dist/browser/client";
+
 import {
   DataSourceFactoryInitializeArgs,
   IDataSourceFactory,
 } from "@foxglove/studio-base/context/PlayerSelectionContext";
 import { IterablePlayer, WorkerIterableSource } from "@foxglove/studio-base/players/IterablePlayer";
-import { NstrumentaBrowserClient } from "nstrumenta/dist/browser/client";
 
 class NstrumentaDataSourceFactory implements IDataSourceFactory {
   public id = "nstrumenta";
@@ -33,7 +34,7 @@ class NstrumentaDataSourceFactory implements IDataSourceFactory {
       compareValue: dataIdParam,
     });
     console.log(query);
-    if (query[0] === undefined) return;
+    if (query[0] === undefined) {return;}
     const nstExperimentUrl = await this.nstClient.storage.getDownloadUrl(query[0].filePath);
     const nstExperiment = await (await fetch(nstExperimentUrl)).json();
 

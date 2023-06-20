@@ -13,20 +13,21 @@
 
 import { useEffect, useRef, useState } from "react";
 
-import Stack from "@foxglove/studio-base/components/Stack";
 
-import Panel from "@foxglove/studio-base/components/Panel";
-import PanelToolbar from "@foxglove/studio-base/components/PanelToolbar";
-import { SaveConfig } from "@foxglove/studio-base/types/panels";
 
 import { toSec } from "@foxglove/rostime";
 import {
   MessagePipelineContext,
   useMessagePipeline,
 } from "@foxglove/studio-base/components/MessagePipeline";
+import Panel from "@foxglove/studio-base/components/Panel";
 import { usePanelContext } from "@foxglove/studio-base/components/PanelContext";
+import PanelToolbar from "@foxglove/studio-base/components/PanelToolbar";
+import Stack from "@foxglove/studio-base/components/Stack";
 import { useNstrumentClient } from "@foxglove/studio-base/context/NstrumentaContext";
 import { subtractTimes } from "@foxglove/studio-base/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils/time";
+import { SaveConfig } from "@foxglove/studio-base/types/panels";
+
 import { NstrumentaVideoConfig, useNstrumentaVideoSettings } from "./settings";
 
 type Props = {
@@ -60,7 +61,7 @@ function NstrumentaVideoPanel(props: Props): JSX.Element {
       compareValue: dataId,
     });
     console.log(query);
-    if (query[0] === undefined) return;
+    if (query[0] === undefined) {return;}
     const videoUrl = await nstClient.storage.getDownloadUrl(query[0].filePath);
     setVideoUrl(videoUrl);
   };
@@ -87,7 +88,7 @@ function NstrumentaVideoPanel(props: Props): JSX.Element {
   return (
     <Stack fullHeight>
       <PanelToolbar />
-      <video width={"100%"} src={videoUrl} ref={videoRef}></video>
+      <video width="100%" src={videoUrl} ref={videoRef}></video>
     </Stack>
   );
 }
