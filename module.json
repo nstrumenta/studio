@@ -1,7 +1,4 @@
 {
-    "$schema": "https://raw.githubusercontent.com/nstrumenta/nstrumenta/main/module.schema.json",
-    "type": "sandbox",
-    "includes": [
-        "web/.webpack"
-    ]
+  "type": "web",
+  "includes": ["web/.webpack", "package.json"]
 }

@@ -36,4 +36,4 @@ RUN apt-get update
 RUN apt-get install -y docker-ce=5:24.0.0-1~debian.11~bullseye  docker-ce-cli=5:24.0.0-1~debian.11~bullseye containerd.io docker-buildx-plugin docker-compose-plugin
 
 #install nstrumenta
-RUN npm i -g nstrumenta@3.1.0
+RUN npm i -g nstrumenta@3.1.2
