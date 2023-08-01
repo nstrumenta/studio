@@ -107,11 +107,11 @@ function NstrumentaPanel(props: Props): JSX.Element {
 
   const loadLabels = useCallback(
     async (dataId: string) => {
-      const query = await nstClient.storage.query({
+      const query = (await nstClient.storage.query({
         field: "dataId",
         comparison: "==",
         compareValue: dataId,
-      });
+      })) as { name: string; filePath: string }[];
       const labels = query.filter((item) => item.name === "labels.json");
       if (!labels[0]) {
         return;

@@ -17,6 +17,7 @@ const apiKey = apiKeyParam
 if (apiKey) {
   localStorage.setItem("apiKey", apiKey);
 }
+
 const nstClient = new NstrumentaBrowserClient(apiKey);
 
 interface INstrumentaContext {

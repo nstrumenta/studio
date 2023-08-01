@@ -1,6 +1,6 @@
 // -*- jsonc -*-
 {
-  "debug.javascript.autoAttachFilter": "onlyWithFlag",
+  "debug.javascript.autoAttachFilter": "disabled",
   "debug.toolBarLocation": "docked",
   "editor.codeActionsOnSave": {
     "source.fixAll.eslint": true

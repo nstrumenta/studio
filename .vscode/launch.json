@@ -9,7 +9,7 @@
       "name": "web",
       "request": "launch",
       "type": "chrome",
-      "url": "http://localhost:8080",
+      "url": "http://localhost:8080?experiment=heyyo.txt",
       "webRoot": "${workspaceFolder}/nstrumenta/studio"
     },
     {

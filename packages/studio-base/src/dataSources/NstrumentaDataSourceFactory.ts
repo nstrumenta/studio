@@ -27,15 +27,13 @@ class NstrumentaDataSourceFactory implements IDataSourceFactory {
     args: DataSourceFactoryInitializeArgs,
   ): ReturnType<IDataSourceFactory["initialize"]> {
     const { search } = window.location;
-    const dataIdParam = new URLSearchParams(search).get("dataId") ?? "";
-    const query = await this.nstClient.storage.query({
-      field: "dataId",
-      comparison: "==",
-      compareValue: dataIdParam,
-    });
-    if (query[0] == undefined) { return; }
-    const nstExperimentUrl = await this.nstClient.storage.getDownloadUrl(query[0].filePath);
-    const nstExperiment = await (await fetch(nstExperimentUrl)).json() as { layoutFilePath?: string, dataFilePath?: string };
+    const filePath = new URLSearchParams(search).get("experiment") ?? "";
+
+    const url = await this.nstClient.storage.getDownloadUrl(filePath);
+    const nstExperiment = (await (await fetch(url)).json()) as {
+      layoutFilePath?: string;
+      dataFilePath?: string;
+    };
 
     if (nstExperiment.layoutFilePath != undefined) {
       const nstLayoutUrl = await this.nstClient.storage.getDownloadUrl(
@@ -49,7 +47,7 @@ class NstrumentaDataSourceFactory implements IDataSourceFactory {
 
     const dataFilePath = nstExperiment.dataFilePath;
 
-    let dataUrl: string = '';
+    let dataUrl: string = "";
     if (dataFilePath != undefined) {
       dataUrl = await this.nstClient.storage.getDownloadUrl(dataFilePath);
     }

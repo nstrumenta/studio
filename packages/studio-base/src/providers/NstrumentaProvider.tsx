@@ -11,20 +11,12 @@ export default function NstrumentaProvider({ children }: { children?: ReactNode 
   const { nstClient } = useContext(NstrumentaContext);
 
   const { search } = window.location;
-  const dataIdParam = new URLSearchParams(search).get("dataId") ?? "";
+  const filePath = new URLSearchParams(search).get("experiment") ?? "";
 
   const [experiment, setExperiment] = useState<JSONType>();
 
   const fetchExperiment = async () => {
-    const query = await nstClient.storage.query({
-      field: "dataId",
-      comparison: "==",
-      compareValue: dataIdParam,
-    });
-    if (query[0] == undefined) {
-      return;
-    }
-    const url = await nstClient.storage.getDownloadUrl(query[0].filePath);
+    const url = await nstClient.storage.getDownloadUrl(filePath);
     const fetchedExperiment: JSONType = await (await fetch(url)).json();
     setExperiment(fetchedExperiment);
   };
@@ -36,9 +28,8 @@ export default function NstrumentaProvider({ children }: { children?: ReactNode 
       type: "application/json",
     });
     await nstClient.storage.upload({
-      dataId: dataIdParam,
       data,
-      filename: "experiment.json",
+      filename: filePath,
       meta: {},
       overwrite: true,
     });

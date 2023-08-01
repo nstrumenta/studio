@@ -54,11 +54,11 @@ function NstrumentaVideoPanel(props: Props): JSX.Element {
 
   const getVideoUrl = useCallback(
     async (dataId: string) => {
-      const query = await nstClient.storage.query({
+      const query = (await nstClient.storage.query({
         field: "filePath",
         comparison: "==",
         compareValue: dataId,
-      });
+      })) as { filePath: string }[];
       if (query[0] == undefined) {
         return;
       }
