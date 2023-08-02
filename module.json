@@ -1,4 +1,8 @@
 {
   "type": "web",
-  "includes": ["web/.webpack", "package.json"]
+  "entry": "web/.webpack/index.html",
+  "includes": [
+    "web/.webpack",
+    "package.json"
+  ]
 }
