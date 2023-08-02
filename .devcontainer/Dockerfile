@@ -31,9 +31,9 @@ RUN chmod a+r /etc/apt/keyrings/docker.gpg
 RUN echo \
   "deb [arch="$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/debian \
   "$(. /etc/os-release && echo "$VERSION_CODENAME")" stable" | \
-tee /etc/apt/sources.list.d/docker.list > /dev/null
+  tee /etc/apt/sources.list.d/docker.list > /dev/null
 RUN apt-get update
 RUN apt-get install -y docker-ce=5:24.0.0-1~debian.11~bullseye  docker-ce-cli=5:24.0.0-1~debian.11~bullseye containerd.io docker-buildx-plugin docker-compose-plugin
 
 #install nstrumenta
-RUN npm i -g nstrumenta@3.1.3
+RUN npm i -g nstrumenta@3.1.4
