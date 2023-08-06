@@ -1,8 +1,7 @@
 {
-  "type": "web",
+  "nstrumentaModuleType": "web",
   "entry": "web/.webpack/index.html",
   "includes": [
-    "web/.webpack",
-    "package.json"
+    "web/.webpack"
   ]
 }
