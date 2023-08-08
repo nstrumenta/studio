@@ -13,7 +13,7 @@
 
 import { LegacyRef, useCallback, useEffect, useRef, useState } from "react";
 
-import { toSec } from "@foxglove/rostime";
+import { fromMillis, toSec } from "@foxglove/rostime";
 import {
   MessagePipelineContext,
   useMessagePipeline,
@@ -77,7 +77,14 @@ function NstrumentaVideoPanel(props: Props): JSX.Element {
     if (videoRef.current && activeData) {
       const video = videoRef.current;
       const { startTime, currentTime, isPlaying, speed } = activeData;
-      const offset = experiment?.videos.find((v) => v.filePath === videoFilePath)?.offset ?? 0;
+
+      const videoStartTime = experiment?.videos.find(
+        (v) => v.filePath === videoFilePath,
+      )?.startTime;
+      const offset =
+        videoStartTime != undefined
+          ? toSec(subtractTimes(fromMillis(videoStartTime), startTime))
+          : 0;
       const videoPlaying =
         video.currentTime > 0 &&
         !video.paused &&
