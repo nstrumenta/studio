@@ -5,7 +5,10 @@
 import { JSONTextEditor } from "material-jsoneditor";
 
 import Stack from "@foxglove/studio-base/components/Stack";
-import { useNstrumentaContext } from "@foxglove/studio-base/context/NstrumentaContext";
+import {
+  NstrumentaExperiment,
+  useNstrumentaContext,
+} from "@foxglove/studio-base/context/NstrumentaContext";
 
 export function ExperimentTab(): JSX.Element {
   const { experiment, setExperiment } = useNstrumentaContext();
@@ -14,7 +17,13 @@ export function ExperimentTab(): JSX.Element {
     <Stack gap={2} justifyContent="flex-start" flex="auto" fullHeight>
       <JSONTextEditor
         value={experiment != undefined ? experiment : {}}
-        onChange={setExperiment != undefined ? setExperiment : () => {}}
+        onChange={
+          setExperiment != undefined
+            ? (val) => {
+                setExperiment(val as NstrumentaExperiment);
+              }
+            : () => {}
+        }
       />
     </Stack>
   );

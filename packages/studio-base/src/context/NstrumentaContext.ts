@@ -2,7 +2,6 @@
 // License, v2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
-import { JSONType } from "material-jsoneditor";
 import { NstrumentaBrowserClient } from "nstrumenta/dist/browser/client";
 import { createContext, useContext } from "react";
 
@@ -20,10 +19,20 @@ if (apiKey) {
 
 const nstClient = new NstrumentaBrowserClient(apiKey);
 
+export type NstrumentaVideo = {
+  label: string;
+  filePath: string;
+};
+export type NstrumentaExperiment = {
+  dataFilePath: string;
+  layoutFilePath: string;
+  videos: NstrumentaVideo[];
+};
+
 interface INstrumentaContext {
   nstClient: NstrumentaBrowserClient;
-  experiment?: JSONType;
-  setExperiment?: (experiment: JSONType) => void;
+  experiment?: NstrumentaExperiment;
+  setExperiment?: (experiment: NstrumentaExperiment) => void;
   fetchExperiment?: () => void;
 }
 

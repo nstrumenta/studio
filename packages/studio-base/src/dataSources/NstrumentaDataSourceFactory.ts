@@ -16,7 +16,6 @@ class NstrumentaDataSourceFactory implements IDataSourceFactory {
   public displayName = "nstrumenta";
   public iconName: IDataSourceFactory["iconName"] = "FileASPX";
   public hidden = true;
-  public sampleLayout: IDataSourceFactory["sampleLayout"];
   public nstClient: NstrumentaBrowserClient;
 
   public constructor(nstClient: NstrumentaBrowserClient) {
@@ -31,19 +30,8 @@ class NstrumentaDataSourceFactory implements IDataSourceFactory {
 
     const url = await this.nstClient.storage.getDownloadUrl(filePath);
     const nstExperiment = (await (await fetch(url)).json()) as {
-      layoutFilePath?: string;
       dataFilePath?: string;
     };
-
-    if (nstExperiment.layoutFilePath != undefined) {
-      const nstLayoutUrl = await this.nstClient.storage.getDownloadUrl(
-        nstExperiment.layoutFilePath,
-      );
-      const nstLayout = await (await fetch(nstLayoutUrl)).json();
-      if (nstLayout != undefined) {
-        this.sampleLayout = nstLayout;
-      }
-    }
 
     const dataFilePath = nstExperiment.dataFilePath;
 

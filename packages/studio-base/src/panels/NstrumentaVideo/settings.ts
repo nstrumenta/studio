@@ -7,6 +7,10 @@ import { set } from "lodash";
 import { useCallback, useEffect } from "react";
 
 import { SettingsTreeAction, SettingsTreeNodes } from "@foxglove/studio";
+import {
+  NstrumentaVideo,
+  useNstrumentaContext,
+} from "@foxglove/studio-base/context/NstrumentaContext";
 import { usePanelSettingsTreeUpdate } from "@foxglove/studio-base/providers/PanelStateContextProvider";
 import { SaveConfig } from "@foxglove/studio-base/types/panels";
 
@@ -15,14 +19,20 @@ export type NstrumentaVideoConfig = {
   offset?: number;
 };
 
-function buildSettingsTree(config: NstrumentaVideoConfig): SettingsTreeNodes {
+function buildSettingsTree(
+  config: NstrumentaVideoConfig,
+  videos: NstrumentaVideo[],
+): SettingsTreeNodes {
   return {
     general: {
       label: "Labels",
       fields: {
         videoFilePath: {
           label: "videoFilePath",
-          input: "string",
+          input: "select",
+          options: videos.map((v) => {
+            return { label: v.label, value: v.filePath };
+          }),
           value: config.videoFilePath,
         },
         offset: {
@@ -40,6 +50,8 @@ export function useNstrumentaVideoSettings(
   saveConfig: SaveConfig<NstrumentaVideoConfig>,
 ): void {
   const updatePanelSettingsTree = usePanelSettingsTreeUpdate();
+
+  const { experiment } = useNstrumentaContext();
 
   const actionHandler = useCallback(
     (action: SettingsTreeAction) => {
@@ -60,7 +72,7 @@ export function useNstrumentaVideoSettings(
   useEffect(() => {
     updatePanelSettingsTree({
       actionHandler,
-      nodes: buildSettingsTree(config),
+      nodes: buildSettingsTree(config, experiment?.videos ?? []),
     });
-  }, [actionHandler, config, updatePanelSettingsTree]);
+  }, [actionHandler, config, experiment?.videos, updatePanelSettingsTree]);
 }
