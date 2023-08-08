@@ -112,15 +112,15 @@ function NstrumentaPanel(props: Props): JSX.Element {
             //merge and attach filePath to items
             fetchedEvents = [
               ...fetchedEvents,
-              ...(await res.json()).map((item: Record<string, unknown>) => {
+              ...(await res.json()).events.map((item: Record<string, unknown>) => {
                 return { ...item, deviceId: labelFile.filePath };
               }),
             ];
           });
-        } catch {
+        } catch (err) {
           await nstClient.storage.upload({
             filename: labelFile.filePath.split("/").slice(2).join("/"),
-            data: new Blob([]),
+            data: new Blob(['{"events":[]}']),
             meta: {},
             overwrite: true,
           });
@@ -146,7 +146,7 @@ function NstrumentaPanel(props: Props): JSX.Element {
           type: "application/json",
         });
         await nstClient.storage.upload({
-          filename: labelFile.filePath.split("/").slice(2).join("/"),
+          filename: labelFile.filePath.split("/").slice(3).join("/"),
           data,
           meta: {},
           overwrite: true,
@@ -156,8 +156,8 @@ function NstrumentaPanel(props: Props): JSX.Element {
   };
 
   useEffect(() => {
-    if (experiment?.labelFiles) {
-      setDeviceId(experiment.labelFiles[0]?.filePath);
+    if (experiment?.labelFiles && experiment.labelFiles[0]?.filePath) {
+      setDeviceId(experiment.labelFiles[0].filePath);
       void loadLabels(experiment.labelFiles);
     }
   }, [experiment?.labelFiles, loadLabels, setDeviceId]);

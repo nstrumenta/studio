@@ -22,7 +22,10 @@ import Panel from "@foxglove/studio-base/components/Panel";
 import { usePanelContext } from "@foxglove/studio-base/components/PanelContext";
 import PanelToolbar from "@foxglove/studio-base/components/PanelToolbar";
 import Stack from "@foxglove/studio-base/components/Stack";
-import { useNstrumentClient } from "@foxglove/studio-base/context/NstrumentaContext";
+import {
+  useNstrumentClient,
+  useNstrumentaContext,
+} from "@foxglove/studio-base/context/NstrumentaContext";
 import { subtractTimes } from "@foxglove/studio-base/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils/time";
 import { SaveConfig } from "@foxglove/studio-base/types/panels";
 
@@ -35,7 +38,7 @@ type Props = {
 
 function NstrumentaVideoPanel(props: Props): JSX.Element {
   const { config, saveConfig } = props;
-  const { videoFilePath, offset } = config;
+  const { videoFilePath } = config;
 
   const [videoUrl, setVideoUrl] = useState<string | undefined>(undefined);
   const videoRef = useRef<HTMLVideoElement>();
@@ -45,8 +48,10 @@ function NstrumentaVideoPanel(props: Props): JSX.Element {
   });
 
   const panelContext = usePanelContext();
-  const name = videoFilePath?.split("/").slice(4).join("/");
+  const name = videoFilePath?.split("/").slice(3).join("/");
   panelContext.title = name ?? "Nstrumenta Video";
+
+  const { experiment } = useNstrumentaContext();
 
   const nstClient = useNstrumentClient();
 
@@ -70,16 +75,28 @@ function NstrumentaVideoPanel(props: Props): JSX.Element {
 
   useEffect(() => {
     if (videoRef.current && activeData) {
+      const video = videoRef.current;
       const { startTime, currentTime, isPlaying, speed } = activeData;
+      const offset = experiment?.videos.find((v) => v.filePath === videoFilePath)?.offset ?? 0;
+      const videoPlaying =
+        video.currentTime > 0 &&
+        !video.paused &&
+        !video.ended &&
+        video.readyState > video.HAVE_CURRENT_DATA;
+
       if (isPlaying) {
-        videoRef.current.playbackRate = speed;
-        void videoRef.current.play();
+        if (!videoPlaying) {
+          video.playbackRate = speed;
+          void video.play();
+        }
       } else {
-        videoRef.current.pause();
-        videoRef.current.currentTime = toSec(subtractTimes(currentTime, startTime)) - (offset ?? 0);
+        if (videoPlaying) {
+          video.pause();
+        }
+        video.currentTime = toSec(subtractTimes(currentTime, startTime)) - offset;
       }
     }
-  }, [activeData, offset]);
+  }, [activeData, experiment?.videos, videoFilePath]);
 
   useEffect(() => {
     if (videoFilePath) {

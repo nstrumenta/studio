@@ -22,6 +22,7 @@ const nstClient = new NstrumentaBrowserClient(apiKey);
 export type NstrumentaVideo = {
   label: string;
   filePath: string;
+  offset?: number;
 };
 
 export type NstrumentaLabels = {
