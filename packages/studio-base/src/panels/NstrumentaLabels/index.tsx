@@ -31,6 +31,7 @@ import {
   useEvents,
 } from "@foxglove/studio-base/context/EventsContext";
 import {
+  NstrumentaLabels,
   useNstrumentClient,
   useNstrumentaContext,
 } from "@foxglove/studio-base/context/NstrumentaContext";
@@ -59,6 +60,7 @@ const selectSetEvents = (store: EventsStore) => store.setEvents;
 const selectEventFilter = (store: EventsStore) => store.filter;
 const selectSetEventFilter = (store: EventsStore) => store.setFilter;
 const selectEvents = (store: EventsStore) => store.events;
+const selectSetDeviceId = (store: EventsStore) => store.setDeviceId;
 const selectHoveredEvent = (store: TimelineInteractionStateStore) => store.hoveredEvent;
 const selectSetHoveredEvent = (store: TimelineInteractionStateStore) => store.setHoveredEvent;
 const selectEventsAtHoverValue = (store: TimelineInteractionStateStore) => store.eventsAtHoverValue;
@@ -77,18 +79,13 @@ function NstrumentaPanel(props: Props): JSX.Element {
 
   useNstrumentaSettings(config, saveConfig);
 
-  const { experiment } = useNstrumentaContext() as unknown as {
-    experiment?: {
-      labelsDataId?: string;
-    };
-  };
-
-  const labelsDataId = experiment?.labelsDataId;
+  const { experiment } = useNstrumentaContext();
 
   const events = useEvents(selectEvents);
   const selectedEventId = useEvents(selectSelectedEventId);
   const selectEvent = useEvents(selectSelectEvent);
   const setEvents = useEvents(selectSetEvents);
+  const setDeviceId = useEvents(selectSetDeviceId);
   const { formatTime } = useAppTimeFormat();
   const seek = useMessagePipeline(selectSeek);
   const eventsAtHoverValue = useTimelineInteractionState(selectEventsAtHoverValue);
@@ -106,49 +103,64 @@ function NstrumentaPanel(props: Props): JSX.Element {
   );
 
   const loadLabels = useCallback(
-    async (dataId: string) => {
-      const query = (await nstClient.storage.query({
-        field: "dataId",
-        comparison: "==",
-        compareValue: dataId,
-      })) as { name: string; filePath: string }[];
-      const labels = query.filter((item) => item.name === "labels.json");
-      if (!labels[0]) {
-        return;
+    async (labelFiles: NstrumentaLabels[]) => {
+      let fetchedEvents: DataSourceEvent[] = [];
+      for (const labelFile of labelFiles) {
+        try {
+          const url = await nstClient.storage.getDownloadUrl(labelFile.filePath);
+          await fetch(url).then(async (res) => {
+            //merge and attach filePath to items
+            fetchedEvents = [
+              ...fetchedEvents,
+              ...(await res.json()).map((item: Record<string, unknown>) => {
+                return { ...item, deviceId: labelFile.filePath };
+              }),
+            ];
+          });
+        } catch {
+          await nstClient.storage.upload({
+            filename: labelFile.filePath.split("/").slice(2).join("/"),
+            data: new Blob([]),
+            meta: {},
+            overwrite: true,
+          });
+        }
       }
-      const url = await nstClient.storage.getDownloadUrl(labels[0].filePath);
-      await fetch(url).then(async (res) => {
-        const { events: fetchedEvents } = await res.json();
-        setEvents({ loading: false, value: fetchedEvents });
-      });
+      setEvents({ loading: false, value: fetchedEvents });
     },
     [nstClient.storage, setEvents],
   );
 
   const saveLabels = async () => {
-    const serializedEvents = JSON.stringify({
-      events: events.value,
-    });
+    if (experiment?.labelFiles == undefined) {
+      console.error("no labelFiles in experiment");
+      return;
+    }
+    for (const labelFile of experiment.labelFiles) {
+      const serializedEvents = JSON.stringify({
+        events: events.value?.filter((v) => v.deviceId === labelFile.filePath),
+      });
 
-    if (serializedEvents) {
-      const data = new Blob([serializedEvents], {
-        type: "application/json",
-      });
-      await nstClient.storage.upload({
-        dataId: labelsDataId,
-        filename: "labels.json",
-        data,
-        meta: {},
-        overwrite: true,
-      });
+      if (serializedEvents) {
+        const data = new Blob([serializedEvents], {
+          type: "application/json",
+        });
+        await nstClient.storage.upload({
+          filename: labelFile.filePath.split("/").slice(2).join("/"),
+          data,
+          meta: {},
+          overwrite: true,
+        });
+      }
     }
   };
 
   useEffect(() => {
-    if (labelsDataId) {
-      void loadLabels(labelsDataId);
+    if (experiment?.labelFiles) {
+      setDeviceId(experiment.labelFiles[0]?.filePath);
+      void loadLabels(experiment.labelFiles);
     }
-  }, [labelsDataId, loadLabels]);
+  }, [experiment?.labelFiles, loadLabels, setDeviceId]);
 
   const clearFilter = useCallback(() => {
     setFilter("");

@@ -23,9 +23,15 @@ export type NstrumentaVideo = {
   label: string;
   filePath: string;
 };
+
+export type NstrumentaLabels = {
+  filePath: string;
+};
+
 export type NstrumentaExperiment = {
   dataFilePath: string;
   layoutFilePath: string;
+  labelFiles: NstrumentaLabels[];
   videos: NstrumentaVideo[];
 };
 
