@@ -74,10 +74,25 @@ export function EventsList(): JSX.Element {
 
   const timestampedEvents = useMemo(
     () =>
-      (events.value ?? []).map((event) => {
-        return { ...event, formattedTime: formatTime(event.startTime) };
-      }),
-    [events, formatTime],
+      (events.value ?? [])
+        .filter((event) => {
+          if (filter) {
+            let valuesConcatString = "";
+            for (const [, value] of Object.entries(event)) {
+              valuesConcatString += `;${JSON.stringify(value)}`;
+            }
+            if (valuesConcatString.match(new RegExp(filter))) {
+              return event;
+            }
+            // filter out non matches
+            return;
+          }
+          return event;
+        })
+        .map((event) => {
+          return { ...event, formattedTime: formatTime(event.startTime) };
+        }),
+    [events, formatTime, filter],
   );
 
   const clearFilter = useCallback(() => {
@@ -157,7 +172,6 @@ export function EventsList(): JSX.Element {
               key={event.id}
               event={event}
               filter={filter}
-              formattedTime={event.formattedTime}
               // When hovering within the event list only show hover state on directly
               // hovered event.
               isHovered={

@@ -3,11 +3,17 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
 import { alpha } from "@mui/material";
-import { compact } from "lodash";
+import { compact, noop } from "lodash";
 import { Fragment } from "react";
 import { makeStyles } from "tss-react/mui";
 
+import { fromSec, toSec } from "@foxglove/rostime";
 import { HighlightedText } from "@foxglove/studio-base/components/HighlightedText";
+import {
+  MessagePipelineContext,
+  useMessagePipeline,
+} from "@foxglove/studio-base/components/MessagePipeline";
+import { NumberInput } from "@foxglove/studio-base/components/SettingsTreeEditor/inputs/NumberInput";
 import { DataSourceEvent } from "@foxglove/studio-base/context/EventsContext";
 
 const useStyles = makeStyles<void, "eventMetadata" | "eventSelected">()(
@@ -67,53 +73,22 @@ const useStyles = makeStyles<void, "eventMetadata" | "eventSelected">()(
   }),
 );
 
-function formatEventDuration(event: DataSourceEvent) {
-  if (event.durationNanos === "0") {
-    // instant
-    return "-";
-  }
-
-  if (!event.durationNanos) {
-    return "";
-  }
-
-  const intDuration = BigInt(event.durationNanos);
-
-  if (intDuration >= BigInt(1e9)) {
-    return `${Number(intDuration / BigInt(1e9))}s`;
-  }
-
-  if (intDuration >= BigInt(1e6)) {
-    return `${Number(intDuration / BigInt(1e6))}ms`;
-  }
-
-  if (intDuration >= BigInt(1e3)) {
-    return `${Number(intDuration / BigInt(1e3))}µs`;
-  }
-
-  return `${event.durationNanos}ns`;
-}
-
 function EventViewComponent(params: {
   event: DataSourceEvent;
   filter: string;
-  formattedTime: string;
   isHovered: boolean;
   isSelected: boolean;
   onClick: (event: DataSourceEvent) => void;
   onHoverStart: (event: DataSourceEvent) => void;
   onHoverEnd: (event: DataSourceEvent) => void;
 }): JSX.Element {
-  const { event, filter, formattedTime, isHovered, isSelected, onClick, onHoverStart, onHoverEnd } =
-    params;
+  const { event, filter, isHovered, isSelected, onClick, onHoverStart, onHoverEnd } = params;
   const { classes, cx } = useStyles();
 
-  const fields = compact([
-    ["timestamp", formattedTime],
-    Number(event.durationNanos) > 0 && ["duration", formatEventDuration(event)],
-    ...Object.entries(event.metadata),
-  ]);
-
+  const fields = compact([...Object.entries(event.metadata)]);
+  const activeData = useMessagePipeline((ctx: MessagePipelineContext) => {
+    return ctx.playerState.activeData;
+  });
   return (
     <div
       data-testid="sidebar-event"
@@ -128,13 +103,52 @@ function EventViewComponent(params: {
       {fields.map(([key, value]) => (
         <Fragment key={key}>
           <div className={classes.eventMetadata}>
-            <HighlightedText text={key ?? ""} highlight={filter} />
+            <HighlightedText text={key} highlight={filter} />
           </div>
           <div className={classes.eventMetadata}>
-            <HighlightedText text={value ?? ""} highlight={filter} />
+            <HighlightedText text={value} highlight={filter} />
           </div>
         </Fragment>
       ))}
+      <Fragment key={`${event.id}-startTime`}>
+        <div className={classes.eventMetadata}>Start Time:</div>
+
+        <div className={classes.eventMetadata}>
+          <NumberInput
+            size="small"
+            variant="filled"
+            value={toSec(event.startTime)}
+            placeholder="start time"
+            fullWidth
+            onChange={(value) => {
+              try {
+                event.startTime = fromSec(value!);
+              } catch {
+                noop();
+              }
+            }}
+          />
+        </div>
+      </Fragment>
+      <Fragment key={`${event.id}-endTime`}>
+        <div className={classes.eventMetadata}>End Time:</div>
+        <div className={classes.eventMetadata}>
+          <NumberInput
+            size="small"
+            variant="filled"
+            value={toSec(event.endTime)}
+            placeholder="end time"
+            fullWidth
+            onChange={(value) => {
+              try {
+                event.endTime = fromSec(value!);
+              } catch {
+                noop();
+              }
+            }}
+          />
+        </div>
+      </Fragment>
       <div className={classes.spacer} />
     </div>
   );

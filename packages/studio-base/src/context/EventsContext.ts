@@ -15,16 +15,17 @@ import useGuaranteedContext from "@foxglove/studio-base/hooks/useGuaranteedConte
  */
 export type DataSourceEvent = {
   id: string;
-  createdAt: string;
-  deviceId: string;
-  durationNanos: string;
-  endTime: Time;
-  endTimeInSeconds: number;
+  collection: string;
   metadata: Record<string, string>;
   startTime: Time;
+  endTime: Time;
+};
+
+export type NstrumentaLabelEvent = {
+  id: string;
   startTimeInSeconds: number;
-  timestampNanos: string;
-  updatedAt: string;
+  endTimeInSeconds: number;
+  metadata: Record<string, string>;
 };
 
 /**

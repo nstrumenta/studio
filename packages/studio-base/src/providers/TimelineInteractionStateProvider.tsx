@@ -4,13 +4,14 @@
 
 import { isEqual, keyBy } from "lodash";
 import { ReactNode, useState } from "react";
-import { createStore, StoreApi } from "zustand";
+import { StoreApi, createStore } from "zustand";
 
+import { toSec } from "@foxglove/rostime";
 import { DataSourceEvent } from "@foxglove/studio-base/context/EventsContext";
 import {
+  SyncBounds,
   TimelineInteractionStateContext,
   TimelineInteractionStateStore,
-  SyncBounds,
 } from "@foxglove/studio-base/context/TimelineInteractionStateContext";
 import { HoverValue } from "@foxglove/studio-base/types/hoverValue";
 
@@ -45,7 +46,7 @@ function createTimelineInteractionStateStore(): StoreApi<TimelineInteractionStat
 
       setHoveredEvent: (hoveredEvent: undefined | DataSourceEvent) => {
         if (hoveredEvent) {
-          const secondsSinceStart = hoveredEvent.startTimeInSeconds; // subtract global start
+          const secondsSinceStart = toSec(hoveredEvent.startTime); // subtract global start
           set({
             hoveredEvent,
             hoverValue: {

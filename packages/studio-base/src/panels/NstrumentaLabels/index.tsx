@@ -11,17 +11,10 @@
 //   found at http://www.apache.org/licenses/LICENSE-2.0
 //   You may not use this file except in compliance with the License.
 
-import ClearIcon from "@mui/icons-material/Clear";
-import SearchIcon from "@mui/icons-material/Search";
-import { Button, CircularProgress, IconButton, TextField, Typography } from "@mui/material";
-import { useCallback, useEffect, useMemo } from "react";
-import { makeStyles } from "tss-react/mui";
+import { Button } from "@mui/material";
+import { useCallback, useEffect } from "react";
 
-import { EventView } from "@foxglove/studio-base/components/DataSourceSidebar/EventView";
-import {
-  MessagePipelineContext,
-  useMessagePipeline,
-} from "@foxglove/studio-base/components/MessagePipeline";
+import { EventsList } from "@foxglove/studio-base/components/DataSourceSidebar/EventsList";
 import Panel from "@foxglove/studio-base/components/Panel";
 import PanelToolbar from "@foxglove/studio-base/components/PanelToolbar";
 import Stack from "@foxglove/studio-base/components/Stack";
@@ -35,37 +28,15 @@ import {
   useNstrumentClient,
   useNstrumentaContext,
 } from "@foxglove/studio-base/context/NstrumentaContext";
-import {
-  TimelineInteractionStateStore,
-  useTimelineInteractionState,
-} from "@foxglove/studio-base/context/TimelineInteractionStateContext";
-import { useAppTimeFormat } from "@foxglove/studio-base/hooks";
 import { SaveConfig } from "@foxglove/studio-base/types/panels";
 
 import { useNstrumentaSettings } from "./settings";
 import { NstrumentaConfig } from "./types";
 
-const useStyles = makeStyles()((theme) => ({
-  grid: {
-    display: "grid",
-    flexShrink: 1,
-    gridTemplateColumns: "auto 1fr",
-    overflowY: "auto",
-    padding: theme.spacing(1),
-  },
-}));
-
-const selectSeek = (ctx: MessagePipelineContext) => ctx.seekPlayback;
 const selectSetEvents = (store: EventsStore) => store.setEvents;
-const selectEventFilter = (store: EventsStore) => store.filter;
-const selectSetEventFilter = (store: EventsStore) => store.setFilter;
+
 const selectEvents = (store: EventsStore) => store.events;
 const selectSetDeviceId = (store: EventsStore) => store.setDeviceId;
-const selectHoveredEvent = (store: TimelineInteractionStateStore) => store.hoveredEvent;
-const selectSetHoveredEvent = (store: TimelineInteractionStateStore) => store.setHoveredEvent;
-const selectEventsAtHoverValue = (store: TimelineInteractionStateStore) => store.eventsAtHoverValue;
-const selectSelectedEventId = (store: EventsStore) => store.selectedEventId;
-const selectSelectEvent = (store: EventsStore) => store.selectEvent;
 
 type Props = {
   config: NstrumentaConfig;
@@ -82,25 +53,9 @@ function NstrumentaPanel(props: Props): JSX.Element {
   const { experiment } = useNstrumentaContext();
 
   const events = useEvents(selectEvents);
-  const selectedEventId = useEvents(selectSelectedEventId);
-  const selectEvent = useEvents(selectSelectEvent);
+
   const setEvents = useEvents(selectSetEvents);
   const setDeviceId = useEvents(selectSetDeviceId);
-  const { formatTime } = useAppTimeFormat();
-  const seek = useMessagePipeline(selectSeek);
-  const eventsAtHoverValue = useTimelineInteractionState(selectEventsAtHoverValue);
-  const hoveredEvent = useTimelineInteractionState(selectHoveredEvent);
-  const setHoveredEvent = useTimelineInteractionState(selectSetHoveredEvent);
-  const filter = useEvents(selectEventFilter);
-  const setFilter = useEvents(selectSetEventFilter);
-
-  const timestampedEvents = useMemo(
-    () =>
-      (events.value ?? []).map((event) => {
-        return { ...event, formattedTime: formatTime(event.startTime) };
-      }),
-    [events, formatTime],
-  );
 
   const loadLabels = useCallback(
     async (labelFiles: NstrumentaLabels[]) => {
@@ -138,7 +93,7 @@ function NstrumentaPanel(props: Props): JSX.Element {
     }
     for (const labelFile of experiment.labelFiles) {
       const serializedEvents = JSON.stringify({
-        events: events.value?.filter((v) => v.deviceId === labelFile.filePath),
+        events: events.value?.filter((v) => v.collection === labelFile.filePath),
       });
 
       if (serializedEvents) {
@@ -162,98 +117,10 @@ function NstrumentaPanel(props: Props): JSX.Element {
     }
   }, [experiment?.labelFiles, loadLabels, setDeviceId]);
 
-  const clearFilter = useCallback(() => {
-    setFilter("");
-  }, [setFilter]);
-
-  const onClick = useCallback(
-    (event: DataSourceEvent) => {
-      if (event.id === selectedEventId) {
-        selectEvent(undefined);
-      } else {
-        selectEvent(event.id);
-      }
-
-      if (seek) {
-        seek(event.startTime);
-      }
-    },
-    [seek, selectEvent, selectedEventId],
-  );
-
-  const onHoverEnd = useCallback(() => {
-    setHoveredEvent(undefined);
-  }, [setHoveredEvent]);
-
-  const onHoverStart = useCallback(
-    (event: DataSourceEvent) => {
-      setHoveredEvent(event);
-    },
-    [setHoveredEvent],
-  );
-
-  const { classes } = useStyles();
-
   return (
     <Stack fullHeight>
       <PanelToolbar />
-      <TextField
-        variant="filled"
-        fullWidth
-        value={filter}
-        onChange={(event) => setFilter(event.currentTarget.value)}
-        placeholder="Search by key, value, or key:value"
-        InputProps={{
-          startAdornment: <SearchIcon fontSize="small" />,
-          endAdornment: filter !== "" && (
-            <IconButton edge="end" onClick={clearFilter} size="small">
-              <ClearIcon fontSize="small" />
-            </IconButton>
-          ),
-        }}
-      />
-      {events.loading && (
-        <Stack flex="auto" padding={2} fullHeight alignItems="center" justifyContent="center">
-          <CircularProgress />
-        </Stack>
-      )}
-      {events.error && (
-        <Stack flex="auto" padding={2} fullHeight alignItems="center" justifyContent="center">
-          <Typography align="center" color="error">
-            Error loading events.
-          </Typography>
-        </Stack>
-      )}
-      {events.value && events.value.length === 0 && (
-        <Stack flex="auto" padding={2} fullHeight alignItems="center" justifyContent="center">
-          <Typography align="center" color="text.secondary">
-            No Events
-          </Typography>
-        </Stack>
-      )}
-      <div className={classes.grid}>
-        {timestampedEvents.map((event) => {
-          return (
-            <EventView
-              key={event.id}
-              event={event}
-              filter={filter}
-              formattedTime={event.formattedTime}
-              // When hovering within the event list only show hover state on directly
-              // hovered event.
-              isHovered={
-                hoveredEvent
-                  ? event.id === hoveredEvent.id
-                  : eventsAtHoverValue[event.id] != undefined
-              }
-              isSelected={event.id === selectedEventId}
-              onClick={onClick}
-              onHoverStart={onHoverStart}
-              onHoverEnd={onHoverEnd}
-            />
-          );
-        })}
-      </div>
+      <EventsList />
       <Button onClick={saveLabels}>Save Events</Button>
     </Stack>
   );
