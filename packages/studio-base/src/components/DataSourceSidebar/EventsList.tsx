@@ -4,9 +4,10 @@
 
 import ClearIcon from "@mui/icons-material/Clear";
 import SearchIcon from "@mui/icons-material/Search";
-import { AppBar, CircularProgress, IconButton, TextField, Typography } from "@mui/material";
-import { useCallback, useMemo } from "react";
+import { AppBar, Button, CircularProgress, IconButton, TextField, Typography } from "@mui/material";
+import { useCallback, useEffect, useMemo } from "react";
 import { makeStyles } from "tss-react/mui";
+import { v4 as uuidv4 } from "uuid";
 
 import {
   MessagePipelineContext,
@@ -18,6 +19,11 @@ import {
   EventsStore,
   useEvents,
 } from "@foxglove/studio-base/context/EventsContext";
+import {
+  NstrumentaLabels,
+  useNstrumentClient,
+  useNstrumentaContext,
+} from "@foxglove/studio-base/context/NstrumentaContext";
 import {
   TimelineInteractionStateStore,
   useTimelineInteractionState,
@@ -37,6 +43,20 @@ const useStyles = makeStyles()((theme) => ({
     alignItems: "center",
     borderBottom: `1px solid ${theme.palette.divider}`,
   },
+  createLabelButton: {
+    position: "absolute",
+    bottom: 0,
+    right: "80px",
+    marginBottom: theme.spacing(4),
+    marginRight: theme.spacing(1),
+  },
+  saveLabelsButton: {
+    position: "absolute",
+    bottom: 0,
+    right: 0,
+    marginBottom: theme.spacing(4),
+    marginRight: theme.spacing(1),
+  },
   grid: {
     display: "grid",
     flexShrink: 1,
@@ -54,6 +74,9 @@ const selectSeek = (ctx: MessagePipelineContext) => ctx.seekPlayback;
 const selectEventFilter = (store: EventsStore) => store.filter;
 const selectSetEventFilter = (store: EventsStore) => store.setFilter;
 const selectEvents = (store: EventsStore) => store.events;
+const selectDeviceId = (store: EventsStore) => store.deviceId;
+const selectSetDeviceId = (store: EventsStore) => store.setDeviceId;
+const selectSetEvents = (store: EventsStore) => store.setEvents;
 const selectHoveredEvent = (store: TimelineInteractionStateStore) => store.hoveredEvent;
 const selectSetHoveredEvent = (store: TimelineInteractionStateStore) => store.setHoveredEvent;
 const selectEventsAtHoverValue = (store: TimelineInteractionStateStore) => store.eventsAtHoverValue;
@@ -63,6 +86,9 @@ const selectSelectEvent = (store: EventsStore) => store.selectEvent;
 export function EventsList(): JSX.Element {
   const events = useEvents(selectEvents);
   const selectedEventId = useEvents(selectSelectedEventId);
+  const deviceId = useEvents(selectDeviceId);
+  const setEvents = useEvents(selectSetEvents);
+  const setDeviceId = useEvents(selectSetDeviceId);
   const selectEvent = useEvents(selectSelectEvent);
   const { formatTime } = useAppTimeFormat();
   const seek = useMessagePipeline(selectSeek);
@@ -71,6 +97,90 @@ export function EventsList(): JSX.Element {
   const setHoveredEvent = useTimelineInteractionState(selectSetHoveredEvent);
   const filter = useEvents(selectEventFilter);
   const setFilter = useEvents(selectSetEventFilter);
+
+  const nstClient = useNstrumentClient();
+
+  const { experiment } = useNstrumentaContext();
+
+  const activeData = useMessagePipeline((ctx: MessagePipelineContext) => {
+    return ctx.playerState.activeData;
+  });
+
+  const createLabel = useCallback(async () => {
+    if (activeData?.currentTime && events.value) {
+      const value = [
+        ...events.value,
+        {
+          id: uuidv4(),
+          collection: deviceId ?? "",
+          startTime: activeData.currentTime,
+          endTime: activeData.currentTime,
+          metadata: {},
+        },
+      ];
+      setEvents({ loading: false, value });
+    }
+  }, [events, setEvents, activeData?.currentTime, deviceId]);
+
+  const loadLabels = useCallback(
+    async (labelFiles: NstrumentaLabels[]) => {
+      let fetchedEvents: DataSourceEvent[] = [];
+      for (const labelFile of labelFiles) {
+        try {
+          const url = await nstClient.storage.getDownloadUrl(labelFile.filePath);
+          await fetch(url).then(async (res) => {
+            //merge and attach filePath to items
+            fetchedEvents = [
+              ...fetchedEvents,
+              ...(await res.json()).events.map((item: Record<string, unknown>) => {
+                return { ...item, deviceId: labelFile.filePath };
+              }),
+            ];
+          });
+        } catch (err) {
+          await nstClient.storage.upload({
+            filename: labelFile.filePath.split("/").slice(2).join("/"),
+            data: new Blob(['{"events":[]}']),
+            meta: {},
+            overwrite: true,
+          });
+        }
+      }
+      setEvents({ loading: false, value: fetchedEvents });
+    },
+    [nstClient.storage, setEvents],
+  );
+
+  const saveLabels = async () => {
+    if (experiment?.labelFiles == undefined) {
+      console.error("no labelFiles in experiment");
+      return;
+    }
+    for (const labelFile of experiment.labelFiles) {
+      const serializedEvents = JSON.stringify({
+        events: events.value?.filter((v) => v.collection === labelFile.filePath),
+      });
+
+      if (serializedEvents) {
+        const data = new Blob([serializedEvents], {
+          type: "application/json",
+        });
+        await nstClient.storage.upload({
+          filename: labelFile.filePath.split("/").slice(3).join("/"),
+          data,
+          meta: {},
+          overwrite: true,
+        });
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (experiment?.labelFiles && experiment.labelFiles[0]?.filePath) {
+      setDeviceId(experiment.labelFiles[0].filePath);
+      void loadLabels(experiment.labelFiles);
+    }
+  }, [experiment?.labelFiles, loadLabels, setDeviceId]);
 
   const timestampedEvents = useMemo(
     () =>
@@ -187,6 +297,24 @@ export function EventsList(): JSX.Element {
           );
         })}
       </div>
+      <Button
+        className={classes.createLabelButton}
+        variant="contained"
+        color="inherit"
+        title="(shortcut: double-click)"
+        onClick={createLabel}
+      >
+        Add Event
+      </Button>
+      <Button
+        className={classes.saveLabelsButton}
+        variant="contained"
+        color="inherit"
+        title="(shortcut: double-click)"
+        onClick={saveLabels}
+      >
+        Save
+      </Button>
     </Stack>
   );
 }
