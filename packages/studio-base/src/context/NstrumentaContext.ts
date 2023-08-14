@@ -20,7 +20,7 @@ if (apiKey) {
 const nstClient = new NstrumentaBrowserClient(apiKey);
 
 export type NstrumentaVideo = {
-  label: string;
+  name: string;
   filePath: string;
   startTime?: number;
 };
