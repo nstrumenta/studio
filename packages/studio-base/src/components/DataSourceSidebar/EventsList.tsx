@@ -7,7 +7,6 @@ import SearchIcon from "@mui/icons-material/Search";
 import { AppBar, Button, CircularProgress, IconButton, TextField, Typography } from "@mui/material";
 import { useCallback, useEffect, useMemo } from "react";
 import { makeStyles } from "tss-react/mui";
-import { v4 as uuidv4 } from "uuid";
 
 import {
   MessagePipelineContext,
@@ -43,13 +42,6 @@ const useStyles = makeStyles()((theme) => ({
     alignItems: "center",
     borderBottom: `1px solid ${theme.palette.divider}`,
   },
-  createLabelButton: {
-    position: "absolute",
-    bottom: 0,
-    right: "80px",
-    marginBottom: theme.spacing(4),
-    marginRight: theme.spacing(1),
-  },
   saveLabelsButton: {
     position: "absolute",
     bottom: 0,
@@ -74,7 +66,6 @@ const selectSeek = (ctx: MessagePipelineContext) => ctx.seekPlayback;
 const selectEventFilter = (store: EventsStore) => store.filter;
 const selectSetEventFilter = (store: EventsStore) => store.setFilter;
 const selectEvents = (store: EventsStore) => store.events;
-const selectDeviceId = (store: EventsStore) => store.deviceId;
 const selectSetDeviceId = (store: EventsStore) => store.setDeviceId;
 const selectSetEvents = (store: EventsStore) => store.setEvents;
 const selectHoveredEvent = (store: TimelineInteractionStateStore) => store.hoveredEvent;
@@ -86,7 +77,6 @@ const selectSelectEvent = (store: EventsStore) => store.selectEvent;
 export function EventsList(): JSX.Element {
   const events = useEvents(selectEvents);
   const selectedEventId = useEvents(selectSelectedEventId);
-  const deviceId = useEvents(selectDeviceId);
   const setEvents = useEvents(selectSetEvents);
   const setDeviceId = useEvents(selectSetDeviceId);
   const selectEvent = useEvents(selectSelectEvent);
@@ -101,26 +91,6 @@ export function EventsList(): JSX.Element {
   const nstClient = useNstrumentClient();
 
   const { experiment } = useNstrumentaContext();
-
-  const activeData = useMessagePipeline((ctx: MessagePipelineContext) => {
-    return ctx.playerState.activeData;
-  });
-
-  const createLabel = useCallback(async () => {
-    if (activeData?.currentTime && events.value) {
-      const value = [
-        ...events.value,
-        {
-          id: uuidv4(),
-          collection: deviceId ?? "",
-          startTime: activeData.currentTime,
-          endTime: activeData.currentTime,
-          metadata: {},
-        },
-      ];
-      setEvents({ loading: false, value });
-    }
-  }, [events, setEvents, activeData?.currentTime, deviceId]);
 
   const loadLabels = useCallback(
     async (labelFiles: NstrumentaLabels[]) => {
@@ -149,6 +119,18 @@ export function EventsList(): JSX.Element {
       setEvents({ loading: false, value: fetchedEvents });
     },
     [nstClient.storage, setEvents],
+  );
+
+  const updateEvent = useCallback(
+    async (updatedEvent: DataSourceEvent) => {
+      if (events.value) {
+        const eventsWithoutUpdatedEvent = events.value.filter(
+          (event) => event.id != updatedEvent.id,
+        );
+        setEvents({ loading: false, value: [...eventsWithoutUpdatedEvent, updatedEvent] });
+      }
+    },
+    [setEvents, events],
   );
 
   const saveLabels = async () => {
@@ -276,36 +258,30 @@ export function EventsList(): JSX.Element {
         </Stack>
       )}
       <div className={classes.grid}>
-        {timestampedEvents.map((event) => {
-          return (
-            <EventView
-              key={event.id}
-              event={event}
-              filter={filter}
-              // When hovering within the event list only show hover state on directly
-              // hovered event.
-              isHovered={
-                hoveredEvent
-                  ? event.id === hoveredEvent.id
-                  : eventsAtHoverValue[event.id] != undefined
-              }
-              isSelected={event.id === selectedEventId}
-              onClick={onClick}
-              onHoverStart={onHoverStart}
-              onHoverEnd={onHoverEnd}
-            />
-          );
-        })}
+        {timestampedEvents
+          .sort((a, b) => (a.id < b.id ? 1 : -1))
+          .map((event) => {
+            return (
+              <EventView
+                key={event.id}
+                event={event}
+                filter={filter}
+                // When hovering within the event list only show hover state on directly
+                // hovered event.
+                isHovered={
+                  hoveredEvent
+                    ? event.id === hoveredEvent.id
+                    : eventsAtHoverValue[event.id] != undefined
+                }
+                updateEvent={updateEvent}
+                isSelected={event.id === selectedEventId}
+                onClick={onClick}
+                onHoverStart={onHoverStart}
+                onHoverEnd={onHoverEnd}
+              />
+            );
+          })}
       </div>
-      <Button
-        className={classes.createLabelButton}
-        variant="contained"
-        color="inherit"
-        title="(shortcut: double-click)"
-        onClick={createLabel}
-      >
-        Add Event
-      </Button>
       <Button
         className={classes.saveLabelsButton}
         variant="contained"

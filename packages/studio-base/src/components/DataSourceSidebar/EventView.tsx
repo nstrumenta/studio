@@ -2,18 +2,19 @@
 // License, v2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
-import { alpha } from "@mui/material";
+import { Button, alpha } from "@mui/material";
 import { compact, noop } from "lodash";
 import { Fragment } from "react";
 import { makeStyles } from "tss-react/mui";
 
-import { fromSec, toSec } from "@foxglove/rostime";
+import { Time, fromSec, toSec } from "@foxglove/rostime";
 import { HighlightedText } from "@foxglove/studio-base/components/HighlightedText";
 import {
   MessagePipelineContext,
   useMessagePipeline,
 } from "@foxglove/studio-base/components/MessagePipeline";
 import { NumberInput } from "@foxglove/studio-base/components/SettingsTreeEditor/inputs/NumberInput";
+import Stack from "@foxglove/studio-base/components/Stack";
 import { DataSourceEvent } from "@foxglove/studio-base/context/EventsContext";
 
 const useStyles = makeStyles<void, "eventMetadata" | "eventSelected">()(
@@ -73,22 +74,60 @@ const useStyles = makeStyles<void, "eventMetadata" | "eventSelected">()(
   }),
 );
 
+function TimeStampFragment(params: {
+  eventId: string;
+  label: string;
+  setTime: (time: Time) => void;
+  setTimeToCursor: () => void;
+  time: Time;
+}): JSX.Element {
+  const { classes } = useStyles();
+  const { eventId, label, time, setTime, setTimeToCursor } = params;
+  return (
+    <Fragment key={`${eventId}${label}`}>
+      <div className={classes.eventMetadata}>{label}</div>
+      <div className={classes.eventMetadata}>
+        <Stack direction="row">
+          <NumberInput
+            size="small"
+            variant="filled"
+            value={toSec(time)}
+            fullWidth
+            onChange={(value) => {
+              try {
+                const updatedTime = fromSec(value!);
+                setTime(updatedTime);
+              } catch {
+                noop();
+              }
+            }}
+          />
+          <Button onClick={setTimeToCursor}> Set </Button>
+        </Stack>
+      </div>
+    </Fragment>
+  );
+}
+
 function EventViewComponent(params: {
   event: DataSourceEvent;
   filter: string;
   isHovered: boolean;
   isSelected: boolean;
+  updateEvent: (event: DataSourceEvent) => void;
   onClick: (event: DataSourceEvent) => void;
   onHoverStart: (event: DataSourceEvent) => void;
   onHoverEnd: (event: DataSourceEvent) => void;
 }): JSX.Element {
-  const { event, filter, isHovered, isSelected, onClick, onHoverStart, onHoverEnd } = params;
+  const { event, filter, isHovered, isSelected, updateEvent, onClick, onHoverStart, onHoverEnd } =
+    params;
   const { classes, cx } = useStyles();
 
   const fields = compact([...Object.entries(event.metadata)]);
   const activeData = useMessagePipeline((ctx: MessagePipelineContext) => {
     return ctx.playerState.activeData;
   });
+
   return (
     <div
       data-testid="sidebar-event"
@@ -110,45 +149,36 @@ function EventViewComponent(params: {
           </div>
         </Fragment>
       ))}
-      <Fragment key={`${event.id}-startTime`}>
-        <div className={classes.eventMetadata}>Start Time:</div>
-
-        <div className={classes.eventMetadata}>
-          <NumberInput
-            size="small"
-            variant="filled"
-            value={toSec(event.startTime)}
-            placeholder="start time"
-            fullWidth
-            onChange={(value) => {
-              try {
-                event.startTime = fromSec(value!);
-              } catch {
-                noop();
-              }
-            }}
-          />
-        </div>
-      </Fragment>
-      <Fragment key={`${event.id}-endTime`}>
-        <div className={classes.eventMetadata}>End Time:</div>
-        <div className={classes.eventMetadata}>
-          <NumberInput
-            size="small"
-            variant="filled"
-            value={toSec(event.endTime)}
-            placeholder="end time"
-            fullWidth
-            onChange={(value) => {
-              try {
-                event.endTime = fromSec(value!);
-              } catch {
-                noop();
-              }
-            }}
-          />
-        </div>
-      </Fragment>
+      <TimeStampFragment
+        eventId={event.id}
+        label="Start Time"
+        time={event.startTime}
+        setTime={(time) => {
+          event.startTime = time;
+          updateEvent(event);
+        }}
+        setTimeToCursor={() => {
+          if (activeData?.currentTime) {
+            event.startTime = activeData.currentTime;
+            updateEvent(event);
+          }
+        }}
+      />
+      <TimeStampFragment
+        eventId={event.id}
+        label="End Time"
+        time={event.endTime}
+        setTime={(time) => {
+          event.endTime = time;
+          updateEvent(event);
+        }}
+        setTimeToCursor={() => {
+          if (activeData?.currentTime) {
+            event.endTime = activeData.currentTime;
+            updateEvent(event);
+          }
+        }}
+      />
       <div className={classes.spacer} />
     </div>
   );
