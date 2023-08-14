@@ -20,9 +20,9 @@ if (apiKey) {
 const nstClient = new NstrumentaBrowserClient(apiKey);
 
 export type NstrumentaVideo = {
-  label: string;
+  name: string;
   filePath: string;
-  offset?: number;
+  startTime?: number;
 };
 
 export type NstrumentaLabels = {

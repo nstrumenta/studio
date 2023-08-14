@@ -13,7 +13,7 @@
 
 import { LegacyRef, useCallback, useEffect, useRef, useState } from "react";
 
-import { toSec } from "@foxglove/rostime";
+import { fromMillis, toSec } from "@foxglove/rostime";
 import {
   MessagePipelineContext,
   useMessagePipeline,
@@ -38,8 +38,9 @@ type Props = {
 
 function NstrumentaVideoPanel(props: Props): JSX.Element {
   const { config, saveConfig } = props;
-  const { videoFilePath } = config;
+  const { videoName } = config;
 
+  const [videoFilePath, setVideoFilePath] = useState<string | undefined>(undefined);
   const [videoUrl, setVideoUrl] = useState<string | undefined>(undefined);
   const videoRef = useRef<HTMLVideoElement>();
 
@@ -48,8 +49,8 @@ function NstrumentaVideoPanel(props: Props): JSX.Element {
   });
 
   const panelContext = usePanelContext();
-  const name = videoFilePath?.split("/").slice(3).join("/");
-  panelContext.title = name ?? "Nstrumenta Video";
+  const filePath = videoFilePath?.split("/").slice(3).join("/");
+  panelContext.title = filePath ? `${videoName}: ${filePath}` : "Nstrumenta Video";
 
   const { experiment } = useNstrumentaContext();
 
@@ -77,7 +78,16 @@ function NstrumentaVideoPanel(props: Props): JSX.Element {
     if (videoRef.current && activeData) {
       const video = videoRef.current;
       const { startTime, currentTime, isPlaying, speed } = activeData;
-      const offset = experiment?.videos.find((v) => v.filePath === videoFilePath)?.offset ?? 0;
+      const nstrumentaVideo = experiment?.videos.find((v) => v.name === videoName);
+      if (!nstrumentaVideo) {
+        return;
+      }
+      setVideoFilePath(nstrumentaVideo.filePath);
+      const videoStartTime = nstrumentaVideo.startTime;
+      const offset =
+        videoStartTime != undefined
+          ? toSec(subtractTimes(fromMillis(videoStartTime), startTime))
+          : 0;
       const videoPlaying =
         video.currentTime > 0 &&
         !video.paused &&
@@ -96,7 +106,7 @@ function NstrumentaVideoPanel(props: Props): JSX.Element {
         video.currentTime = toSec(subtractTimes(currentTime, startTime)) - offset;
       }
     }
-  }, [activeData, experiment?.videos, videoFilePath]);
+  }, [activeData, experiment?.videos, videoName, setVideoFilePath]);
 
   useEffect(() => {
     if (videoFilePath) {
@@ -113,7 +123,7 @@ function NstrumentaVideoPanel(props: Props): JSX.Element {
 }
 
 const defaultConfig: NstrumentaVideoConfig = {
-  videoFilePath: "",
+  videoName: "",
 };
 
 export default Panel(

@@ -28,7 +28,7 @@ import { useImmer } from "use-immer";
 import { v4 as uuidv4 } from "uuid";
 
 import Log from "@foxglove/log";
-import { add, fromNanoSec, fromSec, toNanoSec, toSec } from "@foxglove/rostime";
+import { add, fromNanoSec, fromSec } from "@foxglove/rostime";
 import { Time } from "@foxglove/studio";
 import {
   MessagePipelineContext,
@@ -140,7 +140,7 @@ export function CreateEventDialog(props: { onClose: () => void }): JSX.Element {
   );
   const canSubmit = event.startTime != undefined && event.duration != undefined && !duplicateKey;
 
-  const deviceId = useEvents(selectDeviceId) ?? "web";
+  const collection = useEvents(selectDeviceId) ?? "web";
 
   const [createdEvent, createEvent] = useAsyncFn(async () => {
     if (event.startTime == undefined || event.duration == undefined) {
@@ -150,7 +150,6 @@ export function CreateEventDialog(props: { onClose: () => void }): JSX.Element {
     const duration: Time =
       event.durationUnit === "sec" ? fromSec(event.duration) : fromNanoSec(BigInt(event.duration));
     const { startTime, metadataEntries } = event;
-    const nowIsoString = new Date(Date.now()).toISOString();
     const metadata: Record<string, string> = {};
     metadataEntries.forEach((entry) => (metadata[entry.key] = entry.value));
     const id = uuidv4();
@@ -161,22 +160,16 @@ export function CreateEventDialog(props: { onClose: () => void }): JSX.Element {
         {
           id,
           endTime: add(startTime, duration),
-          endTimeInSeconds: toSec(add(startTime, duration)),
           startTime,
-          startTimeInSeconds: toSec(startTime),
-          timestampNanos: toNanoSec(startTime).toString(),
           metadata,
-          createdAt: nowIsoString,
-          updatedAt: nowIsoString,
-          deviceId,
-          durationNanos: toNanoSec(duration).toString(),
+          collection,
         },
       ],
     });
 
     onClose();
     refreshEvents();
-  }, [deviceId, event, onClose, refreshEvents, setEvents, timestampedEvents]);
+  }, [collection, event, onClose, refreshEvents, setEvents, timestampedEvents]);
 
   const onMetaDataKeyDown = useCallback(
     (keyboardEvent: KeyboardEvent) => {

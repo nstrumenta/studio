@@ -15,7 +15,7 @@ import { usePanelSettingsTreeUpdate } from "@foxglove/studio-base/providers/Pane
 import { SaveConfig } from "@foxglove/studio-base/types/panels";
 
 export type NstrumentaVideoConfig = {
-  videoFilePath?: string;
+  videoName?: string;
 };
 
 function buildSettingsTree(
@@ -24,15 +24,14 @@ function buildSettingsTree(
 ): SettingsTreeNodes {
   return {
     general: {
-      label: "Labels",
       fields: {
-        videoFilePath: {
-          label: "videoFilePath",
+        videoName: {
+          label: "Video Name",
           input: "select",
           options: videos.map((v) => {
-            return { label: v.label, value: v.filePath };
+            return { label: v.name, value: v.name };
           }),
-          value: config.videoFilePath,
+          value: config.videoName,
         },
       },
     },

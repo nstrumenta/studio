@@ -6,7 +6,7 @@ import { alpha } from "@mui/material";
 import { clamp } from "lodash";
 import { makeStyles } from "tss-react/mui";
 
-import { fromSec, toSec } from "@foxglove/rostime";
+import { fromSec, subtract, toSec } from "@foxglove/rostime";
 import {
   MessagePipelineContext,
   useMessagePipeline,
@@ -69,8 +69,8 @@ function EventTick({ event }: { event: DataSourceEvent }): JSX.Element {
 
   const { classes, cx } = useStyles();
 
-  const startPosition = (event.startTimeInSeconds - toSec(playbackStartTime)) / playbackDurationSec;
-  const endPosition = (event.endTimeInSeconds - toSec(playbackStartTime)) / playbackDurationSec;
+  const startPosition = toSec(subtract(event.startTime, playbackStartTime)) / playbackDurationSec;
+  const endPosition = toSec(subtract(event.endTime, playbackStartTime)) / playbackDurationSec;
 
   const left = `calc(${clamp(startPosition, 0, 1) * 100}% - 1px)`;
   const right = `calc(100% - ${clamp(endPosition, 0, 1) * 100}% - 1px)`;

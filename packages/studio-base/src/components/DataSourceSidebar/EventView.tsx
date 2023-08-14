@@ -2,12 +2,19 @@
 // License, v2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
-import { alpha } from "@mui/material";
-import { compact } from "lodash";
+import { Button, alpha } from "@mui/material";
+import { compact, noop } from "lodash";
 import { Fragment } from "react";
 import { makeStyles } from "tss-react/mui";
 
+import { Time, fromSec, toSec } from "@foxglove/rostime";
 import { HighlightedText } from "@foxglove/studio-base/components/HighlightedText";
+import {
+  MessagePipelineContext,
+  useMessagePipeline,
+} from "@foxglove/studio-base/components/MessagePipeline";
+import { NumberInput } from "@foxglove/studio-base/components/SettingsTreeEditor/inputs/NumberInput";
+import Stack from "@foxglove/studio-base/components/Stack";
 import { DataSourceEvent } from "@foxglove/studio-base/context/EventsContext";
 
 const useStyles = makeStyles<void, "eventMetadata" | "eventSelected">()(
@@ -67,52 +74,59 @@ const useStyles = makeStyles<void, "eventMetadata" | "eventSelected">()(
   }),
 );
 
-function formatEventDuration(event: DataSourceEvent) {
-  if (event.durationNanos === "0") {
-    // instant
-    return "-";
-  }
-
-  if (!event.durationNanos) {
-    return "";
-  }
-
-  const intDuration = BigInt(event.durationNanos);
-
-  if (intDuration >= BigInt(1e9)) {
-    return `${Number(intDuration / BigInt(1e9))}s`;
-  }
-
-  if (intDuration >= BigInt(1e6)) {
-    return `${Number(intDuration / BigInt(1e6))}ms`;
-  }
-
-  if (intDuration >= BigInt(1e3)) {
-    return `${Number(intDuration / BigInt(1e3))}µs`;
-  }
-
-  return `${event.durationNanos}ns`;
+function TimeStampFragment(params: {
+  eventId: string;
+  label: string;
+  setTime: (time: Time) => void;
+  setTimeToCursor: () => void;
+  time: Time;
+}): JSX.Element {
+  const { classes } = useStyles();
+  const { eventId, label, time, setTime, setTimeToCursor } = params;
+  return (
+    <Fragment key={`${eventId}${label}`}>
+      <div className={classes.eventMetadata}>{label}</div>
+      <div className={classes.eventMetadata}>
+        <Stack direction="row">
+          <NumberInput
+            size="small"
+            variant="filled"
+            value={toSec(time)}
+            fullWidth
+            onChange={(value) => {
+              try {
+                const updatedTime = fromSec(value!);
+                setTime(updatedTime);
+              } catch {
+                noop();
+              }
+            }}
+          />
+          <Button onClick={setTimeToCursor}> Set </Button>
+        </Stack>
+      </div>
+    </Fragment>
+  );
 }
 
 function EventViewComponent(params: {
   event: DataSourceEvent;
   filter: string;
-  formattedTime: string;
   isHovered: boolean;
   isSelected: boolean;
+  updateEvent: (event: DataSourceEvent) => void;
   onClick: (event: DataSourceEvent) => void;
   onHoverStart: (event: DataSourceEvent) => void;
   onHoverEnd: (event: DataSourceEvent) => void;
 }): JSX.Element {
-  const { event, filter, formattedTime, isHovered, isSelected, onClick, onHoverStart, onHoverEnd } =
+  const { event, filter, isHovered, isSelected, updateEvent, onClick, onHoverStart, onHoverEnd } =
     params;
   const { classes, cx } = useStyles();
 
-  const fields = compact([
-    ["timestamp", formattedTime],
-    Number(event.durationNanos) > 0 && ["duration", formatEventDuration(event)],
-    ...Object.entries(event.metadata),
-  ]);
+  const fields = compact([...Object.entries(event.metadata)]);
+  const activeData = useMessagePipeline((ctx: MessagePipelineContext) => {
+    return ctx.playerState.activeData;
+  });
 
   return (
     <div
@@ -128,13 +142,43 @@ function EventViewComponent(params: {
       {fields.map(([key, value]) => (
         <Fragment key={key}>
           <div className={classes.eventMetadata}>
-            <HighlightedText text={key ?? ""} highlight={filter} />
+            <HighlightedText text={key} highlight={filter} />
           </div>
           <div className={classes.eventMetadata}>
-            <HighlightedText text={value ?? ""} highlight={filter} />
+            <HighlightedText text={value} highlight={filter} />
           </div>
         </Fragment>
       ))}
+      <TimeStampFragment
+        eventId={event.id}
+        label="Start Time"
+        time={event.startTime}
+        setTime={(time) => {
+          event.startTime = time;
+          updateEvent(event);
+        }}
+        setTimeToCursor={() => {
+          if (activeData?.currentTime) {
+            event.startTime = activeData.currentTime;
+            updateEvent(event);
+          }
+        }}
+      />
+      <TimeStampFragment
+        eventId={event.id}
+        label="End Time"
+        time={event.endTime}
+        setTime={(time) => {
+          event.endTime = time;
+          updateEvent(event);
+        }}
+        setTimeToCursor={() => {
+          if (activeData?.currentTime) {
+            event.endTime = activeData.currentTime;
+            updateEvent(event);
+          }
+        }}
+      />
       <div className={classes.spacer} />
     </div>
   );

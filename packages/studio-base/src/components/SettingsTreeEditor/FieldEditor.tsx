@@ -473,11 +473,7 @@ function FieldLabel({ field }: { field: DeepReadonly<SettingsTreeField> }): JSX.
   } else {
     return (
       <>
-        <Typography
-          className={classes.fieldLabel}
-          title={field.help ?? field.label}
-          variant="subtitle2"
-        >
+        <Typography className={classes.fieldLabel} title={field.help ?? field.label}>
           {field.label}
         </Typography>
       </>
