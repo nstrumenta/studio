@@ -11,6 +11,7 @@
 //   found at http://www.apache.org/licenses/LICENSE-2.0
 //   You may not use this file except in compliance with the License.
 
+import Button from "@mui/material/Button";
 import { LegacyRef, useCallback, useEffect, useRef, useState } from "react";
 
 import { fromMillis, toSec } from "@foxglove/rostime";
@@ -21,6 +22,7 @@ import {
 import Panel from "@foxglove/studio-base/components/Panel";
 import { usePanelContext } from "@foxglove/studio-base/components/PanelContext";
 import PanelToolbar from "@foxglove/studio-base/components/PanelToolbar";
+import { NumberInput } from "@foxglove/studio-base/components/SettingsTreeEditor/inputs/NumberInput";
 import Stack from "@foxglove/studio-base/components/Stack";
 import {
   useNstrumentClient,
@@ -42,6 +44,7 @@ function NstrumentaVideoPanel(props: Props): JSX.Element {
 
   const [videoFilePath, setVideoFilePath] = useState<string | undefined>(undefined);
   const [videoUrl, setVideoUrl] = useState<string | undefined>(undefined);
+  const [timeOutsideOfPlayback, setTimeOutsideOfPlayback] = useState(0);
   const videoRef = useRef<HTMLVideoElement>();
 
   const activeData = useMessagePipeline((ctx: MessagePipelineContext) => {
@@ -52,7 +55,18 @@ function NstrumentaVideoPanel(props: Props): JSX.Element {
   const filePath = videoFilePath?.split("/").slice(3).join("/");
   panelContext.title = filePath ? `${videoName}: ${filePath}` : "Nstrumenta Video";
 
-  const { experiment } = useNstrumentaContext();
+  const { experiment, setExperiment, saveExperiment } = useNstrumentaContext();
+  const nstrumentaVideoIndex = experiment?.videos.findIndex((v) => v.name === videoName);
+  const nstrumentaVideo =
+    nstrumentaVideoIndex != undefined ? experiment?.videos[nstrumentaVideoIndex] : undefined;
+
+  const setVideoOffset = (offset?: number) => {
+    if (!experiment || !setExperiment || !nstrumentaVideo || offset == undefined) {
+      return;
+    }
+    experiment.videos[nstrumentaVideoIndex!] = { ...nstrumentaVideo, ...{ offset } };
+    setExperiment(experiment);
+  };
 
   const nstClient = useNstrumentClient();
 
@@ -78,21 +92,29 @@ function NstrumentaVideoPanel(props: Props): JSX.Element {
     if (videoRef.current && activeData) {
       const video = videoRef.current;
       const { startTime, currentTime, isPlaying, speed } = activeData;
-      const nstrumentaVideo = experiment?.videos.find((v) => v.name === videoName);
       if (!nstrumentaVideo) {
         return;
       }
       setVideoFilePath(nstrumentaVideo.filePath);
-      const videoStartTime = nstrumentaVideo.startTime;
-      const offset =
-        videoStartTime != undefined
-          ? toSec(subtractTimes(fromMillis(videoStartTime), startTime))
-          : 0;
+      const videoStartTime = nstrumentaVideo.startTime ?? 0;
+      const videoFineTuneOffset = nstrumentaVideo.offset ?? 0;
+      const offset = toSec(
+        subtractTimes(fromMillis(videoStartTime + videoFineTuneOffset), startTime),
+      );
       const videoPlaying =
         video.currentTime > 0 &&
         !video.paused &&
         !video.ended &&
         video.readyState > video.HAVE_CURRENT_DATA;
+
+      const videoCurrentTime = toSec(subtractTimes(currentTime, startTime)) - offset;
+      if (videoCurrentTime < 0) {
+        setTimeOutsideOfPlayback(videoCurrentTime);
+      } else if (videoCurrentTime > video.duration) {
+        setTimeOutsideOfPlayback(videoCurrentTime - video.duration);
+      } else {
+        setTimeOutsideOfPlayback(0);
+      }
 
       if (isPlaying) {
         if (!videoPlaying) {
@@ -103,10 +125,10 @@ function NstrumentaVideoPanel(props: Props): JSX.Element {
         if (videoPlaying) {
           video.pause();
         }
-        video.currentTime = toSec(subtractTimes(currentTime, startTime)) - offset;
+        video.currentTime = videoCurrentTime;
       }
     }
-  }, [activeData, experiment?.videos, videoName, setVideoFilePath]);
+  }, [activeData, nstrumentaVideo, videoName, setVideoFilePath]);
 
   useEffect(() => {
     if (videoFilePath) {
@@ -117,13 +139,52 @@ function NstrumentaVideoPanel(props: Props): JSX.Element {
   return (
     <Stack fullHeight>
       <PanelToolbar />
-      <video width="100%" src={videoUrl} ref={videoRef as LegacyRef<HTMLVideoElement>}></video>
+      {config.showFineTuning ? (
+        <>
+          {`Time outside playback: ${timeOutsideOfPlayback}\n`}
+          {JSON.stringify(nstrumentaVideo)}
+          <Stack direction="row">
+            <NumberInput
+              size="small"
+              variant="filled"
+              step={100}
+              precision={0}
+              value={nstrumentaVideo?.offset ?? 0}
+              fullWidth
+              onChange={setVideoOffset}
+            />
+            <Button
+              style={{ width: "fit-content", margin: "2px" }}
+              variant="contained"
+              color="inherit"
+              title="Save Experiment to nstrumenta"
+              onClick={saveExperiment}
+            >
+              Save
+            </Button>
+          </Stack>
+        </>
+      ) : (
+        timeOutsideOfPlayback !== 0 && `Time outside playback: ${timeOutsideOfPlayback}\n`
+      )}
+      <video
+        style={{
+          height: "100%",
+          width: "100%",
+          objectFit: "contain",
+          visibility: timeOutsideOfPlayback === 0 ? "visible" : "hidden",
+        }}
+        src={videoUrl}
+        ref={videoRef as LegacyRef<HTMLVideoElement>}
+      ></video>
     </Stack>
   );
 }
 
 const defaultConfig: NstrumentaVideoConfig = {
+  title: "Nstrumenta Video",
   videoName: "",
+  showFineTuning: false,
 };
 
 export default Panel(

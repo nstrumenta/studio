@@ -57,6 +57,7 @@ export interface ILayoutStorage {
   list(namespace: string): Promise<readonly Layout[]>;
   get(namespace: string, id: LayoutID): Promise<Layout | undefined>;
   put(namespace: string, layout: Layout): Promise<Layout>;
+  saveLayoutDb(): Promise<void>;
   delete(namespace: string, id: LayoutID): Promise<void>;
 
   /**

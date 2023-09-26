@@ -16,13 +16,13 @@ import {
 } from "@foxglove/studio-base/services/ILayoutManager";
 import {
   ILayoutStorage,
-  Layout,
-  layoutAppearsDeleted,
-  LayoutID,
-  layoutIsShared,
-  LayoutPermission,
-  layoutPermissionIsShared,
   ISO8601Timestamp,
+  Layout,
+  LayoutID,
+  LayoutPermission,
+  layoutAppearsDeleted,
+  layoutIsShared,
+  layoutPermissionIsShared,
 } from "@foxglove/studio-base/services/ILayoutStorage";
 import {
   IRemoteLayoutStorage,
@@ -268,6 +268,13 @@ export default class LayoutManager implements ILayoutManager {
     );
     this.notifyChangeListeners({ type: "change", updatedLayout: newLayout });
     return newLayout;
+  }
+
+  @LayoutManager.withBusyStatus
+  public async saveLayoutDb(): Promise<void> {
+    await this.local.runExclusive(async (local) => {
+      await local.saveLayoutDb();
+    });
   }
 
   @LayoutManager.withBusyStatus

@@ -44,6 +44,7 @@ export class NstLayoutStorage implements ILayoutStorage {
 
   private nstClient: NstrumentaBrowserClient | undefined;
   private layoutFileId: string | undefined;
+  private layoutFilename: string | undefined;
 
   public async list(namespace: string): Promise<readonly Layout[]> {
     const results: Layout[] = [];
@@ -75,11 +76,12 @@ export class NstLayoutStorage implements ILayoutStorage {
         field: "filePath",
         comparison: "==",
         compareValue: nstExperiment.layoutFilePath,
-      })) as { dataId: string }[];
+      })) as { dataId: string; name: string }[];
       if (layoutQuery[0] == undefined) {
         return results;
       }
       this.layoutFileId = layoutQuery[0].dataId;
+      this.layoutFilename = layoutQuery[0].name;
 
       const nstLayoutUrl = await this.nstClient.storage.getDownloadUrl(
         nstExperiment.layoutFilePath,
@@ -117,7 +119,7 @@ export class NstLayoutStorage implements ILayoutStorage {
       await this.nstClient.storage.upload({
         dataId: this.layoutFileId,
         data,
-        filename: "layoutDB.json",
+        filename: this.layoutFilename ?? "layoutDB.json",
         meta: {},
         overwrite: true,
       });
@@ -131,12 +133,14 @@ export class NstLayoutStorage implements ILayoutStorage {
 
   public async put(namespace: string, layout: Layout): Promise<Layout> {
     await (await this._db).put(OBJECT_STORE_NAME, { namespace, layout });
-    await this.uploadDbToNstrumenta();
     return layout;
   }
 
   public async delete(namespace: string, id: LayoutID): Promise<void> {
     await (await this._db).delete(OBJECT_STORE_NAME, [namespace, id]);
+  }
+
+  public async saveLayoutDb(): Promise<void> {
     await this.uploadDbToNstrumenta();
   }
 

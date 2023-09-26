@@ -23,19 +23,20 @@ export default function NstrumentaProvider({ children }: { children?: ReactNode 
     setExperiment(fetchedExperiment);
   };
 
-  const saveExperiment = async (exp: NstrumentaExperiment) => {
-    const stringified = JSON.stringify(exp)!;
+  const saveExperiment = async () => {
+    const stringified = JSON.stringify(experiment)!;
+    const filename =
+      filePath.split("/")[0] === "projects" ? filePath.split("/").slice(3).join("/") : filePath;
 
     const data = new Blob([stringified], {
       type: "application/json",
     });
     await nstClient.storage.upload({
       data,
-      filename: filePath,
+      filename,
       meta: {},
       overwrite: true,
     });
-    setExperiment(exp);
   };
 
   const init = async () => {
@@ -49,7 +50,7 @@ export default function NstrumentaProvider({ children }: { children?: ReactNode 
 
   return (
     <NstrumentaContext.Provider
-      value={{ experiment, setExperiment: saveExperiment, fetchExperiment, nstClient }}
+      value={{ experiment, setExperiment, saveExperiment, fetchExperiment, nstClient }}
     >
       {children}
     </NstrumentaContext.Provider>

@@ -15,7 +15,9 @@ import { usePanelSettingsTreeUpdate } from "@foxglove/studio-base/providers/Pane
 import { SaveConfig } from "@foxglove/studio-base/types/panels";
 
 export type NstrumentaVideoConfig = {
+  title: string;
   videoName?: string;
+  showFineTuning: boolean;
 };
 
 function buildSettingsTree(
@@ -32,6 +34,11 @@ function buildSettingsTree(
             return { label: v.name, value: v.name };
           }),
           value: config.videoName,
+        },
+        showFineTuning: {
+          label: "Show Fine Tuning",
+          input: "boolean",
+          value: config.showFineTuning,
         },
       },
     },

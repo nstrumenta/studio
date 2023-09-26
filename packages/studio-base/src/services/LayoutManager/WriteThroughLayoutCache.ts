@@ -59,4 +59,8 @@ export default class WriteThroughLayoutCache implements ILayoutStorage {
     await this.storage.delete(namespace, id);
     (await this.getOrCreateCache(namespace).get()).delete(id);
   }
+
+  public async saveLayoutDb(): Promise<void> {
+    await this.storage.saveLayoutDb();
+  }
 }

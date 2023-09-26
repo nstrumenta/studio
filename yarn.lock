@@ -2642,7 +2642,7 @@ __metadata:
     nearley: 2.20.1
     nearley-loader: 2.0.0
     notistack: 3.0.1
-    nstrumenta: 3.1.6
+    nstrumenta: 3.1.8
     path-browserify: 1.0.1
     prettier: 2.8.8
     react: 17.0.2
@@ -16507,9 +16507,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"nstrumenta@npm:3.1.6":
-  version: 3.1.6
-  resolution: "nstrumenta@npm:3.1.6"
+"nstrumenta@npm:3.1.8":
+  version: 3.1.8
+  resolution: "nstrumenta@npm:3.1.8"
   dependencies:
     "@google-cloud/storage": ^5.16.1
     "@mcap/core": ^0.2.2
@@ -16528,7 +16528,7 @@ __metadata:
   bin:
     nst: dist/cli/index.js
     nstrumenta: dist/cli/index.js
-  checksum: a401f4a2c3d58067604eb1f60ed9fa79d56a9029ce8b4653eadc1b57a519f27c57e77289fd46d3e3711bbe859f65953ed1f77c1712e753eb02dc4098cacf0d28
+  checksum: e9c53af47ba35d06639c9d3e5113265a3cd2332812b14cebbe251033624a17bb00e02143f64334b54fb59d22c067f90e06bbd3a33ada392c0af7382e28ecc1b4
   languageName: node
   linkType: hard
 

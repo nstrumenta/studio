@@ -23,6 +23,7 @@ export type NstrumentaVideo = {
   name: string;
   filePath: string;
   startTime?: number;
+  offset?: number;
 };
 
 export type NstrumentaLabels = {
@@ -30,6 +31,7 @@ export type NstrumentaLabels = {
 };
 
 export type NstrumentaExperiment = {
+  experimentFilepath: string;
   dataFilePath: string;
   layoutFilePath: string;
   labelFiles: NstrumentaLabels[];
@@ -40,6 +42,7 @@ interface INstrumentaContext {
   nstClient: NstrumentaBrowserClient;
   experiment?: NstrumentaExperiment;
   setExperiment?: (experiment: NstrumentaExperiment) => void;
+  saveExperiment?: () => void;
   fetchExperiment?: () => void;
 }
 
