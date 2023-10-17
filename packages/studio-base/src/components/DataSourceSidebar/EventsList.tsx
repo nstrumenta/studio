@@ -28,6 +28,7 @@ import {
   useTimelineInteractionState,
 } from "@foxglove/studio-base/context/TimelineInteractionStateContext";
 import { useAppTimeFormat } from "@foxglove/studio-base/hooks";
+import { useConfirm } from "@foxglove/studio-base/hooks/useConfirm";
 
 import { EventView } from "./EventView";
 
@@ -87,6 +88,7 @@ export function EventsList(): JSX.Element {
   const setHoveredEvent = useTimelineInteractionState(selectSetHoveredEvent);
   const filter = useEvents(selectEventFilter);
   const setFilter = useEvents(selectSetEventFilter);
+  const [confirm, confirmModal] = useConfirm();
 
   const nstClient = useNstrumentClient();
 
@@ -131,6 +133,25 @@ export function EventsList(): JSX.Element {
       }
     },
     [setEvents, events],
+  );
+
+  const deleteEvent = useCallback(
+    async (updatedEvent: DataSourceEvent) => {
+      void confirm({
+        title: "Are you sure you want to delete event?",
+        ok: "Delete Event",
+      }).then((response) => {
+        if (response === "ok") {
+          if (events.value) {
+            const eventsWithoutUpdatedEvent = events.value.filter(
+              (event) => event.id !== updatedEvent.id,
+            );
+            setEvents({ loading: false, value: [...eventsWithoutUpdatedEvent] });
+          }
+        }
+      });
+    },
+    [confirm, setEvents, events],
   );
 
   const saveLabels = async () => {
@@ -274,6 +295,7 @@ export function EventsList(): JSX.Element {
                     : eventsAtHoverValue[event.id] != undefined
                 }
                 updateEvent={updateEvent}
+                deleteEvent={deleteEvent}
                 isSelected={event.id === selectedEventId}
                 onClick={onClick}
                 onHoverStart={onHoverStart}
@@ -291,6 +313,7 @@ export function EventsList(): JSX.Element {
       >
         Save
       </Button>
+      {confirmModal}
     </Stack>
   );
 }

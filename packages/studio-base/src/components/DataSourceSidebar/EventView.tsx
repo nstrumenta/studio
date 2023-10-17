@@ -116,11 +116,21 @@ function EventViewComponent(params: {
   isSelected: boolean;
   updateEvent: (event: DataSourceEvent) => void;
   onClick: (event: DataSourceEvent) => void;
+  deleteEvent: (event: DataSourceEvent) => void;
   onHoverStart: (event: DataSourceEvent) => void;
   onHoverEnd: (event: DataSourceEvent) => void;
 }): JSX.Element {
-  const { event, filter, isHovered, isSelected, updateEvent, onClick, onHoverStart, onHoverEnd } =
-    params;
+  const {
+    event,
+    filter,
+    isHovered,
+    isSelected,
+    updateEvent,
+    deleteEvent,
+    onClick,
+    onHoverStart,
+    onHoverEnd,
+  } = params;
   const { classes, cx } = useStyles();
 
   const fields = compact([...Object.entries(event.metadata)]);
@@ -179,6 +189,15 @@ function EventViewComponent(params: {
           }
         }}
       />
+      <Fragment key="eventAction">
+        <div className={classes.eventMetadata}></div>
+        <div
+          className={classes.eventMetadata}
+          style={{ display: "flex", flexDirection: "row-reverse" }}
+        >
+          <Button onClick={() => deleteEvent(event)}>Delete Event</Button>
+        </div>
+      </Fragment>
       <div className={classes.spacer} />
     </div>
   );
