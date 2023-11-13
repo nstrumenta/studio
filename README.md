@@ -86,3 +86,70 @@ Note: All contributors must agree to our [Contributor License Agreement](https:/
 ## Credits
 
 Foxglove Studio originally began as a fork of [Webviz](https://github.com/cruise-automation/webviz), an open source project developed by [Cruise](https://getcruise.com/). Most of the Webviz code has been rewritten, but some files still carry a Cruise license header where appropriate.
+
+
+## Publishing to nstrumenta project
+
+install deps
+```shell
+root@f9e51f81b71a:/workspaces/studio# corepack enable
+root@f9e51f81b71a:/workspaces/studio# yarn
+```
+
+build web prod
+```shell
+root@f9e51f81b71a:/workspaces/studio# yarn run web:build:prod
+webpack 5.79.0 compiled successfully in 194 ms
+
+main:
+  assets by path *.js 23.4 MiB
+
+...
+
+  main (webpack 5.79.0) compiled with 2 warnings in 34207 ms
+```
+confirm project ID:
+```shell
+root@f9e51f81b71a:/workspaces/studio# nst project id
+test1
+```
+publish
+```shell
+root@f9e51f81b71a:/workspaces/studio# nst module publish
+cwd: /workspaces/studio
+publishing: [
+  {
+    nstrumentaVersion: '3.1.8',
+    folder: './',
+    nstrumentaModuleType: 'web',
+    entry: 'web/.webpack/index.html',
+    includes: [ 'web/.webpack' ],
+    name: 'studio',
+    version: '1.0.4',
+    description: 'Integrated robotics visualization and debugging.',
+
+...
+
+  }
+]
+[ 'studio-1.0.4.tar.gz' ]
+```
+host
+```shell
+root@f9e51f81b71a:/workspaces/studio# nst module host studio
+Finding  studio
+found moduleId:  studio
+created action: df439df7-c476-45f0-84ea-da3615ff0430  {
+  task: 'hostModule',
+  status: 'pending',
+  data: {
+    module: {
+      name: 'studio',
+      filePath: 'studio-1.0.4.tar.gz',
+      version: '1.0.4'
+    },
+    args: [ 'studio' ]
+  }
+}
+
+```
