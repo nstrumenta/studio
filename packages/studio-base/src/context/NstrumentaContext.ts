@@ -24,6 +24,7 @@ export type NstrumentaVideo = {
   filePath: string;
   startTime?: number;
   offset?: number;
+  rotate?: number;
 };
 
 export type NstrumentaLabels = {
