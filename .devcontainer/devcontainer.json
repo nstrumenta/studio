@@ -1,7 +1,16 @@
 {
-	"build": {
-		"dockerfile": "./Dockerfile"
-	},
+	"image": "nstrumenta/toolchain",
 	"privileged": true,
-	"runArgs": ["--env-file",".nstrumenta/credentials/.env"]
+	"runArgs": [
+		"--env-file",
+		".nstrumenta/credentials/.env"
+	],
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"eamodio.gitlens",
+				"esbenp.prettier-vscode"
+			]
+		}
+	}
 }

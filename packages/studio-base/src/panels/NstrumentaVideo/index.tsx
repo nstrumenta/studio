@@ -45,6 +45,8 @@ function NstrumentaVideoPanel(props: Props): JSX.Element {
   const [videoFilePath, setVideoFilePath] = useState<string | undefined>(undefined);
   const [videoUrl, setVideoUrl] = useState<string | undefined>(undefined);
   const [timeOutsideOfPlayback, setTimeOutsideOfPlayback] = useState(0);
+  const [offsetInput, setOffsetInput] = useState<number | undefined>();
+
   const videoRef = useRef<HTMLVideoElement>();
 
   const activeData = useMessagePipeline((ctx: MessagePipelineContext) => {
@@ -59,14 +61,6 @@ function NstrumentaVideoPanel(props: Props): JSX.Element {
   const nstrumentaVideoIndex = experiment?.videos.findIndex((v) => v.name === videoName);
   const nstrumentaVideo =
     nstrumentaVideoIndex != undefined ? experiment?.videos[nstrumentaVideoIndex] : undefined;
-
-  const setVideoOffset = (offset?: number) => {
-    if (!experiment || !setExperiment || !nstrumentaVideo || offset == undefined) {
-      return;
-    }
-    experiment.videos[nstrumentaVideoIndex!] = { ...nstrumentaVideo, ...{ offset } };
-    setExperiment(experiment);
-  };
 
   const nstClient = useNstrumentClient();
 
@@ -89,6 +83,10 @@ function NstrumentaVideoPanel(props: Props): JSX.Element {
   );
 
   useEffect(() => {
+    setOffsetInput(nstrumentaVideo?.offset)
+  }, [nstrumentaVideo?.offset])
+
+  useEffect(() => {
     if (videoRef.current && activeData) {
       const video = videoRef.current;
       const { startTime, currentTime, isPlaying, speed } = activeData;
@@ -97,7 +95,7 @@ function NstrumentaVideoPanel(props: Props): JSX.Element {
       }
       setVideoFilePath(nstrumentaVideo.filePath);
       const videoStartTime = nstrumentaVideo.startTime ?? 0;
-      const videoFineTuneOffset = nstrumentaVideo.offset ?? 0;
+      const videoFineTuneOffset = offsetInput ? offsetInput : nstrumentaVideo.offset ?? 0;
       const offset = toSec(
         subtractTimes(fromMillis(videoStartTime + videoFineTuneOffset), startTime),
       );
@@ -136,12 +134,14 @@ function NstrumentaVideoPanel(props: Props): JSX.Element {
     }
   }, [videoFilePath, nstClient, getVideoUrl]);
 
+
+
   return (
     <Stack fullHeight>
       <PanelToolbar />
       {config.showFineTuning ? (
         <>
-          {`Time outside playback: ${timeOutsideOfPlayback}\n`}
+          {`Time(ms) outside playback: ${Math.round(1000 * timeOutsideOfPlayback)}\n`}
           {JSON.stringify(nstrumentaVideo)}
           <Stack direction="row">
             <NumberInput
@@ -149,23 +149,29 @@ function NstrumentaVideoPanel(props: Props): JSX.Element {
               variant="filled"
               step={100}
               precision={0}
-              value={nstrumentaVideo?.offset ?? 0}
+              value={offsetInput}
               fullWidth
-              onChange={setVideoOffset}
+              onChange={setOffsetInput}
             />
             <Button
               style={{ width: "fit-content", margin: "2px" }}
               variant="contained"
               color="inherit"
               title="Save Experiment to nstrumenta"
-              onClick={saveExperiment}
+              onClick={() => {
+                if (saveExperiment && setExperiment && experiment && nstrumentaVideo && offsetInput) {
+                  experiment.videos[nstrumentaVideoIndex!] = { ...nstrumentaVideo, ...{ offset: Math.round(offsetInput) } };
+                  setExperiment(experiment)
+                  saveExperiment()
+                }
+              }}
             >
               Save
             </Button>
           </Stack>
         </>
       ) : (
-        timeOutsideOfPlayback !== 0 && `Time outside playback: ${timeOutsideOfPlayback}\n`
+        timeOutsideOfPlayback !== 0 && `Time(ms) outside playback: ${Math.round(1000 * timeOutsideOfPlayback)}\n`
       )}
       <video
         style={{
