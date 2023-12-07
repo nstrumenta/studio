@@ -1,5 +1,5 @@
 {
-	"image": "nstrumenta/toolchain",
+	"image": "nstrumenta/data-job-runner",
 	"privileged": true,
 	"runArgs": [
 		"--env-file",
