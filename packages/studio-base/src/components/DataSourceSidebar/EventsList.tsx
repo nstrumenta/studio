@@ -74,14 +74,12 @@ const selectHoveredEvent = (store: TimelineInteractionStateStore) => store.hover
 const selectSetHoveredEvent = (store: TimelineInteractionStateStore) => store.setHoveredEvent;
 const selectEventsAtHoverValue = (store: TimelineInteractionStateStore) => store.eventsAtHoverValue;
 const selectSelectedEventId = (store: EventsStore) => store.selectedEventId;
-const selectSelectEvent = (store: EventsStore) => store.selectEvent;
 
 export function EventsList(): JSX.Element {
   const events = useEvents(selectEvents);
   const selectedEventId = useEvents(selectSelectedEventId);
   const setEvents = useEvents(selectSetEvents);
   const setDeviceId = useEvents(selectSetDeviceId);
-  const selectEvent = useEvents(selectSelectEvent);
   const { formatTime } = useAppTimeFormat();
   const seek = useMessagePipeline(selectSeek);
   const eventsAtHoverValue = useTimelineInteractionState(selectEventsAtHoverValue);
