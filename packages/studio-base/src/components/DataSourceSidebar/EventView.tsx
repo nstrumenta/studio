@@ -2,7 +2,7 @@
 // License, v2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
-import { Button, alpha } from "@mui/material";
+import { Button, Tooltip, alpha } from "@mui/material";
 import { compact, noop } from "lodash";
 import { Fragment } from "react";
 import { makeStyles } from "tss-react/mui";
@@ -79,10 +79,11 @@ function TimeStampFragment(params: {
   label: string;
   setTime: (time: Time) => void;
   setTimeToCursor: () => void;
+  setCursorToTime: () => void;
   time: Time;
 }): JSX.Element {
   const { classes } = useStyles();
-  const { eventId, label, time, setTime, setTimeToCursor } = params;
+  const { eventId, label, time, setTime, setTimeToCursor, setCursorToTime } = params;
   return (
     <Fragment key={`${eventId}${label}`}>
       <div className={classes.eventMetadata}>{label}</div>
@@ -102,7 +103,12 @@ function TimeStampFragment(params: {
               }
             }}
           />
-          <Button onClick={setTimeToCursor}> Set </Button>
+          <Tooltip title="Move Cursor">
+            <Button onClick={setCursorToTime}> Go </Button>
+          </Tooltip>
+          <Tooltip title="Set from Cursor">
+            <Button onClick={setTimeToCursor}> Set </Button>
+          </Tooltip>
         </Stack>
       </div>
     </Fragment>
@@ -114,8 +120,8 @@ function EventViewComponent(params: {
   filter: string;
   isHovered: boolean;
   isSelected: boolean;
+  seek?: ((time: Time) => void);
   updateEvent: (event: DataSourceEvent) => void;
-  onClick: (event: DataSourceEvent) => void;
   deleteEvent: (event: DataSourceEvent) => void;
   onHoverStart: (event: DataSourceEvent) => void;
   onHoverEnd: (event: DataSourceEvent) => void;
@@ -127,7 +133,7 @@ function EventViewComponent(params: {
     isSelected,
     updateEvent,
     deleteEvent,
-    onClick,
+    seek,
     onHoverStart,
     onHoverEnd,
   } = params;
@@ -145,7 +151,6 @@ function EventViewComponent(params: {
         [classes.eventSelected]: isSelected,
         [classes.eventHovered]: isHovered,
       })}
-      onClick={() => onClick(event)}
       onMouseEnter={() => onHoverStart(event)}
       onMouseLeave={() => onHoverEnd(event)}
     >
@@ -173,6 +178,7 @@ function EventViewComponent(params: {
             updateEvent(event);
           }
         }}
+        setCursorToTime={() => seek && seek(event.startTime)}
       />
       <TimeStampFragment
         eventId={event.id}
@@ -188,6 +194,7 @@ function EventViewComponent(params: {
             updateEvent(event);
           }
         }}
+        setCursorToTime={() => seek && seek(event.endTime)}
       />
       <Fragment key="eventAction">
         <div className={classes.eventMetadata}></div>

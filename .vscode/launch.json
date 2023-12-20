@@ -9,7 +9,7 @@
       "name": "web",
       "request": "launch",
       "type": "chrome",
-      "url": "http://localhost:8080?ds=nstrumenta&experiment=projects/peek-ai/data/Sensor_Log_2023-09-12_13_26_34.experiment.json",
+      "url": "http://localhost:8080?ds=nstrumenta&experiment=projects%2Fpeek-ai-2023%2Fdata%2FSensor_Log_2023-11-08_09_05_43.dev.experiment.json&firebaseProjectId=peek-nstrumenta",
       "webRoot": "${workspaceFolder}/nstrumenta/studio"
     },
     {

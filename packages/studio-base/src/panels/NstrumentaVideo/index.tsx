@@ -179,7 +179,7 @@ function NstrumentaVideoPanel(props: Props): JSX.Element {
           width: "100%",
           objectFit: "contain",
           visibility: timeOutsideOfPlayback === 0 ? "visible" : "hidden",
-          transform: nstrumentaVideo?.rotate ? `rotate(${nstrumentaVideo?.rotate}deg)` : undefined
+          transform: nstrumentaVideo?.rotate ? `rotate(${nstrumentaVideo?.rotate}deg) scale(1.77)` : undefined
         }}
         src={videoUrl}
         ref={videoRef as LegacyRef<HTMLVideoElement>}
