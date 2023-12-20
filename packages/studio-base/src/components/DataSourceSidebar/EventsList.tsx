@@ -30,6 +30,7 @@ import {
 import { useAppTimeFormat } from "@foxglove/studio-base/hooks";
 import { useConfirm } from "@foxglove/studio-base/hooks/useConfirm";
 
+import { compare } from "@foxglove/rostime";
 import { EventView } from "./EventView";
 
 const useStyles = makeStyles()((theme) => ({
@@ -212,21 +213,6 @@ export function EventsList(): JSX.Element {
     setFilter("");
   }, [setFilter]);
 
-  const onClick = useCallback(
-    (event: DataSourceEvent) => {
-      if (event.id === selectedEventId) {
-        selectEvent(undefined);
-      } else {
-        selectEvent(event.id);
-      }
-
-      if (seek) {
-        seek(event.startTime);
-      }
-    },
-    [seek, selectEvent, selectedEventId],
-  );
-
   const onHoverEnd = useCallback(() => {
     setHoveredEvent(undefined);
   }, [setHoveredEvent]);
@@ -280,7 +266,7 @@ export function EventsList(): JSX.Element {
       )}
       <div className={classes.grid}>
         {timestampedEvents
-          .sort((a, b) => (a.id < b.id ? 1 : -1))
+          .sort((a, b) => { return compare(a.startTime, b.startTime) })
           .map((event) => {
             return (
               <EventView
@@ -297,7 +283,7 @@ export function EventsList(): JSX.Element {
                 updateEvent={updateEvent}
                 deleteEvent={deleteEvent}
                 isSelected={event.id === selectedEventId}
-                onClick={onClick}
+                seek={seek}
                 onHoverStart={onHoverStart}
                 onHoverEnd={onHoverEnd}
               />
