@@ -19,7 +19,6 @@ import { makeStyles } from "tss-react/mui";
 
 import Logger from "@foxglove/log";
 import { AppSetting } from "@foxglove/studio-base/AppSetting";
-import AccountSettings from "@foxglove/studio-base/components/AccountSettingsSidebar/AccountSettings";
 import { AppBar } from "@foxglove/studio-base/components/AppBar";
 import { CustomWindowControlsProps } from "@foxglove/studio-base/components/AppBar/CustomWindowControls";
 import {
@@ -47,7 +46,6 @@ import RemountOnValueChange from "@foxglove/studio-base/components/RemountOnValu
 import { SidebarContent } from "@foxglove/studio-base/components/SidebarContent";
 import Sidebars, { SidebarItem } from "@foxglove/studio-base/components/Sidebars";
 import { NewSidebarItem } from "@foxglove/studio-base/components/Sidebars/NewSidebar";
-import { SignInFormModal } from "@foxglove/studio-base/components/SignInFormModal";
 import Stack from "@foxglove/studio-base/components/Stack";
 import {
   StudioLogsSettings,
@@ -520,13 +518,6 @@ function WorkspaceContent(props: WorkspaceContentProps): JSX.Element {
     const bottomItems = new Map<SidebarItemKey, SidebarItem>([]);
 
     if (!enableNewTopNav) {
-      if (supportsAccountSettings) {
-        bottomItems.set("account", {
-          iconName: currentUser != undefined ? "BlockheadFilled" : "Blockhead",
-          title: currentUser != undefined ? `Signed in as ${currentUser.email}` : "Account",
-          component: AccountSettings,
-        });
-      }
 
       bottomItems.set("app-settings", {
         iconName: "Settings",
@@ -609,7 +600,6 @@ function WorkspaceContent(props: WorkspaceContentProps): JSX.Element {
         /* eslint-enable react/jsx-key */
       ]}
     >
-      {props.showSignInForm && <SignInFormModal />}
       {dataSourceDialog.open && <DataSourceDialog />}
       <DocumentDropListener onDrop={dropHandler} allowedExtensions={allowedDropExtensions} />
       <SyncAdapters />

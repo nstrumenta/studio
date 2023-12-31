@@ -5,9 +5,11 @@
 import ClearIcon from "@mui/icons-material/Clear";
 import SearchIcon from "@mui/icons-material/Search";
 import { AppBar, Button, CircularProgress, IconButton, TextField, Typography } from "@mui/material";
+import { getDownloadURL, uploadBytes, ref } from 'firebase/storage';
 import { useCallback, useEffect, useMemo } from "react";
 import { makeStyles } from "tss-react/mui";
 
+import { compare } from "@foxglove/rostime";
 import {
   MessagePipelineContext,
   useMessagePipeline,
@@ -20,7 +22,6 @@ import {
 } from "@foxglove/studio-base/context/EventsContext";
 import {
   NstrumentaLabels,
-  useNstrumentClient,
   useNstrumentaContext,
 } from "@foxglove/studio-base/context/NstrumentaContext";
 import {
@@ -30,7 +31,6 @@ import {
 import { useAppTimeFormat } from "@foxglove/studio-base/hooks";
 import { useConfirm } from "@foxglove/studio-base/hooks/useConfirm";
 
-import { compare } from "@foxglove/rostime";
 import { EventView } from "./EventView";
 
 const useStyles = makeStyles()((theme) => ({
@@ -89,37 +89,32 @@ export function EventsList(): JSX.Element {
   const setFilter = useEvents(selectSetEventFilter);
   const [confirm, confirmModal] = useConfirm();
 
-  const nstClient = useNstrumentClient();
-
-  const { experiment } = useNstrumentaContext();
+  const { experiment, firebaseInstance } = useNstrumentaContext();
 
   const loadLabels = useCallback(
     async (labelFiles: NstrumentaLabels[]) => {
       let fetchedEvents: DataSourceEvent[] = [];
-      for (const labelFile of labelFiles) {
-        try {
-          const url = await nstClient.storage.getDownloadUrl(labelFile.filePath);
-          await fetch(url).then(async (res) => {
-            //merge and attach filePath to items
-            fetchedEvents = [
-              ...fetchedEvents,
-              ...(await res.json()).events.map((item: Record<string, unknown>) => {
-                return { ...item, deviceId: labelFile.filePath };
-              }),
-            ];
-          });
-        } catch (err) {
-          await nstClient.storage.upload({
-            filename: labelFile.filePath.split("/").slice(2).join("/"),
-            data: new Blob(['{"events":[]}']),
-            meta: {},
-            overwrite: true,
-          });
+      if (firebaseInstance?.storage) {
+        for (const labelFile of labelFiles) {
+          try {
+            const url = await getDownloadURL(ref(firebaseInstance.storage, labelFile.filePath));
+            await fetch(url).then(async (res) => {
+              //merge and attach filePath to items
+              fetchedEvents = [
+                ...fetchedEvents,
+                ...(await res.json()).events.map((item: Record<string, unknown>) => {
+                  return { ...item, deviceId: labelFile.filePath };
+                }),
+              ];
+            });
+          } catch (err) {
+          }
         }
+        setEvents({ loading: false, value: fetchedEvents });
       }
       setEvents({ loading: false, value: fetchedEvents });
     },
-    [nstClient.storage, setEvents],
+    [firebaseInstance?.storage, setEvents],
   );
 
   const updateEvent = useCallback(
@@ -158,6 +153,10 @@ export function EventsList(): JSX.Element {
       console.error("no labelFiles in experiment");
       return;
     }
+    if (firebaseInstance?.storage == undefined) {
+      console.error("firebase not initialized");
+      return;
+    }
     for (const labelFile of experiment.labelFiles) {
       const serializedEvents = JSON.stringify({
         events: events.value?.filter((v) => v.collection === labelFile.filePath),
@@ -167,12 +166,10 @@ export function EventsList(): JSX.Element {
         const data = new Blob([serializedEvents], {
           type: "application/json",
         });
-        await nstClient.storage.upload({
-          filename: labelFile.filePath.split("/").slice(3).join("/"),
-          data,
-          meta: {},
-          overwrite: true,
-        });
+
+        await uploadBytes(ref(firebaseInstance.storage, labelFile.filePath),
+          data
+        );
       }
     }
   };

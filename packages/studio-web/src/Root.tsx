@@ -19,7 +19,7 @@ import {
   SampleNuscenesDataSourceFactory,
   UlogLocalDataSourceFactory,
 } from "@foxglove/studio-base";
-import { useNstrumentClient } from "@foxglove/studio-base/context/NstrumentaContext";
+import { useNstrumentaContext } from "@foxglove/studio-base/context/NstrumentaContext";
 
 import LocalStorageAppConfiguration from "./services/LocalStorageAppConfiguration";
 import { NstLayoutStorage } from "./services/NstLayoutStorage";
@@ -45,9 +45,10 @@ export function Root(props: {
     new IdbExtensionLoader("local"),
   ]);
 
-  const nstClient = useNstrumentClient();
+  const { firebaseInstance } = useNstrumentaContext();
 
   const dataSources = useMemo(() => {
+    if (!firebaseInstance) {return [];}
     const sources = [
       new Ros1LocalBagDataSourceFactory(),
       new Ros2LocalBagDataSourceFactory(),
@@ -57,11 +58,11 @@ export function Root(props: {
       new SampleNuscenesDataSourceFactory(),
       new McapLocalDataSourceFactory(),
       new RemoteDataSourceFactory(),
-      new NstrumentaDataSourceFactory(nstClient),
+      new NstrumentaDataSourceFactory(firebaseInstance),
     ];
 
     return props.dataSources ?? sources;
-  }, [nstClient, props.dataSources]);
+  }, [firebaseInstance, props.dataSources]);
 
   return (
     <>

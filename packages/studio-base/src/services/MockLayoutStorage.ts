@@ -13,6 +13,12 @@ export default class MockLayoutStorage implements ILayoutStorage {
       [namespace, new Map(layouts.map((layout) => [layout.id, layout]))],
     ]);
   }
+  saveLayoutDb(): Promise<void> {
+    throw new Error("Method not implemented.");
+  }
+  migrateUnnamespacedLayouts?(namespace: string): Promise<void> {
+    throw new Error("Method not implemented.");
+  }
 
   public async list(namespace: string): Promise<readonly Layout[]> {
     return Array.from(this.layoutsByIdByNamespace.get(namespace)?.values() ?? []);
@@ -36,5 +42,5 @@ export default class MockLayoutStorage implements ILayoutStorage {
     this.layoutsByIdByNamespace.get(namespace)?.delete(id);
   }
 
-  public async importLayouts(): Promise<void> {}
+  public async importLayouts(): Promise<void> { }
 }

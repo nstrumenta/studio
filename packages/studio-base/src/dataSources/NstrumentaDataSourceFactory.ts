@@ -2,13 +2,16 @@
 // License, v2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
-import { NstrumentaBrowserClient } from "nstrumenta/dist/browser/client";
+
+import { getDownloadURL, ref } from "firebase/storage";
 
 import {
   DataSourceFactoryInitializeArgs,
   IDataSourceFactory,
 } from "@foxglove/studio-base/context/PlayerSelectionContext";
 import { IterablePlayer, WorkerIterableSource } from "@foxglove/studio-base/players/IterablePlayer";
+import { FirebaseInstance } from "@foxglove/studio-base/providers/NstrumentaProvider";
+import { Player } from "@foxglove/studio-base/players/types";
 
 class NstrumentaDataSourceFactory implements IDataSourceFactory {
   public id = "nstrumenta";
@@ -16,28 +19,25 @@ class NstrumentaDataSourceFactory implements IDataSourceFactory {
   public displayName = "nstrumenta";
   public iconName: IDataSourceFactory["iconName"] = "FileASPX";
   public hidden = true;
-  public nstClient: NstrumentaBrowserClient;
+  public firebaseInstance: FirebaseInstance;
 
-  public constructor(nstClient: NstrumentaBrowserClient) {
-    this.nstClient = nstClient;
+  public constructor(firebaseInstance: FirebaseInstance) {
+    this.firebaseInstance = firebaseInstance;
   }
 
   public async initialize(
     args: DataSourceFactoryInitializeArgs,
-  ): ReturnType<IDataSourceFactory["initialize"]> {
-    const { search } = window.location;
-    const filePath = new URLSearchParams(search).get("experiment") ?? "";
+  ): Promise<Player | undefined> {
 
-    const url = await this.nstClient.storage.getDownloadUrl(filePath);
-    const nstExperiment = (await (await fetch(url)).json()) as {
-      dataFilePath?: string;
-    };
-
-    const dataFilePath = nstExperiment.dataFilePath;
+    if (this.firebaseInstance.storage == undefined) {
+      console.error("firebase not initialized");
+      return;
+    }
+    const dataFilePath = "projects/peek-ai-2023/data/recording-f1bf24c7-100d-42a5-84d1-3aa8c9a104ce.mcap"; // TODO picker for this
 
     let dataUrl: string = "";
     if (dataFilePath != undefined) {
-      dataUrl = await this.nstClient.storage.getDownloadUrl(dataFilePath);
+      dataUrl = await getDownloadURL(ref(this.firebaseInstance.storage, dataFilePath));
     }
 
     const source = new WorkerIterableSource({

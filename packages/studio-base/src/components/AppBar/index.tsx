@@ -330,9 +330,9 @@ export function AppBar(props: AppBarProps): JSX.Element {
                   data-testid="user-button"
                 >
                   <Avatar className={classes.avatar} variant="rounded">
-                    {currentUser?.avatarImageUrl ? (
+                    {currentUser?.photoURL ? (
                       <img
-                        src={currentUser.avatarImageUrl}
+                        src={currentUser.photoURL}
                         referrerPolicy="same-origin"
                         className={classes.userIconImage}
                       />

@@ -5,14 +5,16 @@
 import { NstrumentaBrowserClient } from "nstrumenta/dist/browser/client";
 import { createContext, useContext } from "react";
 
+import { FirebaseInstance } from "@foxglove/studio-base/providers/NstrumentaProvider";
+
 const { search } = window.location;
 const apiKeyParam = new URLSearchParams(search).get("apiKey");
 const apiLocalStore = localStorage.getItem("apiKey");
 const apiKey = apiKeyParam
   ? apiKeyParam
   : apiLocalStore
-  ? apiLocalStore
-  : (prompt("Enter your nstrumenta apiKey") as string);
+    ? apiLocalStore
+    : (prompt("Enter your nstrumenta apiKey") as string);
 if (apiKey) {
   localStorage.setItem("apiKey", apiKey);
 }
@@ -41,6 +43,7 @@ export type NstrumentaExperiment = {
 
 interface INstrumentaContext {
   nstClient: NstrumentaBrowserClient;
+  firebaseInstance?: FirebaseInstance;
   experiment?: NstrumentaExperiment;
   setExperiment?: (experiment: NstrumentaExperiment) => void;
   saveExperiment?: () => void;
@@ -56,6 +59,24 @@ export function useNstrumentClient(): NstrumentaBrowserClient {
 
 export function useNstrumentaContext(): INstrumentaContext {
   return useContext(NstrumentaContext);
+}
+
+
+import { GithubAuthProvider, signInWithPopup, type User } from "firebase/auth";
+export interface CurrentUser {
+  currentUser: User | undefined;
+  signIn: () => void;
+  signOut?: () => Promise<void>;
+}
+
+export function useCurrentUser(): CurrentUser {
+  const { firebaseInstance } = useContext(NstrumentaContext);
+  return {
+    currentUser: firebaseInstance?.user, signIn: () => {
+      firebaseInstance?.auth &&
+        signInWithPopup(firebaseInstance.auth, new GithubAuthProvider())
+    }, signOut: async () => { firebaseInstance?.auth && firebaseInstance?.auth.signOut() }
+  }
 }
 
 export { NstrumentaContext };
