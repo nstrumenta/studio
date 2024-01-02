@@ -2,18 +2,16 @@
 // License, v2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
-import { StoryObj, StoryContext, StoryFn } from "@storybook/react";
+import { StoryContext, StoryFn, StoryObj } from "@storybook/react";
 import { fireEvent, screen, userEvent, within } from "@storybook/testing-library";
 import { useMemo } from "react";
 
 import { LayoutData } from "@foxglove/studio-base/context/CurrentLayoutContext/actions";
-import CurrentUserContext from "@foxglove/studio-base/context/CurrentUserContext";
 import LayoutStorageContext from "@foxglove/studio-base/context/LayoutStorageContext";
 import { UserProfileStorageContext } from "@foxglove/studio-base/context/UserProfileStorageContext";
 import CurrentLayoutProvider from "@foxglove/studio-base/providers/CurrentLayoutProvider";
 import { defaultPlaybackConfig } from "@foxglove/studio-base/providers/CurrentLayoutProvider/reducers";
 import LayoutManagerProvider from "@foxglove/studio-base/providers/LayoutManagerProvider";
-import WorkspaceContextProvider from "@foxglove/studio-base/providers/WorkspaceContextProvider";
 import { ISO8601Timestamp, Layout, LayoutID } from "@foxglove/studio-base/services/ILayoutStorage";
 import LayoutManager from "@foxglove/studio-base/services/LayoutManager/LayoutManager";
 import MockLayoutStorage from "@foxglove/studio-base/services/MockLayoutStorage";
@@ -121,7 +119,7 @@ function WithSetup(Child: StoryFn, ctx: StoryContext): JSX.Element {
   const userProfile = useMemo(
     () => ({
       getUserProfile: async () => ({ currentLayoutId: "test-id" as LayoutID }),
-      setUserProfile: async () => {},
+      setUserProfile: async () => { },
     }),
     [],
   );
@@ -436,26 +434,4 @@ export const DeleteLastLayout: StoryObj = {
   },
 
   play: async () => await deleteLayoutInteraction(0),
-};
-
-export const SignInPrompt: StoryObj = {
-  render: function Story() {
-    return (
-      <CurrentUserContext.Provider
-        value={{
-          currentUser: undefined,
-          signIn: () => undefined,
-          signOut: async () => undefined,
-        }}
-      >
-        <WorkspaceContextProvider>
-          <LayoutBrowser />
-        </WorkspaceContextProvider>
-      </CurrentUserContext.Provider>
-    );
-  },
-
-  parameters: {
-    colorScheme: "light",
-  },
 };

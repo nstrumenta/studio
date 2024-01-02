@@ -2,14 +2,12 @@
 // License, v2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
-import AddIcon from "@mui/icons-material/Add";
 import {
   CircularProgress,
   Divider,
-  IconButton,
   Tab,
   Tabs,
-  styled as muiStyled,
+  styled as muiStyled
 } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -26,13 +24,12 @@ import { SidebarContent } from "@foxglove/studio-base/components/SidebarContent"
 import Stack from "@foxglove/studio-base/components/Stack";
 import WssErrorModal from "@foxglove/studio-base/components/WssErrorModal";
 import { EventsStore, useEvents } from "@foxglove/studio-base/context/EventsContext";
-import { useWorkspaceActions } from "@foxglove/studio-base/context/WorkspaceContext";
 import { useAppConfigurationValue } from "@foxglove/studio-base/hooks/useAppConfigurationValue";
 import { PlayerPresence } from "@foxglove/studio-base/players/types";
 
+import { DataSourceInfoView } from "../DataSourceInfoView";
 import { ProblemsList } from "./ProblemsList";
 import { TopicList } from "./TopicList";
-import { DataSourceInfoView } from "../DataSourceInfoView";
 
 type Props = {
   disableToolbar?: boolean;
@@ -87,7 +84,6 @@ export default function DataSourceSidebar(props: Props): JSX.Element {
   const [activeTab, setActiveTab] = useState<DataSourceSidebarTab>("topics");
   const { classes } = useStyles();
   const { t } = useTranslation("dataSourceInfo");
-  const { dataSourceDialogActions } = useWorkspaceActions();
 
   const [enableNewTopNav = false] = useAppConfigurationValue<boolean>(AppSetting.ENABLE_NEW_TOPNAV);
 
@@ -120,14 +116,6 @@ export default function DataSourceSidebar(props: Props): JSX.Element {
             <CircularProgress size={18} variant="indeterminate" />
           </Stack>
         ),
-        <IconButton
-          key="add-connection"
-          color="primary"
-          title="New connection"
-          onClick={() => dataSourceDialogActions.open("start")}
-        >
-          <AddIcon />
-        </IconButton>,
       ].filter(Boolean)}
     >
       <Stack fullHeight>

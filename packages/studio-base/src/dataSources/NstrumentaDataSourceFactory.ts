@@ -5,12 +5,12 @@
 
 import { getDownloadURL, ref } from "firebase/storage";
 
+import { useNstrumentaContext } from "@foxglove/studio-base/context/NstrumentaContext";
 import {
   DataSourceFactoryInitializeArgs,
   IDataSourceFactory,
 } from "@foxglove/studio-base/context/PlayerSelectionContext";
 import { IterablePlayer, WorkerIterableSource } from "@foxglove/studio-base/players/IterablePlayer";
-import { FirebaseInstance } from "@foxglove/studio-base/providers/NstrumentaProvider";
 import { Player } from "@foxglove/studio-base/players/types";
 
 class NstrumentaDataSourceFactory implements IDataSourceFactory {
@@ -19,17 +19,17 @@ class NstrumentaDataSourceFactory implements IDataSourceFactory {
   public displayName = "nstrumenta";
   public iconName: IDataSourceFactory["iconName"] = "FileASPX";
   public hidden = true;
-  public firebaseInstance: FirebaseInstance;
 
-  public constructor(firebaseInstance: FirebaseInstance) {
-    this.firebaseInstance = firebaseInstance;
+  public constructor() {
   }
 
   public async initialize(
     args: DataSourceFactoryInitializeArgs,
   ): Promise<Player | undefined> {
 
-    if (this.firebaseInstance.storage == undefined) {
+    const { firebaseInstance } = useNstrumentaContext();
+
+    if (firebaseInstance?.storage == undefined) {
       console.error("firebase not initialized");
       return;
     }
@@ -37,7 +37,7 @@ class NstrumentaDataSourceFactory implements IDataSourceFactory {
 
     let dataUrl: string = "";
     if (dataFilePath != undefined) {
-      dataUrl = await getDownloadURL(ref(this.firebaseInstance.storage, dataFilePath));
+      dataUrl = await getDownloadURL(ref(firebaseInstance.storage, dataFilePath));
     }
 
     const source = new WorkerIterableSource({

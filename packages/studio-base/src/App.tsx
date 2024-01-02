@@ -2,7 +2,7 @@
 // License, v2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
-import { Suspense, Fragment, useEffect } from "react";
+import { Fragment, Suspense, useEffect } from "react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 
@@ -19,7 +19,6 @@ import CssBaseline from "./components/CssBaseline";
 import DocumentTitleAdapter from "./components/DocumentTitleAdapter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import MultiProvider from "./components/MultiProvider";
-import PlayerManager from "./components/PlayerManager";
 import SendNotificationToastAdapter from "./components/SendNotificationToastAdapter";
 import StudioToastProvider from "./components/StudioToastProvider";
 import AppConfigurationContext, { IAppConfiguration } from "./context/AppConfigurationContext";
@@ -37,6 +36,7 @@ import UserProfileLocalStorageProvider from "./providers/UserProfileLocalStorage
 import { LaunchPreference } from "./screens/LaunchPreference";
 import { ExtensionLoader } from "./services/ExtensionLoader";
 import { ILayoutStorage } from "./services/ILayoutStorage";
+import { MessagePipelineProvider } from "@foxglove/studio-base/components/MessagePipeline";
 
 type AppProps = CustomWindowControlsProps & {
   deepLinks: string[];
@@ -66,7 +66,6 @@ function contextMenuHandler(event: MouseEvent) {
 export function App(props: AppProps): JSX.Element {
   const {
     appConfiguration,
-    dataSources,
     layoutStorage,
     extensionLoaders,
     nativeAppMenu,
@@ -79,6 +78,8 @@ export function App(props: AppProps): JSX.Element {
 
   const providers = [
     /* eslint-disable react/jsx-key */
+    <MessagePipelineProvider />,
+    <NstrumentaProvider />,
     <StudioLogsSettingsProvider />,
     <StudioToastProvider />,
     <LayoutStorageContext.Provider value={layoutStorage} />,
@@ -89,9 +90,7 @@ export function App(props: AppProps): JSX.Element {
     <CurrentLayoutProvider />,
     <ExtensionMarketplaceProvider />,
     <ExtensionCatalogProvider loaders={extensionLoaders} />,
-    <PlayerManager playerSources={dataSources} />,
     <EventsProvider />,
-    <NstrumentaProvider />,
     /* eslint-enable react/jsx-key */
   ];
 

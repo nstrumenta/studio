@@ -7,19 +7,10 @@ import { useMemo, useState } from "react";
 import {
   App,
   AppSetting,
-  FoxgloveWebSocketDataSourceFactory,
   IDataSourceFactory,
   IdbExtensionLoader,
-  McapLocalDataSourceFactory,
-  NstrumentaDataSourceFactory,
-  RemoteDataSourceFactory,
-  Ros1LocalBagDataSourceFactory,
-  Ros2LocalBagDataSourceFactory,
-  RosbridgeDataSourceFactory,
-  SampleNuscenesDataSourceFactory,
-  UlogLocalDataSourceFactory,
+  NstrumentaDataSourceFactory
 } from "@foxglove/studio-base";
-import { useNstrumentaContext } from "@foxglove/studio-base/context/NstrumentaContext";
 
 import LocalStorageAppConfiguration from "./services/LocalStorageAppConfiguration";
 import { NstLayoutStorage } from "./services/NstLayoutStorage";
@@ -45,24 +36,10 @@ export function Root(props: {
     new IdbExtensionLoader("local"),
   ]);
 
-  const { firebaseInstance } = useNstrumentaContext();
 
   const dataSources = useMemo(() => {
-    if (!firebaseInstance) {return [];}
-    const sources = [
-      new Ros1LocalBagDataSourceFactory(),
-      new Ros2LocalBagDataSourceFactory(),
-      new FoxgloveWebSocketDataSourceFactory(),
-      new RosbridgeDataSourceFactory(),
-      new UlogLocalDataSourceFactory(),
-      new SampleNuscenesDataSourceFactory(),
-      new McapLocalDataSourceFactory(),
-      new RemoteDataSourceFactory(),
-      new NstrumentaDataSourceFactory(firebaseInstance),
-    ];
-
-    return props.dataSources ?? sources;
-  }, [firebaseInstance, props.dataSources]);
+    return [new NstrumentaDataSourceFactory()]
+  }, [props.dataSources]);
 
   return (
     <>

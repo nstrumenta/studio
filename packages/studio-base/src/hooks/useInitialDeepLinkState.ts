@@ -10,15 +10,11 @@ import {
   useMessagePipeline,
 } from "@foxglove/studio-base/components/MessagePipeline";
 import { useCurrentLayoutActions } from "@foxglove/studio-base/context/CurrentLayoutContext";
-import { useCurrentUser } from "@foxglove/studio-base/context/CurrentUserContext";
-import { EventsStore, useEvents } from "@foxglove/studio-base/context/EventsContext";
-import { usePlayerSelection } from "@foxglove/studio-base/context/PlayerSelectionContext";
 import { PlayerPresence } from "@foxglove/studio-base/players/types";
 import { AppURLState, parseAppURLState } from "@foxglove/studio-base/util/appURLState";
 
 const selectPlayerPresence = (ctx: MessagePipelineContext) => ctx.playerState.presence;
 const selectSeek = (ctx: MessagePipelineContext) => ctx.seekPlayback;
-const selectSelectEvent = (store: EventsStore) => store.selectEvent;
 
 const log = Log.getLogger(__filename);
 
@@ -30,49 +26,9 @@ const log = Log.getLogger(__filename);
  * garbage collection of the old player.
  */
 
-function useSyncSourceFromUrl(
-  targetUrlState: AppURLState | undefined,
-  { currentUserRequired }: { currentUserRequired: boolean },
-) {
-  const [unappliedSourceArgs, setUnappliedSourceArgs] = useState(
-    targetUrlState ? { ds: targetUrlState.ds, dsParams: targetUrlState.dsParams } : undefined,
-  );
-  const { selectSource } = usePlayerSelection();
-  const selectEvent = useEvents(selectSelectEvent);
-  const { currentUser } = useCurrentUser();
-  // Load data source from URL.
-  useEffect(() => {
-    if (!unappliedSourceArgs) {
-      return;
-    }
 
-    // Wait for current user session if one is required for this source.
-    if (currentUserRequired && !currentUser) {
-      return;
-    }
-
-    // Apply any available datasource args
-    if (unappliedSourceArgs.ds) {
-      log.debug("Initialising source from url", unappliedSourceArgs);
-      selectSource(unappliedSourceArgs.ds, {
-        type: "connection",
-        params: unappliedSourceArgs.dsParams,
-      });
-      selectEvent(unappliedSourceArgs.dsParams?.eventId);
-      setUnappliedSourceArgs({ ds: undefined, dsParams: undefined });
-    }
-  }, [
-    currentUser,
-    currentUserRequired,
-    selectEvent,
-    selectSource,
-    unappliedSourceArgs,
-    setUnappliedSourceArgs,
-  ]);
-}
 function useSyncLayoutFromUrl(
   targetUrlState: AppURLState | undefined,
-  { currentUserRequired }: { currentUserRequired: boolean },
 ) {
   const { setSelectedLayoutId } = useCurrentLayoutActions();
   const playerPresence = useMessagePipeline(selectPlayerPresence);
@@ -85,17 +41,10 @@ function useSyncLayoutFromUrl(
       return;
     }
 
-    // If our datasource requires a current user then wait until the player is
-    // available to load the layout since we may need to sync layouts first and
-    // that's only possible after the user has logged in.
-    if (currentUserRequired && playerPresence !== PlayerPresence.PRESENT) {
-      return;
-    }
-
     log.debug(`Initializing layout from url: ${unappliedLayoutArgs.layoutId}`);
     setSelectedLayoutId(unappliedLayoutArgs.layoutId);
     setUnappliedLayoutArgs({ layoutId: undefined });
-  }, [currentUserRequired, playerPresence, setSelectedLayoutId, unappliedLayoutArgs?.layoutId]);
+  }, [playerPresence, setSelectedLayoutId, unappliedLayoutArgs?.layoutId]);
 }
 
 function useSyncTimeFromUrl(targetUrlState: AppURLState | undefined) {
@@ -129,9 +78,7 @@ let useInitialDeepLinkStateMounted = false;
 /**
  * Restores our session state from any deep link we were passed on startup.
  */
-export function useInitialDeepLinkState(deepLinks: readonly string[]): {
-  currentUserRequired: boolean;
-} {
+export function useInitialDeepLinkState(deepLinks: readonly string[]) {
   useEffect(() => {
     if (useInitialDeepLinkStateMounted) {
       throw new Error("Invariant: only one copy of useInitialDeepLinkState may be mounted");
@@ -142,29 +89,11 @@ export function useInitialDeepLinkState(deepLinks: readonly string[]): {
     };
   }, []);
 
-  const { availableSources } = usePlayerSelection();
   const targetUrlState = useMemo(
     () => (deepLinks[0] ? parseAppURLState(new URL(deepLinks[0])) : undefined),
     [deepLinks],
   );
 
-  // Maybe this should be abstracted somewhere but that would require a
-  // more intimate interface with this hook and the player selection logic.
-  const currentUserRequiredParam = useMemo(() => {
-    let currentUserRequired = false;
-    const ds = targetUrlState?.ds;
-    const foundSource =
-      ds == undefined
-        ? undefined
-        : availableSources.find((source) => source.id === ds || source.legacyIds?.includes(ds));
-    if (foundSource) {
-      currentUserRequired = foundSource.currentUserRequired ?? false;
-    }
-
-    return { currentUserRequired };
-  }, [targetUrlState?.ds, availableSources]);
-  useSyncSourceFromUrl(targetUrlState, currentUserRequiredParam);
-  useSyncLayoutFromUrl(targetUrlState, currentUserRequiredParam);
+  useSyncLayoutFromUrl(targetUrlState);
   useSyncTimeFromUrl(targetUrlState);
-  return currentUserRequiredParam;
 }

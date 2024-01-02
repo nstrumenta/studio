@@ -12,17 +12,11 @@ import {
 } from "@foxglove/studio-base/context/WorkspaceContext";
 
 function createWorkspaceContextStore(
-  initialState?: Partial<WorkspaceContextStore>,
 ): StoreApi<WorkspaceContextStore> {
   return createStore<WorkspaceContextStore>()(
     persist(
       () => {
         const store: WorkspaceContextStore = {
-          dataSourceDialog: {
-            activeDataSource: undefined,
-            item: undefined,
-            open: false,
-          },
           leftSidebarItem: "panel-settings",
           leftSidebarOpen: true,
           leftSidebarSize: undefined,
@@ -37,16 +31,12 @@ function createWorkspaceContextStore(
           rightSidebarOpen: false,
           rightSidebarSize: undefined,
           sidebarItem: "connection",
-          ...initialState,
         };
         return store;
       },
       {
         name: "fox.workspace",
-        partialize: (value) => {
-          const { dataSourceDialog: _, ...rest } = value;
-          return rest;
-        },
+        partialize: (value) => value
       },
     ),
   );
@@ -54,12 +44,10 @@ function createWorkspaceContextStore(
 
 export default function WorkspaceContextProvider({
   children,
-  initialState,
 }: {
   children?: ReactNode;
-  initialState?: Partial<WorkspaceContextStore>;
 }): JSX.Element {
-  const [store] = useState(() => createWorkspaceContextStore(initialState));
+  const [store] = useState(() => createWorkspaceContextStore());
 
   return <WorkspaceContext.Provider value={store}>{children}</WorkspaceContext.Provider>;
 }

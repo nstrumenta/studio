@@ -39,6 +39,9 @@ import AnalyticsMetricsCollector from "@foxglove/studio-base/players/AnalyticsMe
 import UserNodePlayer from "@foxglove/studio-base/players/UserNodePlayer";
 import { Player } from "@foxglove/studio-base/players/types";
 import { UserNodes } from "@foxglove/studio-base/types/panels";
+import { useNstrumentaContext } from "@foxglove/studio-base/context/NstrumentaContext";
+import { getDownloadURL, ref } from "firebase/storage";
+import { IterablePlayer, WorkerIterableSource } from "@foxglove/studio-base/players/IterablePlayer";
 
 const log = Logger.getLogger(__filename);
 
@@ -108,11 +111,8 @@ export default function PlayerManager(props: PropsWithChildren<PlayerManagerProp
   const { enqueueSnackbar } = useSnackbar();
 
   const selectSource = useCallback(
-    async (sourceId: string, args?: DataSourceArgs) => {
+    async (sourceId: string) => {
       log.debug(`Select Source: ${sourceId}`);
-
-      // Clear any previous represented filename
-      void nativeWindow?.setRepresentedFilename(undefined);
 
       const foundSource = playerSources.find(
         (source) => source.id === sourceId || source.legacyIds?.includes(sourceId),
@@ -124,137 +124,71 @@ export default function PlayerManager(props: PropsWithChildren<PlayerManagerProp
 
       metricsCollector.setProperty("player", sourceId);
 
-      // Sample sources don't need args or prompts to initialize
-      if (foundSource.type === "sample" || foundSource.type === "nstrumenta") {
-        const newPlayer = await foundSource.initialize({
-          metricsCollector,
+
+      // const newPlayer = await foundSource.initialize({
+      //   metricsCollector,
+      // });
+
+      const makeNewPlayer = async () => {
+        const { firebaseInstance } = useNstrumentaContext();
+
+        if (firebaseInstance?.storage == undefined) {
+          console.error("firebase not initialized");
+          return;
+        }
+        const dataFilePath = "projects/peek-ai-2023/data/recording-f1bf24c7-100d-42a5-84d1-3aa8c9a104ce.mcap"; // TODO picker for this
+
+        let dataUrl: string = "";
+        if (dataFilePath != undefined) {
+          dataUrl = await getDownloadURL(ref(firebaseInstance.storage, dataFilePath));
+        }
+
+        const source = new WorkerIterableSource({
+          initWorker: () => {
+            return new Worker(
+              // foxglove-depcheck-used: babel-plugin-transform-import-meta
+              new URL(
+                "@foxglove/studio-base/players/IterablePlayer/Mcap/McapIterableSourceWorker.worker",
+                import.meta.url,
+              ),
+            );
+          },
+          initArgs: { url: dataUrl },
         });
 
-        setBasePlayer(newPlayer);
-
-        if (foundSource.sampleLayout) {
-          try {
-            const layouts = await layoutStorage.getLayouts();
-            let sourceLayout = layouts.find((layout) => layout.name === foundSource.displayName);
-            if (sourceLayout == undefined) {
-              sourceLayout = await layoutStorage.saveNewLayout({
-                name: foundSource.displayName,
-                data: foundSource.sampleLayout,
-                permission: "CREATOR_WRITE",
-              });
-            }
-
-            if (isMounted()) {
-              setSelectedLayoutId(sourceLayout.id);
-            }
-          } catch (err) {
-            enqueueSnackbar((err as Error).message, { variant: "error" });
-          }
-        }
-
-        return;
+        return new IterablePlayer({
+          source,
+          isSampleDataSource: true,
+          name: "nstrumenta",
+          metricsCollector,
+          // Use blank url params so the data source is set in the url
+          urlParams: {},
+          sourceId,
+        });
       }
 
-      if (!args) {
-        enqueueSnackbar("Unable to initialize player: no args", { variant: "error" });
-        return;
-      }
+      const newPlayer = await makeNewPlayer();
 
-      try {
-        switch (args.type) {
-          case "connection": {
-            const newPlayer = await foundSource.initialize({
-              metricsCollector,
-              params: args.params,
+      setBasePlayer(newPlayer);
+
+      if (foundSource.sampleLayout) {
+        try {
+          const layouts = await layoutStorage.getLayouts();
+          let sourceLayout = layouts.find((layout) => layout.name === foundSource.displayName);
+          if (sourceLayout == undefined) {
+            sourceLayout = await layoutStorage.saveNewLayout({
+              name: foundSource.displayName,
+              data: foundSource.sampleLayout,
+              permission: "CREATOR_WRITE",
             });
-            setBasePlayer(newPlayer);
-
-            if (args.params?.url) {
-              addRecent({
-                type: "connection",
-                sourceId: foundSource.id,
-                title: args.params.url,
-                label: foundSource.displayName,
-                extra: args.params,
-              });
-            }
-
-            return;
           }
-          case "file": {
-            const handle = args.handle;
-            const files = args.files;
 
-            // files we can try loading immediately
-            // We do not add these to recents entries because putting File in indexedb results in
-            // the entire file being stored in the database.
-            if (files) {
-              let file = files[0];
-              const fileList: File[] = [];
-
-              for (const curFile of files) {
-                file ??= curFile;
-                fileList.push(curFile);
-              }
-              const multiFile = foundSource.supportsMultiFile === true && fileList.length > 1;
-
-              const newPlayer = await foundSource.initialize({
-                file: multiFile ? undefined : file,
-                files: multiFile ? fileList : undefined,
-                metricsCollector,
-              });
-
-              // If we are selecting a single file, the desktop environment might have features to
-              // show the user which file they've selected (i.e. macOS proxy icon)
-              if (file) {
-                void nativeWindow?.setRepresentedFilename((file as { path?: string }).path); // File.path is added by Electron
-              }
-
-              setBasePlayer(newPlayer);
-              return;
-            } else if (handle) {
-              const permission = await handle.queryPermission({ mode: "read" });
-              if (!isMounted()) {
-                return;
-              }
-
-              if (permission !== "granted") {
-                const newPerm = await handle.requestPermission({ mode: "read" });
-                if (newPerm !== "granted") {
-                  throw new Error(`Permission denied: ${handle.name}`);
-                }
-              }
-
-              const file = await handle.getFile();
-              if (!isMounted()) {
-                return;
-              }
-
-              // If we are selecting a single file, the desktop environment might have features to
-              // show the user which file they've selected (i.e. macOS proxy icon)
-              void nativeWindow?.setRepresentedFilename((file as { path?: string }).path); // File.path is added by Electron
-
-              const newPlayer = await foundSource.initialize({
-                file,
-                metricsCollector,
-              });
-
-              setBasePlayer(newPlayer);
-              addRecent({
-                type: "file",
-                title: handle.name,
-                sourceId: foundSource.id,
-                handle,
-              });
-
-              return;
-            }
+          if (isMounted()) {
+            setSelectedLayoutId(sourceLayout.id);
           }
+        } catch (err) {
+          enqueueSnackbar((err as Error).message, { variant: "error" });
         }
-
-        enqueueSnackbar("Unable to initialize player", { variant: "error" });
-      } catch (error) {
-        enqueueSnackbar((error as Error).message, { variant: "error" });
       }
     },
     [

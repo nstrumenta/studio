@@ -63,7 +63,7 @@ export function useMessagePipeline<T>(selector: (arg0: MessagePipelineContext) =
 }
 
 type ProviderProps = {
-  children: React.ReactNode;
+  children?: React.ReactNode;
 
   // Represents either the lack of a player, a player that is currently being constructed, or a
   // valid player. MessagePipelineProvider is not responsible for building players, but it is
@@ -71,7 +71,6 @@ type ProviderProps = {
   // information is passed in and merged with other player state.
   player?: Player;
 
-  globalVariables: GlobalVariables;
 };
 
 const selectRenderDone = (state: MessagePipelineInternalState) => state.renderDone;
@@ -80,7 +79,6 @@ const selectSubscriptions = (state: MessagePipelineInternalState) => state.publi
 export function MessagePipelineProvider({
   children,
   player,
-  globalVariables,
 }: ProviderProps): React.ReactElement {
   const promisesToWaitForRef = useRef<FramePromise[]>([]);
   const [store] = useState(() =>
@@ -157,9 +155,6 @@ export function MessagePipelineProvider({
     };
   }, [player, dispatch]);
 
-  useEffect(() => {
-    player?.setGlobalVariables(globalVariables);
-  }, [player, globalVariables]);
 
   return <ContextInternal.Provider value={store}>{children}</ContextInternal.Provider>;
 }
