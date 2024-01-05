@@ -51,10 +51,6 @@ export class NamespacedLayoutStorage {
     return await this.storage.put(this.namespace, layout);
   }
 
-  public async saveLayoutDb(): Promise<void> {
-    await this.storage.saveLayoutDb();
-  }
-
   public async delete(id: LayoutID): Promise<void> {
     await this.migration;
     await this.storage.delete(this.namespace, id);

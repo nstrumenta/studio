@@ -12,6 +12,7 @@ import NstrumentaProvider from "@foxglove/studio-base/providers/NstrumentaProvid
 import { StudioLogsSettingsProvider } from "@foxglove/studio-base/providers/StudioLogsSettingsProvider";
 import TimelineInteractionStateProvider from "@foxglove/studio-base/providers/TimelineInteractionStateProvider";
 
+import { MessagePipelineProvider } from "@foxglove/studio-base/components/MessagePipeline";
 import Workspace from "./Workspace";
 import { CustomWindowControlsProps } from "./components/AppBar/CustomWindowControls";
 import { ColorSchemeThemeProvider } from "./components/ColorSchemeThemeProvider";
@@ -25,7 +26,6 @@ import AppConfigurationContext, { IAppConfiguration } from "./context/AppConfigu
 import LayoutStorageContext from "./context/LayoutStorageContext";
 import NativeAppMenuContext, { INativeAppMenu } from "./context/NativeAppMenuContext";
 import NativeWindowContext, { INativeWindow } from "./context/NativeWindowContext";
-import { IDataSourceFactory } from "./context/PlayerSelectionContext";
 import { UserNodeStateProvider } from "./context/UserNodeStateContext";
 import CurrentLayoutProvider from "./providers/CurrentLayoutProvider";
 import ExtensionCatalogProvider from "./providers/ExtensionCatalogProvider";
@@ -36,12 +36,10 @@ import UserProfileLocalStorageProvider from "./providers/UserProfileLocalStorage
 import { LaunchPreference } from "./screens/LaunchPreference";
 import { ExtensionLoader } from "./services/ExtensionLoader";
 import { ILayoutStorage } from "./services/ILayoutStorage";
-import { MessagePipelineProvider } from "@foxglove/studio-base/components/MessagePipeline";
 
 type AppProps = CustomWindowControlsProps & {
   deepLinks: string[];
   appConfiguration: IAppConfiguration;
-  dataSources: IDataSourceFactory[];
   layoutStorage: ILayoutStorage;
   extensionLoaders: readonly ExtensionLoader[];
   nativeAppMenu?: INativeAppMenu;
@@ -78,8 +76,8 @@ export function App(props: AppProps): JSX.Element {
 
   const providers = [
     /* eslint-disable react/jsx-key */
-    <MessagePipelineProvider />,
     <NstrumentaProvider />,
+    <MessagePipelineProvider />,
     <StudioLogsSettingsProvider />,
     <StudioToastProvider />,
     <LayoutStorageContext.Provider value={layoutStorage} />,

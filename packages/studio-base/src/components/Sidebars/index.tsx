@@ -2,16 +2,18 @@
 // License, v2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
-import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
-import { Badge, Paper, Tab, Tabs } from "@mui/material";
+import { Avatar, Badge, Button, IconButton, Paper, Tab, Tabs } from "@mui/material";
+import tc from "tinycolor2";
+
+
+import PersonIcon from "@mui/icons-material/Person";
 import {
   ComponentProps,
-  MouseEvent,
   PropsWithChildren,
   useCallback,
   useEffect,
   useMemo,
-  useState,
+  useState
 } from "react";
 import { MosaicNode, MosaicWithoutDragDropContext } from "react-mosaic-component";
 import { makeStyles } from "tss-react/mui";
@@ -24,9 +26,11 @@ import Stack from "@foxglove/studio-base/components/Stack";
 import { useAppConfigurationValue } from "@foxglove/studio-base/hooks";
 import isDesktopApp from "@foxglove/studio-base/util/isDesktopApp";
 
+import { APP_BAR_BACKGROUND_COLOR, APP_BAR_FOREGROUND_COLOR } from "@foxglove/studio-base/components/AppBar/constants";
+import { useCurrentUser } from "@foxglove/studio-base/context/NstrumentaContext";
+import "react-mosaic-component/react-mosaic-component.css";
 import { NewSidebar, NewSidebarItem } from "./NewSidebar";
 import { TabSpacer } from "./TabSpacer";
-import "react-mosaic-component/react-mosaic-component.css";
 
 function Noop(): ReactNull {
   return ReactNull;
@@ -75,6 +79,19 @@ const useStyles = makeStyles()((theme) => ({
         height: "auto",
       },
     },
+  },
+  avatar: {
+    color: APP_BAR_FOREGROUND_COLOR,
+    backgroundColor: tc(APP_BAR_BACKGROUND_COLOR[theme.palette.mode]).lighten().toString(),
+    height: theme.spacing(3.5),
+    width: theme.spacing(3.5),
+    transition: theme.transitions.create("background-color", {
+      duration: theme.transitions.duration.shortest,
+    }),
+  },
+  userIconImage: {
+    objectFit: "cover",
+    width: "100%",
   },
   mosaicWrapper: {
     flex: "1 1 100%",
@@ -179,17 +196,6 @@ export default function Sidebars<
   const allOldLeftItems = useMemo(() => {
     return new Map([...items, ...bottomItems]);
   }, [bottomItems, items]);
-
-  const [helpAnchorEl, setHelpAnchorEl] = useState<undefined | HTMLElement>(undefined);
-
-  const helpMenuOpen = Boolean(helpAnchorEl);
-
-  const handleHelpClick = (event: MouseEvent<HTMLElement>) => {
-    setHelpAnchorEl(event.currentTarget);
-  };
-  const handleHelpClose = () => {
-    setHelpAnchorEl(undefined);
-  };
 
   const oldLeftSidebarOpen = !enableNewTopNav
     ? selectedKey != undefined && allOldLeftItems.has(selectedKey)
@@ -306,6 +312,8 @@ export default function Sidebars<
     ));
   }, [bottomItems, classes, onClickTabAction]);
 
+  const { currentUser, signIn } = useCurrentUser();
+
   const onChangeMosaicValue = useCallback(
     (newValue: ReactNull | MosaicNode<LayoutNode>) => {
       if (newValue != undefined) {
@@ -331,18 +339,38 @@ export default function Sidebars<
             {topTabs}
             <TabSpacer />
             {enableMemoryUseIndicator && <MemoryUseIndicator />}
-            <Tab
-              className={classes.tab}
-              color="inherit"
-              id="help-button"
-              aria-label="Help menu button"
-              aria-controls={helpMenuOpen ? "help-menu" : undefined}
-              aria-haspopup="true"
-              aria-expanded={helpMenuOpen ? "true" : undefined}
-              onClick={(event) => handleHelpClick(event)}
-              icon={<HelpOutlineIcon color={helpMenuOpen ? "primary" : "inherit"} />}
-            />
             {bottomTabs}
+            {!currentUser && (
+              <Button
+                variant="contained"
+                color="primary"
+                size="small"
+                onClick={() => {
+                  signIn();
+                }}
+              >
+                Sign in
+              </Button>
+            )}
+
+            <IconButton
+              aria-label="User profile menu button"
+              color="inherit"
+              id="user-profile-button"
+              onClick={signIn}
+            >
+              <Avatar className={classes.avatar} variant="rounded">
+                {currentUser?.photoURL ? (
+                  <img
+                    src={currentUser.photoURL}
+                    referrerPolicy="same-origin"
+                    className={classes.userIconImage}
+                  />
+                ) : (
+                  <PersonIcon />
+                )}
+              </Avatar>
+            </IconButton>
           </Tabs>
         </Stack>
       )}

@@ -11,12 +11,17 @@ import { AppSetting } from "@foxglove/studio-base/AppSetting";
 import LayoutManagerContext from "@foxglove/studio-base/context/LayoutManagerContext";
 import { useLayoutStorage } from "@foxglove/studio-base/context/LayoutStorageContext";
 import LayoutStorageDebuggingContext from "@foxglove/studio-base/context/LayoutStorageDebuggingContext";
-import { useRemoteLayoutStorage } from "@foxglove/studio-base/context/RemoteLayoutStorageContext";
+import { useCurrentUser, useNstrumentaContext } from "@foxglove/studio-base/context/NstrumentaContext";
 import { useAppConfigurationValue } from "@foxglove/studio-base/hooks/useAppConfigurationValue";
 import useCallbackWithToast from "@foxglove/studio-base/hooks/useCallbackWithToast";
-import { ISO8601Timestamp, LayoutID } from "@foxglove/studio-base/services/ILayoutStorage";
+import { ISO8601Timestamp, LayoutID, LayoutPermission } from "@foxglove/studio-base/services/ILayoutStorage";
+import { IRemoteLayoutStorage, RemoteLayout } from "@foxglove/studio-base/services/IRemoteLayoutStorage";
 import LayoutManager from "@foxglove/studio-base/services/LayoutManager/LayoutManager";
 import delay from "@foxglove/studio-base/util/delay";
+import { getDownloadURL, ref, uploadString } from "firebase/storage";
+import { LayoutData } from "@foxglove/studio-base/context/CurrentLayoutContext/actions";
+
+import { v4 as uuidv4 } from "uuid";
 
 const log = Logger.getLogger(__filename);
 
@@ -27,10 +32,74 @@ export default function LayoutManagerProvider({
   children,
 }: React.PropsWithChildren<unknown>): JSX.Element {
   const layoutStorage = useLayoutStorage();
-  const remoteLayoutStorage = useRemoteLayoutStorage();
   const [enableLayoutDebugging = false] = useAppConfigurationValue<boolean>(
     AppSetting.ENABLE_LAYOUT_DEBUGGING,
   );
+
+
+  const { firebaseInstance } = useNstrumentaContext();
+  const { currentUser } = useCurrentUser();
+
+  console.log(currentUser);
+  console.log(firebaseInstance);
+
+  const remoteLayoutStorage = useMemo<IRemoteLayoutStorage>(
+    () => {
+      const fb = firebaseInstance!;
+      class NstrumentaLayoutStorage implements IRemoteLayoutStorage {
+        namespace: string = 'nstrumenta';
+        filePath = 'projects/peek-ai-2023/data/layouts.json'
+        layouts?: Map<string, RemoteLayout>;
+
+        async getLayouts(): Promise<RemoteLayout[]> {
+          if (!this.layouts) this.layouts = new Map();
+          try {
+            const url = await getDownloadURL(ref(fb.storage, this.filePath));
+            const remoteLayouts = await (await fetch(url)).json() as RemoteLayout[];
+            for (const layout of remoteLayouts) {
+              this.layouts.set(layout.id, layout)
+            }
+            return new Promise((resolve) => resolve(Array.from(this.layouts!.values())))
+          }
+          catch {
+            return new Promise((resolve) => resolve([]))
+          }
+        }
+        async getLayout(id: LayoutID): Promise<RemoteLayout | undefined> {
+          if (!this.layouts) await this.getLayouts();
+          return new Promise(resolve => resolve(this.layouts?.get(id)))
+        }
+        async saveNewLayout(params: { id: LayoutID | undefined; name: string; data: LayoutData; permission: LayoutPermission; savedAt: ISO8601Timestamp; }): Promise<RemoteLayout> {
+          if (!this.layouts) await this.getLayouts();
+          const id = params.id ?? uuidv4() as LayoutID;
+          const layout = { ...params, id }
+          this.layouts?.set(layout.id, layout)
+          const layoutsJson = JSON.stringify(Array.from(this.layouts!.values()))!;
+          uploadString(ref(fb.storage, this.filePath), layoutsJson);
+          return new Promise(resolve => resolve(this.layouts!.get(layout.id)!))
+        }
+        async updateLayout(params: { id: LayoutID; name?: string; data?: LayoutData; permission?: LayoutPermission; savedAt: ISO8601Timestamp; })
+          : Promise<{ status: "success"; newLayout: RemoteLayout } | { status: "conflict" }> {
+          if (!this.layouts) await this.getLayouts();
+          const layout = { ...this.layouts?.get(params.id)!, ...params }
+          this.layouts?.set(layout.id, layout)
+          const url = await getDownloadURL(ref(fb.storage, this.filePath));
+          await (await fetch(url, { method: 'POST', body: JSON.stringify(Array.from(this.layouts!.values())) }));
+          return new Promise(resolve => resolve({ status: "success", newLayout: this.layouts!.get(layout.id)! }))
+        }
+        async deleteLayout(id: LayoutID): Promise<boolean> {
+          if (!this.layouts) await this.getLayouts();
+          this.layouts?.delete(id)
+          const url = await getDownloadURL(ref(fb.storage, this.filePath));
+          await (await fetch(url, { method: 'POST', body: JSON.stringify(Array.from(this.layouts!.values())) }));
+          return new Promise(resolve => resolve(true))
+        }
+      }
+
+      return new NstrumentaLayoutStorage();
+    }
+    , [firebaseInstance?.storage]);
+
 
   const layoutManager = useMemo(
     () => new LayoutManager({ local: layoutStorage, remote: remoteLayoutStorage }),
@@ -109,7 +178,7 @@ export default function LayoutManagerProvider({
         throw new Error("This layout doesn't exist on the server");
       }
       await remoteLayoutStorage?.updateLayout({
-        id,
+        ...layout,
         name: `${layout.name} renamed`,
         savedAt: new Date().toISOString() as ISO8601Timestamp,
       });

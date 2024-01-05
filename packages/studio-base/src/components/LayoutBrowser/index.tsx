@@ -8,18 +8,17 @@ import CloudOffIcon from "@mui/icons-material/CloudOff";
 import FileOpenOutlinedIcon from "@mui/icons-material/FileOpenOutlined";
 import {
   Button,
-  IconButton,
-  Switch,
-  FormGroup,
-  FormControlLabel,
   CircularProgress,
+  Divider,
+  FormControlLabel,
+  FormGroup,
+  IconButton,
   List,
   ListItem,
   ListItemButton,
   ListItemText,
-  Divider,
+  Switch,
 } from "@mui/material";
-import { partition } from "lodash";
 import moment from "moment";
 import { useSnackbar } from "notistack";
 import path from "path";
@@ -30,7 +29,6 @@ import { makeStyles } from "tss-react/mui";
 
 import Logger from "@foxglove/log";
 import { AppSetting } from "@foxglove/studio-base/AppSetting";
-import SignInPrompt from "@foxglove/studio-base/components/LayoutBrowser/SignInPrompt";
 import { useUnsavedChangesPrompt } from "@foxglove/studio-base/components/LayoutBrowser/UnsavedChangesPrompt";
 import { SidebarContent } from "@foxglove/studio-base/components/SidebarContent";
 import Stack from "@foxglove/studio-base/components/Stack";
@@ -41,7 +39,6 @@ import {
   useCurrentLayoutSelector,
 } from "@foxglove/studio-base/context/CurrentLayoutContext";
 import { LayoutData } from "@foxglove/studio-base/context/CurrentLayoutContext/actions";
-import { useCurrentUser } from "@foxglove/studio-base/context/CurrentUserContext";
 import { useLayoutManager } from "@foxglove/studio-base/context/LayoutManagerContext";
 import LayoutStorageDebuggingContext from "@foxglove/studio-base/context/LayoutStorageDebuggingContext";
 import { useAppConfigurationValue } from "@foxglove/studio-base/hooks/useAppConfigurationValue";
@@ -56,6 +53,7 @@ import showOpenFilePicker from "@foxglove/studio-base/util/showOpenFilePicker";
 
 import LayoutSection from "./LayoutSection";
 import { useLayoutBrowserReducer } from "./reducer";
+import { partition } from "lodash";
 
 const log = Logger.getLogger(__filename);
 
@@ -90,7 +88,6 @@ export default function LayoutBrowser({
   currentDateForStorybook?: Date;
 }>): JSX.Element {
   const { classes } = useStyles();
-  const { signIn } = useCurrentUser();
   const isMounted = useMountedState();
   const { enqueueSnackbar } = useSnackbar();
   const layoutManager = useLayoutManager();
@@ -377,10 +374,6 @@ export default function LayoutBrowser({
     void analytics.logEvent(AppEvent.LAYOUT_CREATE);
   }, [promptForUnsavedChanges, currentDateForStorybook, layoutManager, onSelectLayout, analytics]);
 
-  const saveLayoutDB = useCallbackWithToast(async () => {
-    await layoutManager.saveLayoutDb();
-  }, [layoutManager]);
-
   const onExportLayout = useCallbackWithToast(
     async (item: Layout) => {
       const content = JSON.stringify(item.working?.data ?? item.baseline.data, undefined, 2) ?? "";
@@ -541,11 +534,6 @@ export default function LayoutBrowser({
   const layoutDebug = useContext(LayoutStorageDebuggingContext);
 
   const [enableNewTopNav = false] = useAppConfigurationValue<boolean>(AppSetting.ENABLE_NEW_TOPNAV);
-  const [hideSignInPrompt = false, setHideSignInPrompt] = useAppConfigurationValue<boolean>(
-    AppSetting.HIDE_SIGN_IN_PROMPT,
-  );
-  const showSignInPrompt =
-    signIn != undefined && !layoutManager.supportsSharing && !hideSignInPrompt;
 
   const pendingMultiAction = state.multiAction?.ids != undefined;
 
@@ -571,15 +559,6 @@ export default function LayoutBrowser({
             <CloudOffIcon />
           </IconButton>
         ),
-        <IconButton
-          color="primary"
-          key="save-layout-db"
-          onClick={saveLayoutDB}
-          aria-label="Save all layouts to nstrumenta"
-          title="Save all layouts to nstrumenta"
-        >
-          <BackupIcon />
-        </IconButton>,
         <IconButton
           color="primary"
           key="add-layout"
@@ -620,11 +599,6 @@ export default function LayoutBrowser({
               <ListItem disablePadding>
                 <ListItemButton onClick={importLayout}>
                   <ListItemText disableTypography>Import from file…</ListItemText>
-                </ListItemButton>
-              </ListItem>
-              <ListItem disablePadding>
-                <ListItemButton onClick={saveLayoutDB}>
-                  <ListItemText disableTypography>Save layouts to nstrumenta…</ListItemText>
                 </ListItemButton>
               </ListItem>
             </List>
@@ -670,7 +644,6 @@ export default function LayoutBrowser({
           />
         )}
         {!enableNewTopNav && <Stack flexGrow={1} />}
-        {showSignInPrompt && <SignInPrompt onDismiss={() => void setHideSignInPrompt(true)} />}
         {layoutDebug && (
           <Stack gap={0.5} padding={1} position="sticky" className={classes.debugBanner}>
             <Stack direction="row" flex="auto" gap={1} alignItems="center">

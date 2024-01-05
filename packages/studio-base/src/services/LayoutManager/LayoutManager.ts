@@ -271,13 +271,6 @@ export default class LayoutManager implements ILayoutManager {
   }
 
   @LayoutManager.withBusyStatus
-  public async saveLayoutDb(): Promise<void> {
-    await this.local.runExclusive(async (local) => {
-      await local.saveLayoutDb();
-    });
-  }
-
-  @LayoutManager.withBusyStatus
   public async updateLayout({
     id,
     name,
@@ -299,8 +292,8 @@ export default class LayoutManager implements ILayoutManager {
       data == undefined
         ? localLayout.working
         : isLayoutEqual(localLayout.baseline.data, data)
-        ? undefined
-        : { data, savedAt: now };
+          ? undefined
+          : { data, savedAt: now };
 
     // Renames of shared layouts go directly to the server
     if (name != undefined && layoutIsShared(localLayout)) {

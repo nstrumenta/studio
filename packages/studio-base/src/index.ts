@@ -21,6 +21,8 @@ export type {
 } from "./context/AppConfigurationContext";
 export { AppContext } from "./context/AppContext";
 export type { IAppContext } from "./context/AppContext";
+export { useNstrumentaContext, useCurrentUser } from './context/NstrumentaContext';
+export { default as NstrumentaProvider } from './providers/NstrumentaProvider'
 export type { Layout, LayoutID, ISO8601Timestamp, ILayoutStorage } from "./services/ILayoutStorage";
 export { migrateLayout } from "./services/migrateLayout";
 export type { INativeAppMenu, NativeAppMenuEvent } from "./context/NativeAppMenuContext";

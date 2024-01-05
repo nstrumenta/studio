@@ -16,7 +16,6 @@ import { StoreApi, useStore } from "zustand";
 
 import { AppSetting } from "@foxglove/studio-base/AppSetting";
 import { useAppConfigurationValue } from "@foxglove/studio-base/hooks/useAppConfigurationValue";
-import { GlobalVariables } from "@foxglove/studio-base/hooks/useGlobalVariables";
 import useGuaranteedContext from "@foxglove/studio-base/hooks/useGuaranteedContext";
 import {
   Player,
@@ -26,11 +25,11 @@ import {
 } from "@foxglove/studio-base/players/types";
 
 import MessageOrderTracker from "./MessageOrderTracker";
-import { pauseFrameForPromises, FramePromise } from "./pauseFrameForPromise";
+import { FramePromise, pauseFrameForPromises } from "./pauseFrameForPromise";
 import {
   MessagePipelineInternalState,
-  createMessagePipelineStore,
   MessagePipelineStateAction,
+  createMessagePipelineStore,
   defaultPlayerState,
 } from "./store";
 import { MessagePipelineContext } from "./types";

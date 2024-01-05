@@ -9,11 +9,10 @@ import {
   AppSetting,
   IDataSourceFactory,
   IdbExtensionLoader,
-  NstrumentaDataSourceFactory
 } from "@foxglove/studio-base";
 
+import { IdbLayoutStorage } from "./services/IdbLayoutStorage";
 import LocalStorageAppConfiguration from "./services/LocalStorageAppConfiguration";
-import { NstLayoutStorage } from "./services/NstLayoutStorage";
 
 const isDevelopment = process.env.NODE_ENV === "development";
 
@@ -30,29 +29,21 @@ export function Root(props: {
       }),
     [],
   );
-  const layoutStorage = useMemo(() => new NstLayoutStorage(), []);
+  const layoutStorage = useMemo(() => new IdbLayoutStorage(), []);
   const [extensionLoaders] = useState(() => [
     new IdbExtensionLoader("org"),
     new IdbExtensionLoader("local"),
   ]);
 
-
-  const dataSources = useMemo(() => {
-    return [new NstrumentaDataSourceFactory()]
-  }, [props.dataSources]);
-
   return (
-    <>
-      <App
-        enableLaunchPreferenceScreen
-        deepLinks={[window.location.href]}
-        dataSources={dataSources}
-        appConfiguration={appConfiguration}
-        layoutStorage={layoutStorage}
-        extensionLoaders={extensionLoaders}
-        enableGlobalCss
-        extraProviders={props.extraProviders}
-      />
-    </>
+    <App
+      enableLaunchPreferenceScreen
+      deepLinks={[window.location.href]}
+      appConfiguration={appConfiguration}
+      layoutStorage={layoutStorage}
+      extensionLoaders={extensionLoaders}
+      enableGlobalCss
+      extraProviders={props.extraProviders}
+    />
   );
 }
