@@ -3,14 +3,14 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
 import {
+  SlideAdd24Regular,
   PanelLeft24Filled,
   PanelLeft24Regular,
   PanelRight24Filled,
   PanelRight24Regular,
-  SlideAdd24Regular,
 } from "@fluentui/react-icons";
 import PersonIcon from "@mui/icons-material/Person";
-import { Avatar, Button, IconButton, AppBar as MuiAppBar, Tooltip } from "@mui/material";
+import { Avatar, Button, IconButton, Tooltip, AppBar as MuiAppBar } from "@mui/material";
 import { useCallback, useState } from "react";
 import tc from "tinycolor2";
 import { makeStyles } from "tss-react/mui";
@@ -22,6 +22,7 @@ import {
   CustomWindowControls,
   CustomWindowControlsProps,
 } from "@foxglove/studio-base/components/AppBar/CustomWindowControls";
+import { FoxgloveLogo } from "@foxglove/studio-base/components/FoxgloveLogo";
 import { MemoryUseIndicator } from "@foxglove/studio-base/components/MemoryUseIndicator";
 import Stack from "@foxglove/studio-base/components/Stack";
 import { useAnalytics } from "@foxglove/studio-base/context/AnalyticsContext";
@@ -32,9 +33,9 @@ import {
 } from "@foxglove/studio-base/context/CurrentLayoutContext";
 import { useCurrentUser } from "@foxglove/studio-base/context/CurrentUserContext";
 import {
-  WorkspaceContextStore,
   useWorkspaceActions,
   useWorkspaceStore,
+  WorkspaceContextStore,
 } from "@foxglove/studio-base/context/WorkspaceContext";
 import { useAppConfigurationValue } from "@foxglove/studio-base/hooks";
 import { AppEvent } from "@foxglove/studio-base/services/IAnalytics";
@@ -239,6 +240,9 @@ export function AppBar(props: AppBarProps): JSX.Element {
         <div className={classes.toolbar}>
           <div className={classes.start}>
             <div className={classes.startInner}>
+              <IconButton className={classes.logo} size="large" color="inherit">
+                <FoxgloveLogo fontSize="inherit" color="inherit" />
+              </IconButton>
               <AppBarIconButton
                 className={cx({ "Mui-selected": panelMenuOpen })}
                 color="inherit"

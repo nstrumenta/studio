@@ -2,15 +2,16 @@
 // License, v2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
-import { ErrorCircle20Filled } from "@fluentui/react-icons";
+import { ErrorCircle20Filled, Open16Filled } from "@fluentui/react-icons";
 import { ButtonBase, CircularProgress, IconButton, Tooltip } from "@mui/material";
 import { useState } from "react";
+import { useTranslation } from "react-i18next";
 import tc from "tinycolor2";
 import { makeStyles } from "tss-react/mui";
 
 import {
-  APP_BAR_FOREGROUND_COLOR,
   APP_BAR_PRIMARY_COLOR,
+  APP_BAR_FOREGROUND_COLOR,
 } from "@foxglove/studio-base/components/AppBar/constants";
 import { ProblemsList } from "@foxglove/studio-base/components/DataSourceSidebar/ProblemsList";
 import {
@@ -20,6 +21,7 @@ import {
 import Stack from "@foxglove/studio-base/components/Stack";
 import TextMiddleTruncate from "@foxglove/studio-base/components/TextMiddleTruncate";
 import WssErrorModal from "@foxglove/studio-base/components/WssErrorModal";
+import { useWorkspaceActions } from "@foxglove/studio-base/context/WorkspaceContext";
 import { PlayerPresence } from "@foxglove/studio-base/players/types";
 
 const LEFT_ICON_SIZE = 19;
@@ -96,11 +98,13 @@ const selectPlayerPresence = ({ playerState }: MessagePipelineContext) => player
 const selectPlayerProblems = ({ playerState }: MessagePipelineContext) => playerState.problems;
 
 export function DataSource(): JSX.Element {
+  const { t } = useTranslation("appBar");
   const { classes, cx } = useStyles();
 
   const playerName = useMessagePipeline(selectPlayerName);
   const playerPresence = useMessagePipeline(selectPlayerPresence);
   const playerProblems = useMessagePipeline(selectPlayerProblems) ?? [];
+  const { dataSourceDialogActions } = useWorkspaceActions();
 
   const reconnecting = playerPresence === PlayerPresence.RECONNECTING;
   const initializing = playerPresence === PlayerPresence.INITIALIZING;
@@ -114,12 +118,22 @@ export function DataSource(): JSX.Element {
 
   const [problemModal, setProblemModal] = useState<JSX.Element | undefined>(undefined);
 
+  const openDataSourceDialog = () => dataSourceDialogActions.open("start");
+
+  if (playerPresence === PlayerPresence.NOT_PRESENT) {
+    return (
+      <ButtonBase className={classes.button} color="inherit" onClick={openDataSourceDialog}>
+        {t("openDataSource")}
+      </ButtonBase>
+    );
+  }
+
   return (
     <>
       {problemModal}
       <WssErrorModal playerProblems={playerProblems} />
       <Stack direction="row" alignItems="center">
-        <ButtonBase className={classes.button}>
+        <ButtonBase className={classes.button} onClick={openDataSourceDialog}>
           <div className={cx(classes.adornment, { [classes.adornmentError]: error })}>
             {loading && (
               <CircularProgress
@@ -150,6 +164,7 @@ export function DataSource(): JSX.Element {
           <div className={classes.textTruncate}>
             <TextMiddleTruncate text={playerDisplayName ?? "<unknown>"} />
           </div>
+          <Open16Filled className={classes.openIcon} />
         </ButtonBase>
       </Stack>
     </>

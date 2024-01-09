@@ -2,7 +2,7 @@
 // License, v2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
-import { Fragment, Suspense, useEffect } from "react";
+import { Suspense, Fragment, useEffect } from "react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 
@@ -12,7 +12,6 @@ import NstrumentaProvider from "@foxglove/studio-base/providers/NstrumentaProvid
 import { StudioLogsSettingsProvider } from "@foxglove/studio-base/providers/StudioLogsSettingsProvider";
 import TimelineInteractionStateProvider from "@foxglove/studio-base/providers/TimelineInteractionStateProvider";
 
-import { MessagePipelineProvider } from "@foxglove/studio-base/components/MessagePipeline";
 import Workspace from "./Workspace";
 import { CustomWindowControlsProps } from "./components/AppBar/CustomWindowControls";
 import { ColorSchemeThemeProvider } from "./components/ColorSchemeThemeProvider";
@@ -20,12 +19,14 @@ import CssBaseline from "./components/CssBaseline";
 import DocumentTitleAdapter from "./components/DocumentTitleAdapter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import MultiProvider from "./components/MultiProvider";
+import PlayerManager from "./components/PlayerManager";
 import SendNotificationToastAdapter from "./components/SendNotificationToastAdapter";
 import StudioToastProvider from "./components/StudioToastProvider";
 import AppConfigurationContext, { IAppConfiguration } from "./context/AppConfigurationContext";
 import LayoutStorageContext from "./context/LayoutStorageContext";
 import NativeAppMenuContext, { INativeAppMenu } from "./context/NativeAppMenuContext";
 import NativeWindowContext, { INativeWindow } from "./context/NativeWindowContext";
+import { IDataSourceFactory } from "./context/PlayerSelectionContext";
 import { UserNodeStateProvider } from "./context/UserNodeStateContext";
 import CurrentLayoutProvider from "./providers/CurrentLayoutProvider";
 import ExtensionCatalogProvider from "./providers/ExtensionCatalogProvider";
@@ -40,6 +41,7 @@ import { ILayoutStorage } from "./services/ILayoutStorage";
 type AppProps = CustomWindowControlsProps & {
   deepLinks: string[];
   appConfiguration: IAppConfiguration;
+  dataSources: IDataSourceFactory[];
   layoutStorage: ILayoutStorage;
   extensionLoaders: readonly ExtensionLoader[];
   nativeAppMenu?: INativeAppMenu;
@@ -64,6 +66,7 @@ function contextMenuHandler(event: MouseEvent) {
 export function App(props: AppProps): JSX.Element {
   const {
     appConfiguration,
+    dataSources,
     layoutStorage,
     extensionLoaders,
     nativeAppMenu,
@@ -77,7 +80,6 @@ export function App(props: AppProps): JSX.Element {
   const providers = [
     /* eslint-disable react/jsx-key */
     <NstrumentaProvider />,
-    <MessagePipelineProvider />,
     <StudioLogsSettingsProvider />,
     <StudioToastProvider />,
     <LayoutStorageContext.Provider value={layoutStorage} />,
@@ -88,6 +90,7 @@ export function App(props: AppProps): JSX.Element {
     <CurrentLayoutProvider />,
     <ExtensionMarketplaceProvider />,
     <ExtensionCatalogProvider loaders={extensionLoaders} />,
+    <PlayerManager playerSources={dataSources} />,
     <EventsProvider />,
     /* eslint-enable react/jsx-key */
   ];

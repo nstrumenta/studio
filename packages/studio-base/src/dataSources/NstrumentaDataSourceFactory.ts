@@ -5,13 +5,13 @@
 
 import { getDownloadURL, ref } from "firebase/storage";
 
-import { useNstrumentaContext } from "@foxglove/studio-base/context/NstrumentaContext";
 import {
   DataSourceFactoryInitializeArgs,
   IDataSourceFactory,
 } from "@foxglove/studio-base/context/PlayerSelectionContext";
 import { IterablePlayer, WorkerIterableSource } from "@foxglove/studio-base/players/IterablePlayer";
 import { Player } from "@foxglove/studio-base/players/types";
+import { FirebaseInstance } from "@foxglove/studio-base/providers/NstrumentaProvider";
 
 class NstrumentaDataSourceFactory implements IDataSourceFactory {
   public id = "nstrumenta";
@@ -19,25 +19,26 @@ class NstrumentaDataSourceFactory implements IDataSourceFactory {
   public displayName = "nstrumenta";
   public iconName: IDataSourceFactory["iconName"] = "FileASPX";
   public hidden = true;
+  public firebaseInstance: FirebaseInstance;
 
-  public constructor() {
+  public constructor(firebaseInstance: FirebaseInstance) {
+    this.firebaseInstance = firebaseInstance
   }
 
   public async initialize(
     args: DataSourceFactoryInitializeArgs,
   ): Promise<Player | undefined> {
 
-    const { firebaseInstance } = useNstrumentaContext();
-
-    if (firebaseInstance?.storage == undefined) {
+    const { filePath } = args.params!;
+    if (this.firebaseInstance?.storage == undefined) {
       console.error("firebase not initialized");
       return;
     }
-    const dataFilePath = "projects/peek-ai-2023/data/recording-f1bf24c7-100d-42a5-84d1-3aa8c9a104ce.mcap"; // TODO picker for this
+    const dataFilePath = filePath || "filepath"; // TODO picker for this
 
     let dataUrl: string = "";
     if (dataFilePath != undefined) {
-      dataUrl = await getDownloadURL(ref(firebaseInstance.storage, dataFilePath));
+      dataUrl = await getDownloadURL(ref(this.firebaseInstance.storage, dataFilePath));
     }
 
     const source = new WorkerIterableSource({

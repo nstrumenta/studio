@@ -19,10 +19,10 @@ export default function NstrumentaProvider({ children }: { children?: ReactNode 
 
   const { search } = window.location;
 
-  const firebaseProjectId = new URLSearchParams(search).get("firebaseProjectId") ?? "";
+  const nstrumentaOrg = new URLSearchParams(search).get("nstrumentaOrg") ?? "";
 
   const firebaseConfigPath =
-    `https://storage.googleapis.com/${firebaseProjectId}-config/firebaseConfig.json`;
+    `https://storage.googleapis.com/${nstrumentaOrg}-config/firebaseConfig.json`;
 
 
   const [experiment, setExperiment] = useState<NstrumentaExperiment>();

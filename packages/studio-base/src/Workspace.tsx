@@ -11,13 +11,17 @@
 //   You may not use this file except in compliance with the License.
 
 import { Link, Typography } from "@mui/material";
-import { useCallback, useEffect, useMemo, useRef } from "react";
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { makeStyles } from "tss-react/mui";
 
 import { AppSetting } from "@foxglove/studio-base/AppSetting";
 import { AppBar } from "@foxglove/studio-base/components/AppBar";
 import { CustomWindowControlsProps } from "@foxglove/studio-base/components/AppBar/CustomWindowControls";
+import {
+  DataSourceDialog,
+  DataSourceDialogItem,
+} from "@foxglove/studio-base/components/DataSourceDialog";
 import { DataSourceSidebar } from "@foxglove/studio-base/components/DataSourceSidebar";
 import { EventsList } from "@foxglove/studio-base/components/DataSourceSidebar/EventsList";
 import { TopicList } from "@foxglove/studio-base/components/DataSourceSidebar/TopicList";
@@ -64,6 +68,7 @@ import { useAppConfigurationValue } from "@foxglove/studio-base/hooks";
 import useAddPanel from "@foxglove/studio-base/hooks/useAddPanel";
 import { useDefaultWebLaunchPreference } from "@foxglove/studio-base/hooks/useDefaultWebLaunchPreference";
 import { useInitialDeepLinkState } from "@foxglove/studio-base/hooks/useInitialDeepLinkState";
+import { PlayerPresence } from "@foxglove/studio-base/players/types";
 import { PanelStateContextProvider } from "@foxglove/studio-base/providers/PanelStateContextProvider";
 import WorkspaceContextProvider from "@foxglove/studio-base/providers/WorkspaceContextProvider";
 
@@ -139,6 +144,9 @@ type WorkspaceProps = CustomWindowControlsProps & {
 
 const DEFAULT_DEEPLINKS = Object.freeze([]);
 
+const selectPlayerPresence = ({ playerState }: MessagePipelineContext) => playerState.presence;
+const selectPlayerIsPresent = ({ playerState }: MessagePipelineContext) =>
+  playerState.presence !== PlayerPresence.NOT_PRESENT;
 const selectPlayerProblems = ({ playerState }: MessagePipelineContext) => playerState.problems;
 const selectIsPlaying = (ctx: MessagePipelineContext) =>
   ctx.playerState.activeData?.isPlaying === true;
@@ -149,6 +157,7 @@ const selectPlayUntil = (ctx: MessagePipelineContext) => ctx.playUntil;
 const selectPlayerId = (ctx: MessagePipelineContext) => ctx.playerState.playerId;
 const selectEventsSupported = (store: EventsStore) => store.eventsSupported;
 
+const selectWorkspaceDataSourceDialog = (store: WorkspaceContextStore) => store.dataSourceDialog;
 const selectWorkspaceSidebarItem = (store: WorkspaceContextStore) => store.sidebarItem;
 const selectWorkspaceLeftSidebarItem = (store: WorkspaceContextStore) => store.leftSidebarItem;
 const selectWorkspaceLeftSidebarOpen = (store: WorkspaceContextStore) => store.leftSidebarOpen;
@@ -161,9 +170,11 @@ type WorkspaceContentProps = WorkspaceProps;
 function WorkspaceContent(props: WorkspaceContentProps): JSX.Element {
   const { classes } = useStyles();
   const containerRef = useRef<HTMLDivElement>(ReactNull);
+  const playerPresence = useMessagePipeline(selectPlayerPresence);
   const playerProblems = useMessagePipeline(selectPlayerProblems);
 
   const sidebarItem = useWorkspaceStore(selectWorkspaceSidebarItem);
+  const dataSourceDialog = useWorkspaceStore(selectWorkspaceDataSourceDialog);
   const leftSidebarItem = useWorkspaceStore(selectWorkspaceLeftSidebarItem);
   const leftSidebarOpen = useWorkspaceStore(selectWorkspaceLeftSidebarOpen);
   const leftSidebarSize = useWorkspaceStore(selectWorkspaceLeftSidebarSize);
@@ -172,6 +183,7 @@ function WorkspaceContent(props: WorkspaceContentProps): JSX.Element {
   const rightSidebarSize = useWorkspaceStore(selectWorkspaceRightSidebarSize);
 
   const {
+    dataSourceDialogActions,
     selectLeftSidebarItem,
     selectRightSidebarItem,
     selectSidebarItem,
@@ -200,6 +212,16 @@ function WorkspaceContent(props: WorkspaceContentProps): JSX.Element {
   const [enableNewTopNav = false] = useAppConfigurationValue<boolean>(
     AppSetting.ENABLE_NEW_TOPNAV,
   );
+
+  // When a player is activated, hide the open dialog.
+  useLayoutEffect(() => {
+    if (
+      playerPresence === PlayerPresence.PRESENT ||
+      playerPresence === PlayerPresence.INITIALIZING
+    ) {
+      dataSourceDialogActions.close();
+    }
+  }, [playerPresence, dataSourceDialogActions]);
 
   useEffect(() => {
     // Focus on page load to enable keyboard interaction.
@@ -361,6 +383,8 @@ function WorkspaceContent(props: WorkspaceContentProps): JSX.Element {
         /* eslint-enable react/jsx-key */
       ]}
     >
+
+      {dataSourceDialog.open && <DataSourceDialog />}
       <SyncAdapters />
       <KeyListener global keyDownHandlers={keyDownHandlers} />
       <div className={classes.container} ref={containerRef} tabIndex={0}>
@@ -419,11 +443,29 @@ function WorkspaceContent(props: WorkspaceContentProps): JSX.Element {
 
 export default function Workspace(props: WorkspaceProps): JSX.Element {
 
+  const { currentUser } = useCurrentUser();
+
+  console.log(currentUser);
+
   useInitialDeepLinkState(props.deepLinks ?? DEFAULT_DEEPLINKS);
 
+  const isPlayerPresent = useMessagePipeline(selectPlayerIsPresent);
+
+  //TODO initial item from user profile?
+  const initialItem: undefined | DataSourceDialogItem =
+    isPlayerPresent ? undefined : "start";
+
+  const initialState: Pick<WorkspaceContextStore, "dataSourceDialog"> = {
+    dataSourceDialog: {
+      activeDataSource: undefined,
+      open: initialItem != undefined,
+      item: initialItem,
+    },
+  };
+
   return (
-    <WorkspaceContextProvider>
-      <WorkspaceContent {...props} />
+    <WorkspaceContextProvider initialState={initialState}>
+      <WorkspaceContent  {...props} />
     </WorkspaceContextProvider>
   );
 }
