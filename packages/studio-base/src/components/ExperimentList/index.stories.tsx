@@ -103,7 +103,7 @@ const ExperimentListWithInteractions = ({
       ref={ref}
     >
       <ExperimentList
-        onPanelSelect={(arg0) => {
+        onSelect={(arg0) => {
           console.log(arg0)
 
           // no-op
@@ -145,7 +145,7 @@ export const ExperimentListStory: StoryObj = {
     const theme = useTheme();
     return (
       <div style={{ margin: 50, height: 480, backgroundColor: theme.palette.background.paper }}>
-        <ExperimentList onPanelSelect={(arg0) => {
+        <ExperimentList onSelect={(arg0) => {
           console.log(arg0)
         }} />
       </div>
@@ -209,7 +209,7 @@ export const ExperimentListChinese: StoryObj = {
     const theme = useTheme();
     return (
       <div style={{ margin: 50, height: 480, backgroundColor: theme.palette.background.paper }}>
-        <ExperimentList onPanelSelect={() => { }} />
+        <ExperimentList onSelect={() => { }} />
       </div>
     );
   },

@@ -29,12 +29,6 @@ import { makeStyles } from "tss-react/mui";
 import Stack from "@foxglove/studio-base/components/Stack";
 import TextHighlight from "@foxglove/studio-base/components/TextHighlight";
 import { useNstrumentaContext } from "@foxglove/studio-base/context/NstrumentaContext";
-import { PanelInfo } from "@foxglove/studio-base/context/PanelCatalogContext";
-import { ExtensionNamespace } from "@foxglove/studio-base/types/Extensions";
-import {
-  PanelConfig,
-  SavedProps
-} from "@foxglove/studio-base/types/panels";
 import { collection, getDocs, getFirestore } from 'firebase/firestore';
 
 
@@ -66,18 +60,9 @@ const useStyles = makeStyles<void>()((theme, _params) => {
 });
 
 
-type PanelItemProps = {
-  panel: {
-    type: string;
-    title: string;
-    description?: string;
-    config?: PanelConfig;
-    relatedConfigs?: SavedProps;
-    thumbnail?: string;
-    extensionNamespace?: ExtensionNamespace;
-  };
+type ExperimentItemProps = {
+  experiment: ExperimentInfo;
   searchQuery: string;
-  checked?: boolean;
   highlighted?: boolean;
   onClick: () => void;
 };
@@ -92,11 +77,10 @@ function blurActiveElement() {
 
 function ExperimentListItem({
   searchQuery,
-  panel,
+  experiment,
   onClick,
-  checked = false,
   highlighted = false,
-}: PanelItemProps) {
+}: ExperimentItemProps) {
   const { classes } = useStyles();
   const scrollRef = useRef<HTMLElement>(ReactNull);
 
@@ -119,9 +103,7 @@ function ExperimentListItem({
     }
   }, [highlighted]);
 
-  const targetString = panel.extensionNamespace
-    ? `${panel.title} [${panel.extensionNamespace}]`
-    : panel.title;
+  const targetString = experiment.title;
 
   const onClickWithStopPropagation = useCallback(
     (event: React.MouseEvent) => {
@@ -137,36 +119,28 @@ function ExperimentListItem({
       <ListItemButton
         selected={highlighted}
         className={classes.listItemButton}
-        disabled={checked}
         onClick={onClickWithStopPropagation}
       >
         <ListItemText
           primary={
-            <span data-testid={`panel-menu-item ${panel.title}`}>
+            <span data-testid={`panel-menu-item ${experiment.id}`}>
               <TextHighlight targetStr={targetString} searchText={searchQuery} />
             </span>
           }
-          primaryTypographyProps={{ fontWeight: checked ? "bold" : undefined }}
         />
       </ListItemButton>
     </ListItem>
   );
 }
 
-export type PanelSelection = {
-  type: string;
-  config?: PanelConfig;
-  relatedConfigs?: {
-    [panelId: string]: PanelConfig;
-  };
-};
+type ExperimentInfo = { title: string, id: string, filePath: string }
 
 type Props = {
-  onPanelSelect: (arg0: PanelSelection) => void;
+  onSelect: (filePath: string) => void;
 };
 
 const ExperimentList = forwardRef<HTMLDivElement, Props>((props: Props, ref) => {
-  const { onPanelSelect } = props;
+  const { onSelect } = props;
   const [searchQuery, setSearchQuery] = useState("");
   const [highlightedPanelIdx, setHighlightedPanelIdx] = useState<number | undefined>();
   const { classes, cx } = useStyles();
@@ -183,7 +157,7 @@ const ExperimentList = forwardRef<HTMLDivElement, Props>((props: Props, ref) => 
 
   const { firebaseInstance } = useNstrumentaContext();
 
-  const [panels, setPanels] = useState<PanelInfo[]>([]);
+  const [panels, setPanels] = useState<ExperimentInfo[]>([]);
 
   useEffect(() => {
     if (!firebaseInstance?.app) return;
@@ -191,14 +165,14 @@ const ExperimentList = forwardRef<HTMLDivElement, Props>((props: Props, ref) => 
     const fetchData = async () => {
       try {
         const querySnapshot = await getDocs(collection(db, 'projects/peek-ai-2023/data'));
-        const panels: PanelInfo[] = []
+        const panels: ExperimentInfo[] = []
         querySnapshot.forEach((doc) => {
           const data = doc.data();
           console.log(doc.id, ' => ', data);
           panels.push({
             title: data.name,
-            type: doc.id,
-            module: async () => await import("../../panels/Image")
+            id: doc.id,
+            filePath: data.filePath
           })
         });
         setPanels(panels)
@@ -210,17 +184,17 @@ const ExperimentList = forwardRef<HTMLDivElement, Props>((props: Props, ref) => 
   }, [firebaseInstance]);
 
   const getFilteredPanels = useCallback(
-    (panels: PanelInfo[]) => {
+    (experiments: ExperimentInfo[]) => {
       return searchQuery.length > 0
         ? fuzzySort
-          .go(searchQuery, panels, {
+          .go(searchQuery, experiments, {
             keys: ["title", "description"],
             // Weigh title matches more heavily than description matches.
             scoreFn: (a) => Math.max(a[0] ? a[0].score : -1000, a[1] ? a[1].score - 100 : -1000),
             threshold: -900,
           })
           .map((searchResult) => searchResult.obj)
-        : panels;
+        : experiments;
     },
     [searchQuery],
   );
@@ -262,25 +236,21 @@ const ExperimentList = forwardRef<HTMLDivElement, Props>((props: Props, ref) => 
           return (existing - 1 + allFilteredPanels.length) % allFilteredPanels.length;
         });
       } else if (e.key === "Enter" && highlightedPanel) {
-        onPanelSelect({
-          type: highlightedPanel.type,
-          config: highlightedPanel.config,
-          relatedConfigs: highlightedPanel.relatedConfigs,
-        });
+        onSelect(highlightedPanel.filePath);
       }
     },
-    [allFilteredPanels.length, highlightedPanel, onPanelSelect],
+    [allFilteredPanels.length, highlightedPanel, onSelect],
   );
 
   const displayPanelListItem = useCallback(
-    (panelInfo: PanelInfo) => {
-      const { title, type, config, relatedConfigs } = panelInfo;
+    (experiment: ExperimentInfo) => {
+      const { title, filePath, id } = experiment;
       return (
         <ExperimentListItem
-          key={`${type}-${title}`}
-          panel={panelInfo}
+          key={`${title}-${id}`}
+          experiment={experiment}
           onClick={() => {
-            onPanelSelect({ type, config, relatedConfigs });
+            onSelect(filePath);
             blurActiveElement();
           }}
           highlighted={highlightedPanel?.title === title}
@@ -290,7 +260,7 @@ const ExperimentList = forwardRef<HTMLDivElement, Props>((props: Props, ref) => 
     },
     [
       highlightedPanel?.title,
-      onPanelSelect,
+      onSelect,
       searchQuery,
     ],
   );

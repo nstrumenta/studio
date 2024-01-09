@@ -7,12 +7,10 @@ import {
 } from "@foxglove/studio-base/context/PlayerSelectionContext";
 import { useCallback } from "react";
 
-export function useOpenExperiment(): () => Promise<void> {
+export function useOpenExperiment(): (filePath: string) => Promise<void> {
   const { selectSource } = usePlayerSelection();
 
-
-
-  return useCallback(async () => {
-    selectSource("nstrumenta", { type: "nstrumenta", params: { filePath: "projects/peek-ai-2023/data/recording-f1bf24c7-100d-42a5-84d1-3aa8c9a104ce.mcap" } });
+  return useCallback(async (filePath: string) => {
+    selectSource("nstrumenta", { type: "nstrumenta", params: { filePath } });
   }, [selectSource]);
 }

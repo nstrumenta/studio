@@ -34,12 +34,12 @@ class NstrumentaDataSourceFactory implements IDataSourceFactory {
       console.error("firebase not initialized");
       return;
     }
-    const dataFilePath = filePath || "filepath"; // TODO picker for this
 
-    let dataUrl: string = "";
-    if (dataFilePath != undefined) {
-      dataUrl = await getDownloadURL(ref(this.firebaseInstance.storage, dataFilePath));
-    }
+    const experimentUrl = await getDownloadURL(ref(this.firebaseInstance.storage, filePath))
+    const experiment = await (await fetch(experimentUrl)).json();
+
+    const dataUrl = await getDownloadURL(ref(this.firebaseInstance.storage, experiment.dataFilePath));
+
 
     const source = new WorkerIterableSource({
       initWorker: () => {

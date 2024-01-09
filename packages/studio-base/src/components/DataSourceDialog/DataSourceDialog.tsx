@@ -20,7 +20,6 @@ import { AppEvent } from "@foxglove/studio-base/services/IAnalytics";
 
 import StartNstrumenta from "./StartNstrumenta";
 import { useOpenFile } from "./useOpenFile";
-import { useOpenExperiment } from "@foxglove/studio-base/components/DataSourceDialog/useOpenExperiment";
 
 const DataSourceDialogItems = ["start", "file", "nstrumenta"] as const;
 export type DataSourceDialogItem = (typeof DataSourceDialogItems)[number];
@@ -48,7 +47,6 @@ export function DataSourceDialog(): JSX.Element {
   const isMounted = useMountedState();
 
   const openFile = useOpenFile(availableSources);
-  const openExperiment = useOpenExperiment();
 
   const firstSampleSource = useMemo(() => {
     return availableSources.find((source) => source.type === "nstrumenta");
@@ -72,8 +70,6 @@ export function DataSourceDialog(): JSX.Element {
             dataSourceDialogActions.open("start");
           }
         });
-    } else if (activeView === "nstrumenta") {
-      openExperiment()
     }
   }, [activeView, dataSourceDialogActions, firstSampleSource, isMounted, openFile, selectSource]);
 
