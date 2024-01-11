@@ -47,7 +47,7 @@ export function Root(props: {
 
   const { search } = window.location;
 
-  const nstrumentaOrg = new URLSearchParams(search).get("nstrumentaOrg") ?? "";
+  const nstrumentaOrg = new URLSearchParams(search).get("org") ?? "";
 
 
   const firebaseConfigPath =

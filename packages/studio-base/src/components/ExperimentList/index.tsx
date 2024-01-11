@@ -155,7 +155,7 @@ const ExperimentList = forwardRef<HTMLDivElement, Props>((props: Props, ref) => 
     setHighlightedPanelIdx(query ? 0 : undefined);
   }, []);
 
-  const { firebaseInstance } = useNstrumentaContext();
+  const { firebaseInstance, projectId } = useNstrumentaContext();
 
   const [panels, setPanels] = useState<ExperimentInfo[]>([]);
 
@@ -164,11 +164,10 @@ const ExperimentList = forwardRef<HTMLDivElement, Props>((props: Props, ref) => 
     const db = getFirestore(firebaseInstance.app);
     const fetchData = async () => {
       try {
-        const querySnapshot = await getDocs(collection(db, 'projects/peek-ai-2023/data'));
+        const querySnapshot = await getDocs(collection(db, `projects/${projectId}/data`));
         const panels: ExperimentInfo[] = []
         querySnapshot.forEach((doc) => {
           const data = doc.data();
-          console.log(doc.id, ' => ', data);
           panels.push({
             title: data.name,
             id: doc.id,
@@ -181,7 +180,7 @@ const ExperimentList = forwardRef<HTMLDivElement, Props>((props: Props, ref) => 
       }
     };
     fetchData()
-  }, [firebaseInstance]);
+  }, [firebaseInstance, projectId]);
 
   const getFilteredPanels = useCallback(
     (experiments: ExperimentInfo[]) => {

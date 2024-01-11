@@ -2,24 +2,9 @@
 // License, v2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
-import { NstrumentaBrowserClient } from "nstrumenta/dist/browser/client";
 import { createContext, useContext } from "react";
 
 import { FirebaseInstance } from "@foxglove/studio-base/providers/NstrumentaProvider";
-
-const { search } = window.location;
-const apiKeyParam = new URLSearchParams(search).get("apiKey");
-const apiLocalStore = localStorage.getItem("apiKey");
-const apiKey = apiKeyParam
-  ? apiKeyParam
-  : apiLocalStore
-    ? apiLocalStore
-    : (prompt("Enter your nstrumenta apiKey") as string);
-if (apiKey) {
-  localStorage.setItem("apiKey", apiKey);
-}
-
-const nstClient = new NstrumentaBrowserClient(apiKey);
 
 export type NstrumentaVideo = {
   name: string;
@@ -41,24 +26,29 @@ export type NstrumentaExperiment = {
   videos: NstrumentaVideo[];
 };
 
-interface INstrumentaContext {
-  nstClient: NstrumentaBrowserClient;
+export interface INstrumentaContext {
   firebaseInstance?: FirebaseInstance;
   experiment?: NstrumentaExperiment;
+  userProjects?: string[];
+  projectId?: string;
+  setProjectId?: (projectId: string) => void
   setExperiment?: (experiment: NstrumentaExperiment) => void;
-  saveExperiment?: () => void;
+  setExperimentPath?: (experimentPath: string) => void;
   fetchExperiment?: () => void;
+  saveExperiment?: () => void;
 }
 
-const NstrumentaContext = createContext<INstrumentaContext>({ nstClient });
+const NstrumentaContext = createContext<INstrumentaContext | undefined>(undefined);
 NstrumentaContext.displayName = "NstrumentaContext";
 
-export function useNstrumentClient(): NstrumentaBrowserClient {
-  return useContext(NstrumentaContext).nstClient;
-}
-
 export function useNstrumentaContext(): INstrumentaContext {
-  return useContext(NstrumentaContext);
+  const nstrumentaContext = useContext(NstrumentaContext);
+  if (nstrumentaContext) {
+    return nstrumentaContext;
+  }
+  else {
+    return {}
+  }
 }
 
 
@@ -70,13 +60,17 @@ export interface CurrentUser {
 }
 
 export function useCurrentUser(): CurrentUser {
-  const { firebaseInstance } = useContext(NstrumentaContext);
-  return {
-    currentUser: firebaseInstance?.user, signIn: () => {
-      firebaseInstance?.auth &&
-        signInWithPopup(firebaseInstance.auth, new GithubAuthProvider())
-    }, signOut: async () => { firebaseInstance?.auth && firebaseInstance?.auth.signOut() }
+  const nstrumentaContext = useContext(NstrumentaContext);
+  if (nstrumentaContext) {
+    const { firebaseInstance } = nstrumentaContext;
+    return {
+      currentUser: firebaseInstance?.user, signIn: () => {
+        firebaseInstance?.auth &&
+          signInWithPopup(firebaseInstance.auth, new GithubAuthProvider())
+      }, signOut: async () => { firebaseInstance?.auth && firebaseInstance?.auth.signOut() }
+    }
   }
+  else { return { currentUser: undefined, signIn: () => { } } }
 }
 
 export { NstrumentaContext };

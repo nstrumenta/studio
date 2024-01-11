@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
 import { Button, Link, List, ListItem, ListItemButton, SvgIcon, Typography } from "@mui/material";
-import { useMemo } from "react";
+import { useEffect, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { makeStyles } from "tss-react/mui";
 
@@ -15,6 +15,8 @@ import { useAnalytics } from "@foxglove/studio-base/context/AnalyticsContext";
 import { usePlayerSelection } from "@foxglove/studio-base/context/PlayerSelectionContext";
 import { useWorkspaceActions } from "@foxglove/studio-base/context/WorkspaceContext";
 import { AppEvent } from "@foxglove/studio-base/services/IAnalytics";
+import NstrumentaProjectSelect from "@foxglove/studio-base/components/NstrumentaProjectSelect";
+import { useNstrumentaContext } from "@foxglove/studio-base/context/NstrumentaContext";
 
 const useStyles = makeStyles()((theme) => ({
   logo: {
@@ -131,6 +133,17 @@ export default function StartNstrumenta(): JSX.Element {
   const { dataSourceDialogActions } = useWorkspaceActions();
   const openExperiment = useOpenExperiment();
 
+  const { setExperimentPath } = useNstrumentaContext();
+
+  const experimentParam = new URLSearchParams(window.location.search).get("experiment") ?? "";
+
+  useEffect(() => {
+    if (setExperimentPath && experimentParam) {
+      dataSourceDialogActions.open('nstrumenta')
+      openExperiment(experimentParam)
+    }
+  }, [openExperiment, setExperimentPath])
+
   const startItems = useMemo(() => {
     return [
       {
@@ -194,10 +207,16 @@ export default function StartNstrumenta(): JSX.Element {
               </List>
             </Stack>
           )}
-          <ExperimentList onSelect={(experiment) => {
-            dataSourceDialogActions.open('nstrumenta')
-            openExperiment(experiment)
-          }}></ExperimentList>
+          <Stack gap={1}>
+            <Typography variant="h5" gutterBottom>
+              Nstrumenta Project
+            </Typography>
+            <NstrumentaProjectSelect />
+            <ExperimentList onSelect={(experiment) => {
+              dataSourceDialogActions.open('nstrumenta')
+              openExperiment(experiment)
+            }}></ExperimentList>
+          </Stack>
         </Stack>
       </Stack>
     </Stack>

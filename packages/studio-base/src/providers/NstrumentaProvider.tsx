@@ -4,22 +4,24 @@
 
 import { FirebaseApp, initializeApp } from 'firebase/app';
 import { Auth, GithubAuthProvider, User, getAuth, onAuthStateChanged, signInWithRedirect } from 'firebase/auth';
-import { FirebaseStorage, getStorage } from 'firebase/storage';
-import { ReactNode, useContext, useEffect, useState } from "react";
+import { FirebaseStorage, getDownloadURL, getStorage, ref } from 'firebase/storage';
+import { ReactNode, useEffect, useState } from "react";
 
 import {
+  INstrumentaContext,
   NstrumentaContext,
   NstrumentaExperiment,
 } from "@foxglove/studio-base/context/NstrumentaContext";
+import { collection, getFirestore, onSnapshot } from 'firebase/firestore';
 
 export type FirebaseInstance = { app: FirebaseApp, storage: FirebaseStorage, auth: Auth, user?: User }
 
 export default function NstrumentaProvider({ children }: { children?: ReactNode }): JSX.Element {
-  const { nstClient } = useContext(NstrumentaContext);
 
   const { search } = window.location;
 
-  const nstrumentaOrg = new URLSearchParams(search).get("nstrumentaOrg") ?? "";
+  const experimentParam = new URLSearchParams(search).get("experiment") ?? "";
+  const nstrumentaOrg = new URLSearchParams(search).get("org") ?? "";
 
   const firebaseConfigPath =
     `https://storage.googleapis.com/${nstrumentaOrg}-config/firebaseConfig.json`;
@@ -28,20 +30,28 @@ export default function NstrumentaProvider({ children }: { children?: ReactNode 
   const [experiment, setExperiment] = useState<NstrumentaExperiment>();
 
   const [firebaseInstance, setFirebaseInstance] = useState<FirebaseInstance>();
+
+  const [experimentPath, setExperimentPath] = useState<string>();
+
+  const [userProjects, setUserProjects] = useState<string[]>();
+
+  const [projectId, setProjectId] = useState<string>();
+
   const fetchExperiment = async () => {
-    //TODO getDownloadUrl from firebase
-    // const url = '';
-    // const fetchedExperiment: NstrumentaExperiment = await (await fetch(url)).json();
-    // console.log(fetchedExperiment)
-    // setExperiment(fetchedExperiment);
-  };
+    if (firebaseInstance == undefined || experimentPath == undefined) return;
+
+    const experimentUrl = await getDownloadURL(ref(firebaseInstance.storage, experimentPath))
+    const experiment = await (await fetch(experimentUrl)).json();
+
+    setExperiment(experiment);
+  }
 
   const saveExperiment = async () => {
     const stringified = JSON.stringify(experiment)!;
     //TODO upload experiment
     console.log(stringified)
   };
-  const [nstrumentaState, setNstrumentaState] = useState({ experiment, setExperiment, saveExperiment, fetchExperiment, nstClient, firebaseInstance })
+  const [nstrumentaState, setNstrumentaState] = useState<INstrumentaContext>()
 
   const fetchConfig = async () => {
     const fetchedFirebaseConfig = await (await fetch(firebaseConfigPath)).json();
@@ -49,10 +59,21 @@ export default function NstrumentaProvider({ children }: { children?: ReactNode 
     const app = initializeApp(fetchedFirebaseConfig);
     const storage = getStorage(app);
     const auth = getAuth(app);
+    const db = getFirestore(app);
 
 
     onAuthStateChanged(auth, nextUser => {
-      if (nextUser) { setFirebaseInstance({ app, storage, auth, user: nextUser }) }
+      if (nextUser) {
+        setFirebaseInstance({ app, storage, auth, user: nextUser })
+
+        onSnapshot(collection(db, `users/${nextUser.uid}/projects`), (querySnapshot) => {
+          const newData: string[] = [];
+          querySnapshot.forEach((doc) => {
+            newData.push(doc.id);
+          });
+          setUserProjects(newData);
+        })
+      }
       else {
         setFirebaseInstance({ app, storage, auth, user: undefined })
         signInWithRedirect(auth, new GithubAuthProvider())
@@ -60,20 +81,24 @@ export default function NstrumentaProvider({ children }: { children?: ReactNode 
     })
   };
 
+
   const init = async () => {
-    await fetchExperiment();
     await fetchConfig();
   };
 
   useEffect(() => {
+    if (experimentParam) {
+      setProjectId(experimentParam.split('/')[1])
+    }
     void init();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    console.log(firebaseInstance?.user)
-    setNstrumentaState({ ...nstrumentaState, firebaseInstance })
-  }, [firebaseInstance])
+    if (firebaseInstance) {
+      setNstrumentaState({ projectId, setProjectId, experiment, userProjects, setExperimentPath, fetchExperiment, setExperiment, saveExperiment, firebaseInstance })
+    }
+  }, [experiment, userProjects, projectId, setProjectId, firebaseInstance])
 
   return (
     <NstrumentaContext.Provider
