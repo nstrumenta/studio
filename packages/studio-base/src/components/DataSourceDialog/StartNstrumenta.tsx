@@ -126,7 +126,7 @@ function DataSourceOption(props: DataSourceOptionProps): JSX.Element {
 }
 
 export default function StartNstrumenta(): JSX.Element {
-  const { recentSources, selectRecent } = usePlayerSelection();
+  const { recentSources, selectRecent, selectedSource } = usePlayerSelection();
   const { classes } = useStyles();
   const analytics = useAnalytics();
   const { t } = useTranslation("openDialog");
@@ -138,11 +138,12 @@ export default function StartNstrumenta(): JSX.Element {
   const experimentParam = new URLSearchParams(window.location.search).get("experiment") ?? "";
 
   useEffect(() => {
-    if (setExperimentPath && experimentParam) {
+    // open the experiment from param on a new page load
+    if (setExperimentPath && experimentParam && !selectedSource) {
       dataSourceDialogActions.open('nstrumenta')
       openExperiment(experimentParam)
     }
-  }, [openExperiment, setExperimentPath])
+  }, [openExperiment, setExperimentPath, selectedSource])
 
   const startItems = useMemo(() => {
     return [

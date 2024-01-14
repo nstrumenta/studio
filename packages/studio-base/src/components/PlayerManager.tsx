@@ -80,6 +80,8 @@ export default function PlayerManager(props: PropsWithChildren<PlayerManagerProp
 
   const [basePlayer, setBasePlayer] = useState<Player | undefined>();
 
+  const [selectedSource, setSelectedSource] = useState<IDataSourceFactory | undefined>();
+
   const userNodes = useCurrentLayoutSelector(userNodesSelector);
   const globalVariables = useCurrentLayoutSelector(globalVariablesSelector);
 
@@ -133,6 +135,7 @@ export default function PlayerManager(props: PropsWithChildren<PlayerManagerProp
         });
 
         setBasePlayer(newPlayer);
+        setSelectedSource(foundSource)
 
         if (foundSource.sampleLayout) {
           try {
@@ -289,6 +292,7 @@ export default function PlayerManager(props: PropsWithChildren<PlayerManagerProp
   const value: PlayerSelection = {
     selectSource,
     selectRecent,
+    selectedSource,
     availableSources: playerSources,
     recentSources,
   };
