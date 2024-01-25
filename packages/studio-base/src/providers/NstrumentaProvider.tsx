@@ -95,6 +95,15 @@ export default function NstrumentaProvider({ children }: { children?: ReactNode 
   }, []);
 
   useEffect(() => {
+    if (experimentPath) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('experiment', experimentPath);
+      // Replace the current state in the history without triggering a page reload
+      history.replaceState(null, '', url.toString());
+    }
+  }, [experimentPath]);
+
+  useEffect(() => {
     if (firebaseInstance) {
       setNstrumentaState({ projectId, setProjectId, experiment, userProjects, setExperimentPath, fetchExperiment, setExperiment, saveExperiment, firebaseInstance })
     }

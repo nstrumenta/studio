@@ -133,7 +133,7 @@ function ExperimentListItem({
   );
 }
 
-type ExperimentInfo = { title: string, id: string, filePath: string }
+type ExperimentInfo = { title: string, id: string, filePath: string, lastModified: number }
 
 type Props = {
   onSelect: (filePath: string) => void;
@@ -157,7 +157,7 @@ const ExperimentList = forwardRef<HTMLDivElement, Props>((props: Props, ref) => 
 
   const { firebaseInstance, projectId } = useNstrumentaContext();
 
-  const [panels, setPanels] = useState<ExperimentInfo[]>([]);
+  const [experiments, setExperiments] = useState<ExperimentInfo[]>([]);
 
   useEffect(() => {
     if (!firebaseInstance?.app) return;
@@ -165,16 +165,17 @@ const ExperimentList = forwardRef<HTMLDivElement, Props>((props: Props, ref) => 
     const fetchData = async () => {
       try {
         const querySnapshot = await getDocs(collection(db, `projects/${projectId}/data`));
-        const panels: ExperimentInfo[] = []
+        const experiments: ExperimentInfo[] = []
         querySnapshot.forEach((doc) => {
           const data = doc.data();
-          panels.push({
+          experiments.push({
             title: data.name,
             id: doc.id,
-            filePath: data.filePath
+            filePath: data.filePath,
+            lastModified: data.lastModified
           })
         });
-        setPanels(panels)
+        setExperiments(experiments.sort((a, b) => b.lastModified - a.lastModified))
       } catch (error) {
         console.log('Error getting documents: ', error);
       }
@@ -182,15 +183,12 @@ const ExperimentList = forwardRef<HTMLDivElement, Props>((props: Props, ref) => 
     fetchData()
   }, [firebaseInstance, projectId]);
 
-  const getFilteredPanels = useCallback(
+  const getFilteredExperiments = useCallback(
     (experiments: ExperimentInfo[]) => {
       return searchQuery.length > 0
         ? fuzzySort
           .go(searchQuery, experiments, {
-            keys: ["title", "description"],
-            // Weigh title matches more heavily than description matches.
-            scoreFn: (a) => Math.max(a[0] ? a[0].score : -1000, a[1] ? a[1].score - 100 : -1000),
-            threshold: -900,
+            keys: ["title", "description"]
           })
           .map((searchResult) => searchResult.obj)
         : experiments;
@@ -198,16 +196,16 @@ const ExperimentList = forwardRef<HTMLDivElement, Props>((props: Props, ref) => 
     [searchQuery],
   );
 
-  const allFilteredPanels = useMemo(
-    () => getFilteredPanels(panels),
-    [panels, getFilteredPanels],
+  const allFilteredExperiments = useMemo(
+    () => getFilteredExperiments(experiments),
+    [experiments, getFilteredExperiments],
   );
 
   const highlightedPanel = useMemo(() => {
-    return highlightedPanelIdx != undefined ? allFilteredPanels[highlightedPanelIdx] : undefined;
-  }, [allFilteredPanels, highlightedPanelIdx]);
+    return highlightedPanelIdx != undefined ? allFilteredExperiments[highlightedPanelIdx] : undefined;
+  }, [allFilteredExperiments, highlightedPanelIdx]);
 
-  const noResults = allFilteredPanels.length === 0;
+  const noResults = allFilteredExperiments.length === 0;
 
   const onKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
@@ -220,25 +218,25 @@ const ExperimentList = forwardRef<HTMLDivElement, Props>((props: Props, ref) => 
           if (existing == undefined) {
             return 0;
           }
-          return (existing + 1) % allFilteredPanels.length;
+          return (existing + 1) % allFilteredExperiments.length;
         });
       } else if (e.key === "ArrowUp") {
         setHighlightedPanelIdx((existing) => {
           // nothing to highlight if there are no entries
-          if (allFilteredPanels.length <= 0) {
+          if (allFilteredExperiments.length <= 0) {
             return undefined;
           }
 
           if (existing == undefined) {
-            return allFilteredPanels.length - 1;
+            return allFilteredExperiments.length - 1;
           }
-          return (existing - 1 + allFilteredPanels.length) % allFilteredPanels.length;
+          return (existing - 1 + allFilteredExperiments.length) % allFilteredExperiments.length;
         });
       } else if (e.key === "Enter" && highlightedPanel) {
         onSelect(highlightedPanel.filePath);
       }
     },
-    [allFilteredPanels.length, highlightedPanel, onSelect],
+    [allFilteredExperiments.length, highlightedPanel, onSelect],
   );
 
   const displayPanelListItem = useCallback(
@@ -289,7 +287,7 @@ const ExperimentList = forwardRef<HTMLDivElement, Props>((props: Props, ref) => 
       </div>
 
       <List dense disablePadding>
-        {allFilteredPanels.map(displayPanelListItem)}
+        {allFilteredExperiments.map(displayPanelListItem)}
       </List>
 
       {noResults && (

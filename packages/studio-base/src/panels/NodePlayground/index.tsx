@@ -20,10 +20,8 @@ import {
   Divider,
   IconButton,
   Input,
-  Link,
-  Typography,
-  useTheme,
   styled as muiStyled,
+  useTheme
 } from "@mui/material";
 import { Suspense, useCallback, useEffect, useState } from "react";
 import { v4 as uuidv4 } from "uuid";
@@ -52,15 +50,9 @@ const Editor = React.lazy(
 );
 
 const skeletonBody = `\
-// The ./types module provides helper types for your Input events and messages.
-import { Input, Message } from "./types";
+// The ./types module provides helper types for your Input events
+import { Input } from "./types";
 
-// Your script can output well-known message types, any of your custom message types, or
-// complete custom message types.
-//
-// Use \`Message\` to access your data source types or well-known types:
-// type Twist = Message<"geometry_msgs/Twist">;
-//
 // Conventionally, it's common to make a _type alias_ for your script's output type
 // and use that type name as the return type for your script function.
 // Here we've called the type \`Output\` but you can pick any type name.
@@ -73,7 +65,7 @@ type Output = {
 export const inputs = ["/input/topic"];
 
 // Any output your script produces is "published" to this topic. Published messages are only visible within Studio, not to your original data source.
-export const output = "/studio_script/output_topic";
+export const output = "/output/topic";
 
 // This function is called with messages from your input topics.
 // The first argument is an event with the topic, receive time, and message.
@@ -132,20 +124,6 @@ const WelcomeScreen = ({ addNewNode }: { addNewNode: (code?: string) => void }) 
     <EmptyState>
       <Container maxWidth="xs">
         <Stack justifyContent="center" alignItems="center" gap={1} fullHeight>
-          <Typography variant="inherit" gutterBottom>
-            Welcome to User Scripts!
-            <br />
-            Get started by reading the{" "}
-            <Link
-              color="primary"
-              underline="hover"
-              href="https://foxglove.dev/docs/studio/panels/user-scripts"
-              target="_blank"
-            >
-              docs
-            </Link>
-            , or just create a new script.
-          </Typography>
           <Button
             color="inherit"
             variant="contained"
@@ -432,6 +410,8 @@ function NodePlayground(props: Props) {
             <Stack>
               <BottomBar
                 nodeId={selectedNodeId}
+                userNodes={userNodes}
+                setUserNodes={setUserNodes}
                 isSaved={isNodeSaved}
                 save={() => saveNode(currentScript?.code)}
                 diagnostics={selectedNodeDiagnostics}

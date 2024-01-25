@@ -29,6 +29,8 @@ import { useUserNodeState } from "@foxglove/studio-base/context/UserNodeStateCon
 import DiagnosticsSection from "@foxglove/studio-base/panels/NodePlayground/BottomBar/DiagnosticsSection";
 import LogsSection from "@foxglove/studio-base/panels/NodePlayground/BottomBar/LogsSection";
 import { Diagnostic, UserNodeLog } from "@foxglove/studio-base/players/UserNodePlayer/types";
+import PromptSection from "@foxglove/studio-base/panels/NodePlayground/BottomBar/PromptSection";
+import { UserNodes } from "@foxglove/studio-base/types/panels";
 
 type Props = {
   nodeId?: string;
@@ -36,9 +38,11 @@ type Props = {
   save: () => void;
   diagnostics: readonly Diagnostic[];
   logs: readonly UserNodeLog[];
+  userNodes: UserNodes;
+  setUserNodes: (userNodes: UserNodes) => void;
 };
 
-type BottomBarModes = "logs" | "diagnostics" | "closed";
+type BottomBarModes = "logs" | "diagnostics" | "prompt" | "closed";
 
 const TAB_HEIGHT = 36;
 
@@ -73,7 +77,7 @@ const StyledBadge = muiStyled(Badge)(({ theme }) => ({
   },
 }));
 
-const BottomBar = ({ nodeId, isSaved, save, diagnostics, logs }: Props): ReactElement => {
+const BottomBar = ({ nodeId, isSaved, save, diagnostics, logs, userNodes, setUserNodes }: Props): ReactElement => {
   const [bottomBarDisplay, setBottomBarDisplay] = useState<BottomBarModes>("closed");
   const [autoScroll, setAutoScroll] = useState(true);
 
@@ -114,6 +118,18 @@ const BottomBar = ({ nodeId, isSaved, save, diagnostics, logs }: Props): ReactEl
             value={bottomBarDisplay !== "closed" ? bottomBarDisplay : false}
             onChange={handleChange}
           >
+            <StyledTab
+              label={
+                <StyledBadge
+                  color="error"
+                >
+                  Prompt
+                </StyledBadge>
+              }
+              value="prompt"
+              data-testid="np-prompt"
+              onClick={() => handleClick("prompt")}
+            />
             <StyledTab
               label={
                 <StyledBadge
@@ -195,6 +211,9 @@ const BottomBar = ({ nodeId, isSaved, save, diagnostics, logs }: Props): ReactEl
                 <DiagnosticsSection diagnostics={diagnostics} />
               )}
               {bottomBarDisplay === "logs" && <LogsSection logs={logs} />}
+              {bottomBarDisplay === "prompt" && (
+                <PromptSection nodeId={nodeId} userNodes={userNodes} setUserNodes={setUserNodes} diagnostics={diagnostics} />
+              )}
             </Stack>
           </Collapse>
         </Stack>

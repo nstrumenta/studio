@@ -62,7 +62,7 @@ const log = Log.getLogger(__filename);
 // https://github.com/webpack/webpack/issues/13043
 declare let SharedWorker: {
   prototype: SharedWorker;
-  new (scriptURL: URL, options?: string | WorkerOptions): SharedWorker;
+  new(scriptURL: URL, options?: string | WorkerOptions): SharedWorker;
 };
 
 type UserNodeActions = {

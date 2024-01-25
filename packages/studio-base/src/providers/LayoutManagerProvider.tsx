@@ -25,8 +25,8 @@ import { v4 as uuidv4 } from "uuid";
 
 const log = Logger.getLogger(__filename);
 
-const SYNC_INTERVAL_BASE_MS = 30_000;
-const SYNC_INTERVAL_MAX_MS = 3 * 60_000;
+const SYNC_INTERVAL_BASE_MS = 60_000;
+const SYNC_INTERVAL_MAX_MS = 60 * 60_000;
 
 export default function LayoutManagerProvider({
   children,
