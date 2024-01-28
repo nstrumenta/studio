@@ -3,7 +3,6 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
 import AddIcon from "@mui/icons-material/Add";
-import BackupIcon from "@mui/icons-material/Backup";
 import CloudOffIcon from "@mui/icons-material/CloudOff";
 import FileOpenOutlinedIcon from "@mui/icons-material/FileOpenOutlined";
 import {
@@ -51,9 +50,9 @@ import { Layout, LayoutID, layoutIsShared } from "@foxglove/studio-base/services
 import { downloadTextFile } from "@foxglove/studio-base/util/download";
 import showOpenFilePicker from "@foxglove/studio-base/util/showOpenFilePicker";
 
+import { partition } from "lodash";
 import LayoutSection from "./LayoutSection";
 import { useLayoutBrowserReducer } from "./reducer";
-import { partition } from "lodash";
 
 const log = Logger.getLogger(__filename);
 
