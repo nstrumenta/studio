@@ -75,6 +75,8 @@ export interface ILayoutManager {
     permission: LayoutPermission;
   }): Promise<Layout>;
 
+  saveLayoutDb(): Promise<void>;
+
   /**
    * Persist changes to the user's edited copy of this layout.
    *

@@ -16,8 +16,7 @@ import { LayoutData } from "@foxglove/studio-base/context/CurrentLayoutContext/a
  * by introducing new fields which are _undefined_. If _b_ has an extra field with value undefined,
  * it will still be considered equal to _a_.
  */
-export function isLayoutEqual(a: LayoutData | undefined, b: LayoutData): boolean {
-  if (a == undefined) return false
+export function isLayoutEqual(a: LayoutData, b: LayoutData): boolean {
   const res = diff(a, b);
   for (const item of res) {
     // Any replace or remove is treated as a diff

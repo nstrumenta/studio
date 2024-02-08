@@ -37,26 +37,27 @@ export type Layout = {
    * The working copy of this layout, if it has been edited since the last explicit save.
    */
   working:
-  | {
-    data: LayoutData;
-    savedAt: ISO8601Timestamp | undefined;
-  }
-  | undefined;
+    | {
+        data: LayoutData;
+        savedAt: ISO8601Timestamp | undefined;
+      }
+    | undefined;
 
   /** Info about this layout from remote storage. */
   syncInfo:
-  | {
-    status: LayoutSyncStatus;
-    /** The last savedAt time returned by the server. */
-    lastRemoteSavedAt: ISO8601Timestamp | undefined;
-  }
-  | undefined;
+    | {
+        status: LayoutSyncStatus;
+        /** The last savedAt time returned by the server. */
+        lastRemoteSavedAt: ISO8601Timestamp | undefined;
+      }
+    | undefined;
 };
 
 export interface ILayoutStorage {
   list(namespace: string): Promise<readonly Layout[]>;
   get(namespace: string, id: LayoutID): Promise<Layout | undefined>;
   put(namespace: string, layout: Layout): Promise<Layout>;
+  saveLayoutDb(): Promise<void>;
   delete(namespace: string, id: LayoutID): Promise<void>;
 
   /**

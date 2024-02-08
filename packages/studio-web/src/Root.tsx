@@ -13,9 +13,7 @@ import {
   NstrumentaDataSourceFactory
 } from "@foxglove/studio-base";
 
-import { IdbLayoutStorage } from "./services/IdbLayoutStorage";
 import LocalStorageAppConfiguration from "./services/LocalStorageAppConfiguration";
-
 import { FirebaseApp, initializeApp } from 'firebase/app';
 import { Auth, GithubAuthProvider, User, getAuth, onAuthStateChanged, signInWithRedirect } from 'firebase/auth';
 import { FirebaseStorage, getStorage } from 'firebase/storage';
@@ -38,7 +36,6 @@ export function Root(props: {
       }),
     [],
   );
-  const layoutStorage = useMemo(() => new IdbLayoutStorage(), []);
   const [extensionLoaders] = useState(() => [
     new IdbExtensionLoader("org"),
     new IdbExtensionLoader("local"),
@@ -97,7 +94,6 @@ export function Root(props: {
         deepLinks={[window.location.href]}
         dataSources={dataSources}
         appConfiguration={appConfiguration}
-        layoutStorage={layoutStorage}
         extensionLoaders={extensionLoaders}
         enableGlobalCss
         extraProviders={props.extraProviders}

@@ -4,7 +4,8 @@
 
 import { FirebaseApp, initializeApp } from 'firebase/app';
 import { Auth, GithubAuthProvider, User, getAuth, onAuthStateChanged, signInWithRedirect } from 'firebase/auth';
-import { FirebaseStorage, getDownloadURL, getStorage, ref } from 'firebase/storage';
+import { FirebaseStorage, getDownloadURL, getStorage, ref, uploadString } from 'firebase/storage';
+
 import { ReactNode, useEffect, useState } from "react";
 
 import {
@@ -48,8 +49,12 @@ export default function NstrumentaProvider({ children }: { children?: ReactNode 
 
   const saveExperiment = async () => {
     const stringified = JSON.stringify(experiment)!;
-    //TODO upload experiment
-    console.log(stringified)
+    if (firebaseInstance) {
+
+      uploadString(ref(firebaseInstance.storage, experimentPath), stringified);
+      console.log('uploading experiment', experimentPath, stringified)
+    }
+
   };
   const [nstrumentaState, setNstrumentaState] = useState<INstrumentaContext>()
 

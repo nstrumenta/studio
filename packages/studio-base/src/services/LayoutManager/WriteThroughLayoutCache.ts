@@ -14,7 +14,7 @@ import { ILayoutStorage, Layout, LayoutID } from "@foxglove/studio-base/services
 export default class WriteThroughLayoutCache implements ILayoutStorage {
   private cacheByNamespace = new Map<string, LazilyInitialized<Map<string, Layout>>>();
 
-  public constructor(private storage: ILayoutStorage) { }
+  public constructor(private storage: ILayoutStorage) {}
 
   private getOrCreateCache(namespace: string): LazilyInitialized<Map<string, Layout>> {
     let cache = this.cacheByNamespace.get(namespace);
@@ -37,6 +37,10 @@ export default class WriteThroughLayoutCache implements ILayoutStorage {
     return await this.storage.importLayouts(params);
   }
 
+  public async migrateUnnamespacedLayouts(namespace: string): Promise<void> {
+    await this.storage.migrateUnnamespacedLayouts?.(namespace);
+  }
+
   public async list(namespace: string): Promise<readonly Layout[]> {
     return Array.from((await this.getOrCreateCache(namespace).get()).values());
   }
@@ -54,5 +58,9 @@ export default class WriteThroughLayoutCache implements ILayoutStorage {
   public async delete(namespace: string, id: LayoutID): Promise<void> {
     await this.storage.delete(namespace, id);
     (await this.getOrCreateCache(namespace).get()).delete(id);
+  }
+
+  public async saveLayoutDb(): Promise<void> {
+    await this.storage.saveLayoutDb();
   }
 }

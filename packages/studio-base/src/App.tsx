@@ -36,13 +36,11 @@ import PanelCatalogProvider from "./providers/PanelCatalogProvider";
 import UserProfileLocalStorageProvider from "./providers/UserProfileLocalStorageProvider";
 import { LaunchPreference } from "./screens/LaunchPreference";
 import { ExtensionLoader } from "./services/ExtensionLoader";
-import { ILayoutStorage } from "./services/ILayoutStorage";
 
 type AppProps = CustomWindowControlsProps & {
   deepLinks: string[];
   appConfiguration: IAppConfiguration;
   dataSources: IDataSourceFactory[];
-  layoutStorage: ILayoutStorage;
   extensionLoaders: readonly ExtensionLoader[];
   nativeAppMenu?: INativeAppMenu;
   nativeWindow?: INativeWindow;
@@ -67,7 +65,6 @@ export function App(props: AppProps): JSX.Element {
   const {
     appConfiguration,
     dataSources,
-    layoutStorage,
     extensionLoaders,
     nativeAppMenu,
     nativeWindow,
@@ -82,7 +79,6 @@ export function App(props: AppProps): JSX.Element {
     <NstrumentaProvider />,
     <StudioLogsSettingsProvider />,
     <StudioToastProvider />,
-    <LayoutStorageContext.Provider value={layoutStorage} />,
     <UserProfileLocalStorageProvider />,
     <LayoutManagerProvider />,
     <TimelineInteractionStateProvider />,
