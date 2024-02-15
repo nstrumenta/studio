@@ -8,7 +8,6 @@ import { useCallback, useLayoutEffect, useMemo } from "react";
 import { useMountedState } from "react-use";
 import { makeStyles } from "tss-react/mui";
 
-import Snow from "@foxglove/studio-base/components/DataSourceDialog/Snow";
 import Stack from "@foxglove/studio-base/components/Stack";
 import { useAnalytics } from "@foxglove/studio-base/context/AnalyticsContext";
 import { usePlayerSelection } from "@foxglove/studio-base/context/PlayerSelectionContext";
@@ -19,16 +18,11 @@ import {
 } from "@foxglove/studio-base/context/WorkspaceContext";
 import { AppEvent } from "@foxglove/studio-base/services/IAnalytics";
 
-import Connection from "./Connection";
 import StartNstrumenta from "./StartNstrumenta";
 import { useOpenFile } from "./useOpenFile";
 
-const DataSourceDialogItems = ["start", "file", "demo", "remote", "connection"] as const;
+const DataSourceDialogItems = ["start", "file", "nstrumenta"] as const;
 export type DataSourceDialogItem = (typeof DataSourceDialogItems)[number];
-
-type DataSourceDialogProps = {
-  backdropAnimation?: boolean;
-};
 
 const useStyles = makeStyles()((theme) => ({
   paper: {
@@ -44,8 +38,7 @@ const useStyles = makeStyles()((theme) => ({
 
 const selectDataSourceDialog = (store: WorkspaceContextStore) => store.dataSourceDialog;
 
-export function DataSourceDialog(props: DataSourceDialogProps): JSX.Element {
-  const { backdropAnimation } = props;
+export function DataSourceDialog(): JSX.Element {
   const { classes } = useStyles();
   const { availableSources, selectSource } = usePlayerSelection();
   const { dataSourceDialogActions } = useWorkspaceActions();
@@ -73,48 +66,12 @@ export function DataSourceDialog(props: DataSourceDialogProps): JSX.Element {
           console.error(err);
         })
         .finally(() => {
-          // set the view back to start so the user can click to open file again
           if (isMounted()) {
             dataSourceDialogActions.open("start");
           }
         });
-    } else if (activeView === "demo" && firstSampleSource) {
-      selectSource(firstSampleSource.id);
     }
   }, [activeView, dataSourceDialogActions, firstSampleSource, isMounted, openFile, selectSource]);
-
-  const backdrop = useMemo(() => {
-    const now = new Date();
-    if (backdropAnimation === false) {
-      return;
-    } else if (now >= new Date(now.getFullYear(), 11, 25)) {
-      return <Snow effect="snow" />;
-    } else if (now < new Date(now.getFullYear(), 0, 2)) {
-      return <Snow effect="confetti" />;
-    }
-    return;
-  }, [backdropAnimation]);
-
-  const view = useMemo(() => {
-    switch (activeView) {
-      case "demo": {
-        return {
-          title: "",
-          component: <></>,
-        };
-      }
-      case "connection":
-        return {
-          title: "Open new connection",
-          component: <Connection />,
-        };
-      default:
-        return {
-          title: "Get started",
-          component: <StartNstrumenta />,
-        };
-    }
-  }, [activeView]);
 
   return (
     <Dialog
@@ -122,7 +79,6 @@ export function DataSourceDialog(props: DataSourceDialogProps): JSX.Element {
       onClose={onModalClose}
       fullWidth
       maxWidth="lg"
-      BackdropProps={{ children: backdrop }}
       PaperProps={{
         square: false,
         elevation: 4,
@@ -136,9 +92,9 @@ export function DataSourceDialog(props: DataSourceDialogProps): JSX.Element {
         flexGrow={1}
         fullHeight
         justifyContent="space-between"
-        overflow={activeView === "connection" ? "hidden" : undefined}
+        overflow={"hidden"}
       >
-        {view.component}
+        <StartNstrumenta />,
       </Stack>
     </Dialog>
   );

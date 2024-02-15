@@ -25,13 +25,14 @@ import PanelToolbar from "@foxglove/studio-base/components/PanelToolbar";
 import { NumberInput } from "@foxglove/studio-base/components/SettingsTreeEditor/inputs/NumberInput";
 import Stack from "@foxglove/studio-base/components/Stack";
 import {
-  useNstrumentClient,
   useNstrumentaContext,
 } from "@foxglove/studio-base/context/NstrumentaContext";
 import { subtractTimes } from "@foxglove/studio-base/players/UserNodePlayer/nodeTransformerWorker/typescript/userUtils/time";
 import { SaveConfig } from "@foxglove/studio-base/types/panels";
 
 import { NstrumentaVideoConfig, useNstrumentaVideoSettings } from "./settings";
+
+import { getDownloadURL, ref } from "firebase/storage";
 
 type Props = {
   config: NstrumentaVideoConfig;
@@ -62,24 +63,19 @@ function NstrumentaVideoPanel(props: Props): JSX.Element {
   const nstrumentaVideo =
     nstrumentaVideoIndex != undefined ? experiment?.videos[nstrumentaVideoIndex] : undefined;
 
-  const nstClient = useNstrumentClient();
+  const { firebaseInstance } = useNstrumentaContext()
 
   useNstrumentaVideoSettings(config, saveConfig);
 
   const getVideoUrl = useCallback(
     async (dataId: string) => {
-      const query = (await nstClient.storage.query({
-        field: "filePath",
-        comparison: "==",
-        compareValue: dataId,
-      })) as { filePath: string }[];
-      if (query[0] == undefined) {
-        return;
-      }
-      const url = await nstClient.storage.getDownloadUrl(query[0].filePath);
+      if (!firebaseInstance) return;
+
+
+      const url = await getDownloadURL(ref(firebaseInstance.storage, dataId));
       setVideoUrl(url);
     },
-    [nstClient.storage],
+    [firebaseInstance],
   );
 
   useEffect(() => {
@@ -132,7 +128,7 @@ function NstrumentaVideoPanel(props: Props): JSX.Element {
     if (videoFilePath) {
       void getVideoUrl(videoFilePath);
     }
-  }, [videoFilePath, nstClient, getVideoUrl]);
+  }, [videoFilePath, getVideoUrl]);
 
 
 
@@ -179,7 +175,7 @@ function NstrumentaVideoPanel(props: Props): JSX.Element {
           width: "100%",
           objectFit: "contain",
           visibility: timeOutsideOfPlayback === 0 ? "visible" : "hidden",
-          transform: nstrumentaVideo?.rotate ? `rotate(${nstrumentaVideo?.rotate}deg) scale(1.77)` : undefined
+          transform: nstrumentaVideo?.rotate ? `rotate(${nstrumentaVideo.rotate}deg) scale(1.77)` : undefined
         }}
         src={videoUrl}
         ref={videoRef as LegacyRef<HTMLVideoElement>}

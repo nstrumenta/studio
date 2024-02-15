@@ -63,11 +63,10 @@ export async function main(params: MainParams = {}): Promise<void> {
     return;
   }
 
-  const { installDevtoolsFormatters, overwriteFetch, waitForFonts, initI18n } = await import(
+  const { installDevtoolsFormatters, waitForFonts, initI18n } = await import(
     "@foxglove/studio-base"
   );
   installDevtoolsFormatters();
-  overwriteFetch();
   // consider moving waitForFonts into App to display an app loading screen
   await waitForFonts();
   await initI18n();

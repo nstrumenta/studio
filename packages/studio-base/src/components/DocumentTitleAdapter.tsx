@@ -19,12 +19,9 @@ export default function DocumentTitleAdapter(): JSX.Element {
 
   useEffect(() => {
     if (!playerName) {
-      window.document.title = "Foxglove Studio";
+      window.document.title = "Studio";
       return;
     }
-    window.document.title = navigator.userAgent.includes("Mac")
-      ? playerName
-      : `${playerName} – Foxglove Studio`;
   }, [playerName]);
 
   return <></>;

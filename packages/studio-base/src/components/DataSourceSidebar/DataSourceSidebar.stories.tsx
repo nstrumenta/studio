@@ -9,7 +9,6 @@ import { useEffect } from "react";
 import { fromDate } from "@foxglove/rostime";
 import { AppSetting } from "@foxglove/studio-base/AppSetting";
 import MockMessagePipelineProvider from "@foxglove/studio-base/components/MessagePipeline/MockMessagePipelineProvider";
-import CurrentUserContext, { User } from "@foxglove/studio-base/context/CurrentUserContext";
 import { useEvents } from "@foxglove/studio-base/context/EventsContext";
 import { useAppConfigurationValue } from "@foxglove/studio-base/hooks";
 import { PlayerPresence, Topic } from "@foxglove/studio-base/players/types";
@@ -207,11 +206,7 @@ export const PlayerPresentWithCustomTimezoneChinese: StoryObj = {
 
 export const WithEvents: StoryObj = {
   render: function Story() {
-    const userContextValue = {
-      currentUser: { id: "ok" } as User,
-      signIn: () => undefined,
-      signOut: async () => undefined,
-    };
+
 
     const setEventsSupported = useEvents((store) => store.setEventsSupported);
     useEffect(() => {
@@ -225,11 +220,9 @@ export const WithEvents: StoryObj = {
         topics={TOPICS}
         presence={PlayerPresence.PRESENT}
       >
-        <CurrentUserContext.Provider value={userContextValue}>
-          <Box height="100%" bgcolor="background.paper">
-            <DataSourceSidebar />
-          </Box>
-        </CurrentUserContext.Provider>
+        <Box height="100%" bgcolor="background.paper">
+          <DataSourceSidebar />
+        </Box>
       </MockMessagePipelineProvider>
     );
   },

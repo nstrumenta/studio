@@ -86,6 +86,7 @@ type FileDataSourceArgs = {
   type: "file";
   files?: File[];
   handle?: FileSystemFileHandle; // foxglove-depcheck-used: @types/wicg-file-system-access
+  params?: Record<string, string | undefined>;
 };
 
 type ConnectionDataSourceArgs = {
@@ -93,7 +94,13 @@ type ConnectionDataSourceArgs = {
   params?: Record<string, string | undefined>;
 };
 
-export type DataSourceArgs = FileDataSourceArgs | ConnectionDataSourceArgs;
+type NstrumentaDataSourceArgs = {
+  type: "nstrumenta";
+  params?: Record<string, string | undefined>;
+};
+
+
+export type DataSourceArgs = FileDataSourceArgs | ConnectionDataSourceArgs | NstrumentaDataSourceArgs;
 
 /**
  * PlayerSelectionContext exposes the available data sources and a function to set the current data source
@@ -113,8 +120,8 @@ export interface PlayerSelection {
 }
 
 const PlayerSelectionContext = createContext<PlayerSelection>({
-  selectSource: () => {},
-  selectRecent: () => {},
+  selectSource: () => { },
+  selectRecent: () => { },
   availableSources: [],
   recentSources: [],
 });

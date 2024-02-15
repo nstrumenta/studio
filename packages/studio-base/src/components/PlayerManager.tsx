@@ -80,6 +80,8 @@ export default function PlayerManager(props: PropsWithChildren<PlayerManagerProp
 
   const [basePlayer, setBasePlayer] = useState<Player | undefined>();
 
+  const [selectedSource, setSelectedSource] = useState<IDataSourceFactory | undefined>();
+
   const userNodes = useCurrentLayoutSelector(userNodesSelector);
   const globalVariables = useCurrentLayoutSelector(globalVariablesSelector);
 
@@ -126,11 +128,14 @@ export default function PlayerManager(props: PropsWithChildren<PlayerManagerProp
 
       // Sample sources don't need args or prompts to initialize
       if (foundSource.type === "sample" || foundSource.type === "nstrumenta") {
+        const params = args?.params;
         const newPlayer = await foundSource.initialize({
-          metricsCollector,
+          params,
+          metricsCollector
         });
 
         setBasePlayer(newPlayer);
+        setSelectedSource(foundSource)
 
         if (foundSource.sampleLayout) {
           try {
@@ -287,6 +292,7 @@ export default function PlayerManager(props: PropsWithChildren<PlayerManagerProp
   const value: PlayerSelection = {
     selectSource,
     selectRecent,
+    selectedSource,
     availableSources: playerSources,
     recentSources,
   };
@@ -294,7 +300,7 @@ export default function PlayerManager(props: PropsWithChildren<PlayerManagerProp
   return (
     <>
       <PlayerSelectionContext.Provider value={value}>
-        <MessagePipelineProvider player={player} globalVariables={globalVariablesRef.current}>
+        <MessagePipelineProvider player={player}>
           {children}
         </MessagePipelineProvider>
       </PlayerSelectionContext.Provider>

@@ -16,13 +16,13 @@ import { LayoutID } from "@foxglove/studio-base/services/ILayoutStorage";
 import { PanelConfig, PlaybackConfig, UserNodes } from "@foxglove/studio-base/types/panels";
 
 import {
-  LayoutData,
   AddPanelPayload,
   ChangePanelLayoutPayload,
   ClosePanelPayload,
   CreateTabPanelPayload,
   DropPanelPayload,
   EndDragPayload,
+  LayoutData,
   MoveTabPayload,
   SaveConfigsPayload,
   SplitPanelPayload,
@@ -32,13 +32,13 @@ import {
 
 export type LayoutState = Readonly<{
   selectedLayout:
-    | {
-        id: LayoutID;
-        loading?: boolean;
-        data: LayoutData | undefined;
-        name?: string;
-      }
-    | undefined;
+  | {
+    id: LayoutID;
+    loading?: boolean;
+    data: LayoutData | undefined;
+    name?: string;
+  }
+  | undefined;
 }>;
 
 /**

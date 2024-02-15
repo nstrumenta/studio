@@ -2,13 +2,15 @@
 // License, v2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
-import { NstrumentaBrowserClient } from "nstrumenta/dist/browser/client";
+
 
 import {
   DataSourceFactoryInitializeArgs,
   IDataSourceFactory,
 } from "@foxglove/studio-base/context/PlayerSelectionContext";
 import { IterablePlayer, WorkerIterableSource } from "@foxglove/studio-base/players/IterablePlayer";
+import { Player } from "@foxglove/studio-base/players/types";
+import { FirebaseInstance } from "@foxglove/studio-base/providers/NstrumentaProvider";
 
 class NstrumentaDataSourceFactory implements IDataSourceFactory {
   public id = "nstrumenta";
@@ -16,29 +18,22 @@ class NstrumentaDataSourceFactory implements IDataSourceFactory {
   public displayName = "nstrumenta";
   public iconName: IDataSourceFactory["iconName"] = "FileASPX";
   public hidden = true;
-  public nstClient: NstrumentaBrowserClient;
+  public firebaseInstance: FirebaseInstance;
 
-  public constructor(nstClient: NstrumentaBrowserClient) {
-    this.nstClient = nstClient;
+  public constructor(firebaseInstance: FirebaseInstance) {
+    this.firebaseInstance = firebaseInstance
   }
 
   public async initialize(
     args: DataSourceFactoryInitializeArgs,
-  ): ReturnType<IDataSourceFactory["initialize"]> {
-    const { search } = window.location;
-    const filePath = new URLSearchParams(search).get("experiment") ?? "";
+  ): Promise<Player | undefined> {
 
-    const url = await this.nstClient.storage.getDownloadUrl(filePath);
-    const nstExperiment = (await (await fetch(url)).json()) as {
-      dataFilePath?: string;
-    };
-
-    const dataFilePath = nstExperiment.dataFilePath;
-
-    let dataUrl: string = "";
-    if (dataFilePath != undefined) {
-      dataUrl = await this.nstClient.storage.getDownloadUrl(dataFilePath);
+    const { dataUrl } = args.params!;
+    if (this.firebaseInstance?.storage == undefined) {
+      console.error("firebase not initialized");
+      return;
     }
+
 
     const source = new WorkerIterableSource({
       initWorker: () => {

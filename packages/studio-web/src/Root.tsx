@@ -2,29 +2,26 @@
 // License, v2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
   App,
   AppSetting,
-  FoxgloveWebSocketDataSourceFactory,
   IDataSourceFactory,
   IdbExtensionLoader,
   McapLocalDataSourceFactory,
-  NstrumentaDataSourceFactory,
-  RemoteDataSourceFactory,
-  Ros1LocalBagDataSourceFactory,
-  Ros2LocalBagDataSourceFactory,
-  RosbridgeDataSourceFactory,
-  SampleNuscenesDataSourceFactory,
-  UlogLocalDataSourceFactory,
+  NstrumentaDataSourceFactory
 } from "@foxglove/studio-base";
-import { useNstrumentClient } from "@foxglove/studio-base/context/NstrumentaContext";
 
 import LocalStorageAppConfiguration from "./services/LocalStorageAppConfiguration";
-import { NstLayoutStorage } from "./services/NstLayoutStorage";
+import { FirebaseApp, initializeApp } from 'firebase/app';
+import { Auth, GithubAuthProvider, User, getAuth, onAuthStateChanged, signInWithRedirect } from 'firebase/auth';
+import { FirebaseStorage, getStorage } from 'firebase/storage';
+
 
 const isDevelopment = process.env.NODE_ENV === "development";
+
+export type FirebaseInstance = { app: FirebaseApp, storage: FirebaseStorage, auth: Auth, user?: User }
 
 export function Root(props: {
   extraProviders: JSX.Element[] | undefined;
@@ -39,30 +36,57 @@ export function Root(props: {
       }),
     [],
   );
-  const layoutStorage = useMemo(() => new NstLayoutStorage(), []);
   const [extensionLoaders] = useState(() => [
     new IdbExtensionLoader("org"),
     new IdbExtensionLoader("local"),
   ]);
 
-  const nstClient = useNstrumentClient();
+
+  const { search } = window.location;
+
+  const nstrumentaOrg = new URLSearchParams(search).get("org") ?? "";
+
+
+  const firebaseConfigPath =
+    `https://storage.googleapis.com/${nstrumentaOrg}-config/firebaseConfig.json`;
+
+  const [firebaseInstance, setFirebaseInstance] = useState<FirebaseInstance>();
+
+  const fetchConfig = async () => {
+    const fetchedFirebaseConfig = await (await fetch(firebaseConfigPath)).json();
+    console.log(fetchedFirebaseConfig);
+    const app = initializeApp(fetchedFirebaseConfig);
+    const storage = getStorage(app);
+    const auth = getAuth(app);
+
+
+    onAuthStateChanged(auth, nextUser => {
+      if (nextUser) { setFirebaseInstance({ app, storage, auth, user: nextUser }) }
+      else {
+        setFirebaseInstance({ app, storage, auth, user: undefined })
+        signInWithRedirect(auth, new GithubAuthProvider())
+      }
+    })
+  };
 
   const dataSources = useMemo(() => {
+    if (!firebaseInstance) return [];
     const sources = [
-      new Ros1LocalBagDataSourceFactory(),
-      new Ros2LocalBagDataSourceFactory(),
-      new FoxgloveWebSocketDataSourceFactory(),
-      new RosbridgeDataSourceFactory(),
-      new UlogLocalDataSourceFactory(),
-      new SampleNuscenesDataSourceFactory(),
       new McapLocalDataSourceFactory(),
-      new RemoteDataSourceFactory(),
-      new NstrumentaDataSourceFactory(nstClient),
+      new NstrumentaDataSourceFactory(firebaseInstance),
     ];
 
     return props.dataSources ?? sources;
-  }, [nstClient, props.dataSources]);
+  }, [firebaseInstance, props.dataSources]);
 
+  const init = async () => {
+    await fetchConfig();
+  };
+
+  useEffect(() => {
+    void init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   return (
     <>
       <App
@@ -70,7 +94,6 @@ export function Root(props: {
         deepLinks={[window.location.href]}
         dataSources={dataSources}
         appConfiguration={appConfiguration}
-        layoutStorage={layoutStorage}
         extensionLoaders={extensionLoaders}
         enableGlobalCss
         extraProviders={props.extraProviders}
