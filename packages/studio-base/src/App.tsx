@@ -2,7 +2,7 @@
 // License, v2.0. If a copy of the MPL was not distributed with this
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
-import { Suspense, Fragment, useEffect } from "react";
+import { Fragment, Suspense, useEffect } from "react";
 import { DndProvider } from "react-dnd";
 import { HTML5Backend } from "react-dnd-html5-backend";
 
@@ -23,7 +23,6 @@ import PlayerManager from "./components/PlayerManager";
 import SendNotificationToastAdapter from "./components/SendNotificationToastAdapter";
 import StudioToastProvider from "./components/StudioToastProvider";
 import AppConfigurationContext, { IAppConfiguration } from "./context/AppConfigurationContext";
-import LayoutStorageContext from "./context/LayoutStorageContext";
 import NativeAppMenuContext, { INativeAppMenu } from "./context/NativeAppMenuContext";
 import NativeWindowContext, { INativeWindow } from "./context/NativeWindowContext";
 import { IDataSourceFactory } from "./context/PlayerSelectionContext";

@@ -25,7 +25,7 @@ import { v4 as uuidv4 } from "uuid";
 
 import { Layout, migrateLayout } from "@foxglove/studio-base";
 
-import { clearDatabase, exportToJson, importFromJson } from "./IdbBackupAndRestore";
+import { exportToJson, importFromJson } from "./IdbBackupAndRestore";
 
 
 const log = Logger.getLogger(__filename);
