@@ -3,21 +3,20 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
 import AddIcon from "@mui/icons-material/Add";
-import BackupIcon from "@mui/icons-material/Backup";
 import CloudOffIcon from "@mui/icons-material/CloudOff";
 import FileOpenOutlinedIcon from "@mui/icons-material/FileOpenOutlined";
 import {
   Button,
-  IconButton,
-  Switch,
-  FormGroup,
-  FormControlLabel,
   CircularProgress,
+  Divider,
+  FormControlLabel,
+  FormGroup,
+  IconButton,
   List,
   ListItem,
   ListItemButton,
   ListItemText,
-  Divider,
+  Switch,
 } from "@mui/material";
 import { partition } from "lodash";
 import moment from "moment";
@@ -377,9 +376,6 @@ export default function LayoutBrowser({
     void analytics.logEvent(AppEvent.LAYOUT_CREATE);
   }, [promptForUnsavedChanges, currentDateForStorybook, layoutManager, onSelectLayout, analytics]);
 
-  const saveLayoutDB = useCallbackWithToast(async () => {
-    await layoutManager.saveLayoutDb();
-  }, [layoutManager]);
 
   const onExportLayout = useCallbackWithToast(
     async (item: Layout) => {
@@ -573,15 +569,6 @@ export default function LayoutBrowser({
         ),
         <IconButton
           color="primary"
-          key="save-layout-db"
-          onClick={saveLayoutDB}
-          aria-label="Save all layouts to nstrumenta"
-          title="Save all layouts to nstrumenta"
-        >
-          <BackupIcon />
-        </IconButton>,
-        <IconButton
-          color="primary"
           key="add-layout"
           onClick={createNewLayout}
           aria-label="Create new layout"
@@ -620,11 +607,6 @@ export default function LayoutBrowser({
               <ListItem disablePadding>
                 <ListItemButton onClick={importLayout}>
                   <ListItemText disableTypography>Import from file…</ListItemText>
-                </ListItemButton>
-              </ListItem>
-              <ListItem disablePadding>
-                <ListItemButton onClick={saveLayoutDB}>
-                  <ListItemText disableTypography>Save layouts to nstrumenta…</ListItemText>
                 </ListItemButton>
               </ListItem>
             </List>

@@ -37,39 +37,27 @@ export type Layout = {
    * The working copy of this layout, if it has been edited since the last explicit save.
    */
   working:
-    | {
-        data: LayoutData;
-        savedAt: ISO8601Timestamp | undefined;
-      }
-    | undefined;
+  | {
+    data: LayoutData;
+    savedAt: ISO8601Timestamp | undefined;
+  }
+  | undefined;
 
   /** Info about this layout from remote storage. */
   syncInfo:
-    | {
-        status: LayoutSyncStatus;
-        /** The last savedAt time returned by the server. */
-        lastRemoteSavedAt: ISO8601Timestamp | undefined;
-      }
-    | undefined;
+  | {
+    status: LayoutSyncStatus;
+    /** The last savedAt time returned by the server. */
+    lastRemoteSavedAt: ISO8601Timestamp | undefined;
+  }
+  | undefined;
 };
 
 export interface ILayoutStorage {
-  list(namespace: string): Promise<readonly Layout[]>;
-  get(namespace: string, id: LayoutID): Promise<Layout | undefined>;
-  put(namespace: string, layout: Layout): Promise<Layout>;
-  saveLayoutDb(): Promise<void>;
-  delete(namespace: string, id: LayoutID): Promise<void>;
-
-  /**
-   * If applicable, the layout manager will call this method to migrate any old existing local
-   * layouts into the new namespace used for local layouts.
-   */
-  migrateUnnamespacedLayouts?(namespace: string): Promise<void>;
-
-  /**
-   * The layout manager will call this method to convert any local layouts to personal layouts when logging in.
-   */
-  importLayouts(params: { fromNamespace: string; toNamespace: string }): Promise<void>;
+  list(): Promise<readonly Layout[]>;
+  get(id: LayoutID): Promise<Layout | undefined>;
+  put(layout: Layout): Promise<Layout>;
+  delete(id: LayoutID): Promise<void>;
 }
 
 export function layoutPermissionIsShared(

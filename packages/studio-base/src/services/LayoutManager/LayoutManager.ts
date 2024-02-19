@@ -29,7 +29,6 @@ import {
 } from "@foxglove/studio-base/services/IRemoteLayoutStorage";
 
 import { migratePanelsState } from "../migrateLayout";
-import { NamespacedLayoutStorage } from "./NamespacedLayoutStorage";
 import { isLayoutEqual } from "./compareLayouts";
 import computeLayoutSyncOperations, { SyncOperation } from "./computeLayoutSyncOperations";
 
@@ -67,7 +66,7 @@ export default class LayoutManager implements ILayoutManager {
    * and then writing a single layout, or writing one and deleting another) from getting
    * interleaved.
    */
-  private local: NamespacedLayoutStorage;
+  private local: ILayoutStorage;
   private remote: IRemoteLayoutStorage | undefined;
 
   public readonly supportsSharing: boolean;
@@ -126,14 +125,8 @@ export default class LayoutManager implements ILayoutManager {
     remote: IRemoteLayoutStorage | undefined;
   }) {
 
-    this.local = new NamespacedLayoutStorage(
-      local, LayoutManager.LOCAL_STORAGE_NAMESPACE,
-      {
-        migrateUnnamespacedLayouts: false,
-        importFromNamespace: undefined
-      },
-    ),
-      this.remote = remote;
+    this.local = local;
+    this.remote = remote;
     this.supportsSharing = remote != undefined;
   }
 
@@ -221,13 +214,6 @@ export default class LayoutManager implements ILayoutManager {
 
     this.notifyChangeListeners({ type: "change", updatedLayout: newLayout });
     return newLayout;
-  }
-
-  @LayoutManager.withBusyStatus
-  public async saveLayoutDb(): Promise<void> {
-
-    await this.local.saveLayoutDb();
-
   }
 
   @LayoutManager.withBusyStatus
@@ -553,7 +539,7 @@ export default class LayoutManager implements ILayoutManager {
 
     // Any necessary local cleanups are performed all at once after the server operations, so the
     // server ops can be done without blocking other local sync operations.
-    type CleanupFunction = (local: NamespacedLayoutStorage) => Promise<void>;
+    type CleanupFunction = (local: ILayoutStorage) => Promise<void>;
 
     const cleanups = await Promise.all(
       operations.map(async (operation): Promise<CleanupFunction> => {
