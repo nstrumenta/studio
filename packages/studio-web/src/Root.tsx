@@ -13,10 +13,10 @@ import {
   NstrumentaDataSourceFactory
 } from "@foxglove/studio-base";
 
-import LocalStorageAppConfiguration from "./services/LocalStorageAppConfiguration";
 import { FirebaseApp, initializeApp } from 'firebase/app';
-import { Auth, GithubAuthProvider, User, getAuth, onAuthStateChanged, signInWithRedirect } from 'firebase/auth';
+import { Auth, User, getAuth, onAuthStateChanged } from 'firebase/auth';
 import { FirebaseStorage, getStorage } from 'firebase/storage';
+import LocalStorageAppConfiguration from "./services/LocalStorageAppConfiguration";
 
 
 const isDevelopment = process.env.NODE_ENV === "development";
@@ -64,7 +64,6 @@ export function Root(props: {
       if (nextUser) { setFirebaseInstance({ app, storage, auth, user: nextUser }) }
       else {
         setFirebaseInstance({ app, storage, auth, user: undefined })
-        signInWithRedirect(auth, new GithubAuthProvider())
       }
     })
   };

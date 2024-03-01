@@ -3,7 +3,7 @@
 // file, You can obtain one at http://mozilla.org/MPL/2.0/
 
 import { FirebaseApp, initializeApp } from 'firebase/app';
-import { Auth, GithubAuthProvider, User, getAuth, onAuthStateChanged, signInWithRedirect } from 'firebase/auth';
+import { Auth, User, getAuth, onAuthStateChanged } from 'firebase/auth';
 import { FirebaseStorage, getDownloadURL, getStorage, ref, uploadString } from 'firebase/storage';
 
 import { ReactNode, useEffect, useState } from "react";
@@ -81,7 +81,6 @@ export default function NstrumentaProvider({ children }: { children?: ReactNode 
       }
       else {
         setFirebaseInstance({ app, storage, auth, user: undefined })
-        signInWithRedirect(auth, new GithubAuthProvider())
       }
     })
   };
